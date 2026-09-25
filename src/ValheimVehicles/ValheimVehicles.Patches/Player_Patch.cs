@@ -585,6 +585,14 @@
           AvatarIKGoal.LeftHand, 0);
         ((Character)__instance).m_animator.SetIKRotationWeight(
           AvatarIKGoal.RightHand, 0);
+        ((Character)__instance).m_animator.SetIKPositionWeight(
+          AvatarIKGoal.LeftFoot, 0);
+        ((Character)__instance).m_animator.SetIKPositionWeight(
+          AvatarIKGoal.RightFoot, 0);
+        ((Character)__instance).m_animator.SetIKRotationWeight(
+          AvatarIKGoal.LeftFoot, 0);
+        ((Character)__instance).m_animator.SetIKRotationWeight(
+          AvatarIKGoal.RightFoot, 0);
       }
 
       // always call this as the player might detach and not be in the vehicle briefly.

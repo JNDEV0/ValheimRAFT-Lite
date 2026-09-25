@@ -35,7 +35,7 @@
 
     public int m_stepOffsetUp = 1;
 
-    public int m_stepOffsetDown = 0;
+    public int m_stepOffsetDown = -1;
 
     private List<GameObject> m_steps = [];
 
@@ -132,10 +132,6 @@
         return;
       }
 
-      m_currentLeft = INVALID_STEP;
-      m_currentRight = INVALID_STEP;
-      m_targetLeft = INVALID_STEP;
-      m_targetRight = INVALID_STEP;
       if (m_attachPoint.parent == null) return;
 
       isRunning = true;
@@ -143,10 +139,18 @@
       var exitY = m_exitPoint != null ? m_exitPoint.position.y : transform.position.y;
       _autoClimbDir = player.transform.position.y >= exitY - 1f ? MoveDirection.Down : MoveDirection.Up;
 
+      var initialAttachY = ClampOffset(m_attachPoint.parent
+        .InverseTransformPoint(player.transform.position).y);
       m_attachPoint.localPosition = new Vector3(m_attachPoint.localPosition.x,
-        ClampOffset(m_attachPoint.parent
-          .InverseTransformPoint(player.transform.position).y),
+        initialAttachY,
         m_attachPoint.localPosition.z);
+
+      var initialFootCenter = Mathf.RoundToInt((initialAttachY - 0.85f) / m_stepDistance);
+      m_currentLeft = initialFootCenter;
+      m_currentRight = initialFootCenter;
+      m_targetLeft = INVALID_STEP;
+      m_targetRight = INVALID_STEP;
+
       player.AttachStart(m_attachPoint, null, true, false,
         false,
         "Movement", Vector3.zero);
@@ -322,90 +326,103 @@
 
     public void UpdateIK(Animator animator)
     {
-      var center =
-        Mathf.RoundToInt(m_attachPoint.localPosition.y / m_stepDistance);
-      if (m_currentRight == INVALID_STEP) m_currentRight = center;
+      if (animator == null || m_attachPoint == null) return;
 
-      if (m_currentLeft == INVALID_STEP) m_currentLeft = center;
+      var hipY = m_attachPoint.localPosition.y;
+      var ladderBottomY = -m_ladderHeight;
+
+      // Natural foot resting level is ~0.85m below the hip attach point
+      var footCenter = Mathf.RoundToInt((hipY - 0.85f) / m_stepDistance);
+
+      if (m_currentRight == INVALID_STEP) m_currentRight = footCenter;
+      if (m_currentLeft == INVALID_STEP) m_currentLeft = footCenter;
 
       var currentMoveDir =
         hasAutoClimb ? _autoClimbDir : GetMovementDir(m_currentMoveDir);
 
-      if (m_targetLeft == INVALID_STEP && m_targetRight == INVALID_STEP &&
-          currentMoveDir != MoveDirection.None)
+      // Synchronize IK step animation rate with physical ladder movement speed
+      var moveSpeed =
+        isRunning
+          ? baseLadderMoveSpeed * ladderRunSpeedMult
+          : baseLadderMoveSpeed;
+      var stepRate = Mathf.Max(moveSpeed / m_stepDistance, 1f);
+
+      if (currentMoveDir != MoveDirection.None)
       {
-        if (currentMoveDir == MoveDirection.Up &&
-            m_currentLeft < m_currentRight ||
-            currentMoveDir == MoveDirection.Down &&
-            m_currentLeft > m_currentRight ||
-            !m_lastMovedLeft)
+        if (m_targetLeft == INVALID_STEP && m_targetRight == INVALID_STEP)
         {
-          m_targetLeft = center +
-                         (currentMoveDir == MoveDirection.Up
-                           ? m_stepOffsetUp
-                           : m_stepOffsetDown);
-          m_leftMoveTime = Time.time;
-          m_lastMovedLeft = true;
+          var stepOffset = currentMoveDir == MoveDirection.Up
+            ? m_stepOffsetUp
+            : m_stepOffsetDown;
+          var targetRung = footCenter + stepOffset;
+
+          if (currentMoveDir == MoveDirection.Up &&
+              m_currentLeft < m_currentRight ||
+              currentMoveDir == MoveDirection.Down &&
+              m_currentLeft > m_currentRight ||
+              !m_lastMovedLeft)
+          {
+            m_targetLeft = targetRung;
+            m_leftMoveTime = Time.time;
+            m_lastMovedLeft = true;
+          }
+          else
+          {
+            m_targetRight = targetRung;
+            m_rightMoveTime = Time.time;
+            m_lastMovedLeft = false;
+          }
         }
-        else
+      }
+      else
+      {
+        // When stopped or at ladder bottom/top:
+        // Automatically settle any trailing/stale foot to footCenter (fixes Image 4)
+        if (m_targetLeft == INVALID_STEP && Mathf.Abs(m_currentLeft - footCenter) > 1)
         {
-          m_targetRight = center +
-                          (currentMoveDir == MoveDirection.Up
-                            ? m_stepOffsetUp
-                            : m_stepOffsetDown);
+          m_targetLeft = footCenter;
+          m_leftMoveTime = Time.time;
+        }
+        else if (m_targetRight == INVALID_STEP && Mathf.Abs(m_currentRight - footCenter) > 1)
+        {
+          m_targetRight = footCenter;
           m_rightMoveTime = Time.time;
-          m_lastMovedLeft = false;
         }
       }
 
-      var leftHand =
-        transform.TransformPoint(new Vector3(-0.3f,
-          (float)(m_currentLeft + 2) * m_stepDistance,
-          -0.1f));
-      var leftFoot =
-        transform.TransformPoint(
-          new Vector3(-0.2f, (float)m_currentLeft * m_stepDistance, -0.3f));
-      var rightHand =
-        transform.TransformPoint(new Vector3(0.3f,
-          (float)(m_currentRight + 2) * m_stepDistance,
-          -0.1f));
-      var rightFoot =
-        transform.TransformPoint(
-          new Vector3(0.2f, (float)m_currentRight * m_stepDistance, -0.3f));
+      // Base hand and foot local positions (Hands are 3 rungs / 1.5m above feet, at chest/head level)
+      var leftHandPos = new Vector3(-0.3f, (float)(m_currentLeft + 3) * m_stepDistance, 0f);
+      var leftFootPos = new Vector3(-0.2f, (float)m_currentLeft * m_stepDistance, -0.15f);
+      var rightHandPos = new Vector3(0.3f, (float)(m_currentRight + 3) * m_stepDistance, 0f);
+      var rightFootPos = new Vector3(0.2f, (float)m_currentRight * m_stepDistance, -0.15f);
+
+      // Interpolate left limb step
       if (m_targetLeft != INVALID_STEP)
       {
-        var targetLeftHand =
-          transform.TransformPoint(new Vector3(-0.3f,
-            (float)(m_targetLeft + 3) * m_stepDistance,
-            0f));
-        var targetLeftFoot =
-          transform.TransformPoint(new Vector3(-0.2f,
-            (float)m_targetLeft * m_stepDistance, 0f));
-        var leftAlpha =
-          Mathf.Clamp01((Time.time - m_leftMoveTime) *
-                        (baseLadderMoveSpeed / m_stepDistance));
-        leftHand = Vector3.Lerp(leftHand, targetLeftHand, leftAlpha);
-        leftFoot = Vector3.Lerp(leftFoot, targetLeftFoot, leftAlpha);
+        var targetLeftHandPos = new Vector3(-0.3f, (float)(m_targetLeft + 3) * m_stepDistance, 0f);
+        var targetLeftFootPos = new Vector3(-0.2f, (float)m_targetLeft * m_stepDistance, -0.15f);
+
+        var leftAlpha = Mathf.Clamp01((Time.time - m_leftMoveTime) * stepRate);
+        leftHandPos = Vector3.Lerp(leftHandPos, targetLeftHandPos, leftAlpha);
+        leftFootPos = Vector3.Lerp(leftFootPos, targetLeftFootPos, leftAlpha);
+
         if (Mathf.Approximately(leftAlpha, 1f))
         {
           m_currentLeft = m_targetLeft;
           m_targetLeft = INVALID_STEP;
         }
       }
-      else if (m_targetRight != INVALID_STEP)
+
+      // Interpolate right limb step
+      if (m_targetRight != INVALID_STEP)
       {
-        var targetRightHand =
-          transform.TransformPoint(new Vector3(0.3f,
-            (float)(m_targetRight + 3) * m_stepDistance,
-            0f));
-        var targetRightFoot =
-          transform.TransformPoint(new Vector3(0.2f,
-            (float)m_targetRight * m_stepDistance, 0f));
-        var rightAlpha =
-          Mathf.Clamp01((Time.time - m_rightMoveTime) *
-                        (baseLadderMoveSpeed / m_stepDistance));
-        rightHand = Vector3.Lerp(rightHand, targetRightHand, rightAlpha);
-        rightFoot = Vector3.Lerp(rightFoot, targetRightFoot, rightAlpha);
+        var targetRightHandPos = new Vector3(0.3f, (float)(m_targetRight + 3) * m_stepDistance, 0f);
+        var targetRightFootPos = new Vector3(0.2f, (float)m_targetRight * m_stepDistance, -0.15f);
+
+        var rightAlpha = Mathf.Clamp01((Time.time - m_rightMoveTime) * stepRate);
+        rightHandPos = Vector3.Lerp(rightHandPos, targetRightHandPos, rightAlpha);
+        rightFootPos = Vector3.Lerp(rightFootPos, targetRightFootPos, rightAlpha);
+
         if (Mathf.Approximately(rightAlpha, 1f))
         {
           m_currentRight = m_targetRight;
@@ -413,6 +430,26 @@
         }
       }
 
+      // CRITICAL FAIL-SAFE: Enforce anatomical limits relative to hip attach point
+      // Leg reach: feet must be between 0.35m and 1.15m below the hip. NEVER above the hip!
+      var maxFootY = hipY - 0.35f;
+      var minFootY = hipY - 1.15f;
+      leftFootPos.y = Mathf.Clamp(leftFootPos.y, Mathf.Max(minFootY, ladderBottomY), maxFootY);
+      rightFootPos.y = Mathf.Clamp(rightFootPos.y, Mathf.Max(minFootY, ladderBottomY), maxFootY);
+
+      // Hands must be at chest/head level above the hip
+      var minHandY = hipY + 0.30f;
+      var maxHandY = hipY + 1.10f;
+      leftHandPos.y = Mathf.Clamp(leftHandPos.y, minHandY, maxHandY);
+      rightHandPos.y = Mathf.Clamp(rightHandPos.y, minHandY, maxHandY);
+
+      // Transform to world space
+      var leftHand = transform.TransformPoint(leftHandPos);
+      var leftFoot = transform.TransformPoint(leftFootPos);
+      var rightHand = transform.TransformPoint(rightHandPos);
+      var rightFoot = transform.TransformPoint(rightFootPos);
+
+      // Apply IK positions
       animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHand);
       animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 1f);
       animator.SetIKPosition(AvatarIKGoal.LeftFoot, leftFoot);
@@ -421,6 +458,12 @@
       animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 1f);
       animator.SetIKPosition(AvatarIKGoal.RightFoot, rightFoot);
       animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 1f);
+
+      // Orient wrists to naturally grip the horizontal rungs (fixes Image 1 stiffness)
+      animator.SetIKRotation(AvatarIKGoal.LeftHand, transform.rotation);
+      animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0.7f);
+      animator.SetIKRotation(AvatarIKGoal.RightHand, transform.rotation);
+      animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0.7f);
     }
 
     private float previousDir = 0;
