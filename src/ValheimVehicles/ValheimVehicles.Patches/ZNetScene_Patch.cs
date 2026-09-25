@@ -137,7 +137,7 @@
         return false;
       }
 
-      if (zdo.GetPrefab() <= 0) return false;
+      if (zdo.GetPrefab() == 0) return false;
 
       if (VehiclePiecesController.VehicleParentIdCache.TryGetValue(zdo, out var cachedParentPersistentId))
       {

@@ -253,123 +253,12 @@ public class MapPinSync : MonoBehaviour
 
 
   private IEnumerator UpdatePlayerSpawnPin()
-
   {
-
-    // Defensive: Always check singletons before each access (coroutines can yield, and Unity objects can become null between frames)
-
-    if (Minimap.instance == null) yield break;
-
-    if (PlayerSpawnController.Instance == null) yield break;
-
-
-
-    // Attempt to get the player spawn ZDO if not cached
-
-    if (cachedPlayerSpawnZdo == null)
-
-      yield return PlayerSpawnController.Instance.FindDynamicZdo(
-
-        LocationVariation.Spawn,
-
-        data => { cachedPlayerSpawnZdo = data; });
-
-
-
-    // Re-check: Did we get a valid ZDO?
-
-    if (cachedPlayerSpawnZdo == null)
-
+    if (cachedLastBedPinData != null)
     {
-
       ClearSpawnPin(cachedLastBedPinData);
-
-      yield break;
-
     }
-
-
-
-    // Defensive: Ensure Minimap and m_pins are still valid
-
-    if (Minimap.instance == null || Minimap.instance.m_pins == null)
-
-    {
-
-      ClearSpawnPin(cachedLastBedPinData);
-
-      yield break;
-
-    }
-
-
-
-    // Defensive: Check if Player.m_localPlayer is valid
-
-    if (Player.m_localPlayer == null)
-
-    {
-
-      ClearSpawnPin(cachedLastBedPinData);
-
-      yield break;
-
-    }
-
-
-
-    var nextPosition = cachedPlayerSpawnZdo.GetPosition();
-
-
-
-    // Remove previous pin if moved
-
-    if (cachedLastBedVector != nextPosition)
-
-      ClearSpawnPin(cachedLastBedPinData);
-
-
-
-    // Only add if pin does not exist
-
-    if (Minimap.instance.m_pins.Contains(cachedLastBedPinData))
-
-      yield break;
-
-
-
-    // Add new pin, but check AddPin didn't return null
-
-    var newPin = Minimap.instance.AddPin(
-
-      nextPosition,
-
-      Minimap.PinType.Bed,
-
-      "Spawn",
-
-      false, false,
-
-      Player.m_localPlayer.GetOwner());
-
-
-
-    if (newPin == null)
-
-    {
-
-      Debug.LogWarning("[MapPinSync] Failed to add spawn pin: AddPin returned null.");
-
-      yield break;
-
-    }
-
-
-
-    cachedLastBedPinData = newPin;
-
-    cachedLastBedVector = nextPosition;
-
+    yield break;
   }
 
 
@@ -755,9 +644,21 @@ public class MapPinSync : MonoBehaviour
           { pinData = pinData, zdo = zdo };
 
       }
-
     }
+  }
 
+  public Minimap.PinData? GetVehiclePin(int vehicleId)
+  {
+    if (vehicleId == 0) return null;
+    foreach (var pair in _vehiclePins)
+    {
+      if (pair.Value.zdo != null)
+      {
+        var pId = pair.Value.zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
+        if (pId == vehicleId) return pair.Value.pinData;
+      }
+    }
+    return null;
   }
 
 

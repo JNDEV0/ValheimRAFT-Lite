@@ -449,7 +449,7 @@
           stopWatchRuntime.Restart();
         }
 
-        if (zdo == null || !zdo.IsValid() || zdo.GetPrefab() <= 0)
+        if (zdo == null || !zdo.IsValid() || zdo.GetPrefab() == 0)
         {
           if (zdo != null) invalidZdos.Add(zdo);
           continue;
@@ -485,7 +485,7 @@
       if (zdo == null || !zdo.IsValid()) return false;
 
       var prefab = zdo.GetPrefab();
-      if (prefab <= 0) return false;
+      if (prefab == 0) return false;
       if (BlacklistedPrefabHashes.Contains(prefab)) return false;
 
       // 1. Validate MBParentId
@@ -1809,16 +1809,12 @@
       var spawnPos = mBedPiece.GetSpawnPoint();
       bedNetView.GetZDO()?.SetPosition(spawnPos);
 
-      if (Game.instance != null && Player.m_localPlayer != null)
+      if (Game.instance != null && Player.m_localPlayer != null && mBedPiece.IsMine())
       {
         var profile = Game.instance.GetPlayerProfile();
-        if (profile != null)
+        if (profile != null && Manager != null && BoatBedSpawnController.IsBoatSpawnActiveForVehicle(Manager.PersistentZdoId))
         {
-          var currentSpawn = profile.GetCustomSpawnPoint();
-          if (Vector3.Distance(currentSpawn, spawnPos) < 4f || (mBedPiece.IsCurrent() && currentSpawn != spawnPos))
-          {
-            profile.SetCustomSpawnPoint(spawnPos);
-          }
+          profile.SetCustomSpawnPoint(spawnPos);
         }
       }
     }
@@ -1913,8 +1909,6 @@
     public static void SetPrefabWorldPosition(ZDO zdo, Vector3 vehiclePosition)
     {
       if (zdo == null || !zdo.IsValid()) return;
-      var isPortal = Game.instance != null && Game.instance.PortalPrefabHash.Contains(zdo.GetPrefab());
-      var oldSector = zdo.GetSectorIndex();
 
       Vector3 targetPos;
       if (CanUseActualPiecePosition)
@@ -1927,40 +1921,14 @@
         targetPos = vehiclePosition;
       }
 
-      zdo.SetPosition(targetPos);
-
-      if (ZDOMan.instance != null)
+      var isPortal = Game.instance != null && Game.instance.PortalPrefabHash.Contains(zdo.GetPrefab());
+      if (isPortal)
       {
-        var newSector = zdo.GetSectorIndex();
-        if (oldSector != newSector)
-        {
-          ZDOMan.instance.RemoveFromSector(zdo, oldSector);
-          ZDOMan.instance.AddToSector(zdo, newSector);
-
-          if (isPortal && ZDOMan.instance.m_portalObjects != null)
-          {
-            if (ZDOMan.instance.m_portalObjects.TryGetValue(oldSector, out var oldList))
-            {
-              oldList.Remove(zdo);
-            }
-            if (!ZDOMan.instance.m_portalObjects.TryGetValue(newSector, out var newList))
-            {
-              newList = new List<ZDO>();
-              ZDOMan.instance.m_portalObjects[newSector] = newList;
-            }
-            if (!newList.Contains(zdo))
-            {
-              newList.Add(zdo);
-            }
-            ZDOMan.instance.SetDirtyPortals();
-          }
-
-          if (ZNet.instance != null && ZNet.instance.IsServer())
-          {
-            ZDOMan.instance.ZDOSectorInvalidated(zdo);
-          }
-        }
+        MigratePortalSectorInZdoMan(zdo, targetPos);
+        return;
       }
+
+      zdo.SetPosition(targetPos);
     }
 
     /// <summary>

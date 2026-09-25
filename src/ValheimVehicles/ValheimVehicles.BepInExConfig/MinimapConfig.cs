@@ -16,7 +16,14 @@ public class MinimapConfig : BepInExBaseConfig<MinimapConfig>
   public static ConfigEntry<float> VisibleVehicleRadius =
     null!;
 
+  public enum BoatBedPinPosition
+  {
+    AboveVehicleIcon,
+    UnderVehicleText
+  }
+
   public static ConfigEntry<bool> ShowBedsOnVehicles = null!;
+  public static ConfigEntry<BoatBedPinPosition> BoatBedPinOffsetPosition = null!;
   public static ConfigEntry<float> BedPinSyncInterval = null!;
   public static ConfigEntry<float> VehiclePinSyncInterval = null!;
 
@@ -63,5 +70,11 @@ public class MinimapConfig : BepInExBaseConfig<MinimapConfig>
       ConfigHelpers.CreateConfigDescription(
         "Will show your bed on you vehicle. This requires DynamicLocations to be enabled. This config may be migrated to dynamic locations.",
         true, true));
+
+    BoatBedPinOffsetPosition = config.BindUnique(SectionKey, "BoatBedPinOffsetPosition",
+      BoatBedPinPosition.AboveVehicleIcon,
+      ConfigHelpers.CreateConfigDescription(
+        "Where to offset the bed icon relative to the boat: AboveVehicleIcon (above the boat/plane icon) or UnderVehicleText (below the ValheimRAFT vehicle name text).",
+        false, false));
   }
 }
