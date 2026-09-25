@@ -944,6 +944,46 @@
           }
         });
       if (syncRow != null) commandsPanelToggleObjects.Add(syncRow);
+
+      // 5. Boat Damage Toggles (Env, Mobs, Player)
+      var damageRow = SwivelUIHelpers.AddMultiToggleRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Boat Damage",
+        new[] { "Env", "Mobs", "Player" },
+        new[]
+        {
+          VehicleGlobalConfig.BoatDamageEnv?.Value ?? false,
+          VehicleGlobalConfig.BoatDamageMobs?.Value ?? false,
+          VehicleGlobalConfig.BoatDamagePlayer?.Value ?? false
+        },
+        states =>
+        {
+          if (states == null || states.Length < 3) return;
+          if (VehicleGlobalConfig.BoatDamageEnv != null)
+            VehicleGlobalConfig.BoatDamageEnv.Value = states[0];
+          if (VehicleGlobalConfig.BoatDamageMobs != null)
+            VehicleGlobalConfig.BoatDamageMobs.Value = states[1];
+          if (VehicleGlobalConfig.BoatDamagePlayer != null)
+            VehicleGlobalConfig.BoatDamagePlayer.Value = states[2];
+        });
+      if (damageRow != null) commandsPanelToggleObjects.Add(damageRow);
+
+      // 6. Boat Snow Overlay Toggle
+      var snowRow = SwivelUIHelpers.AddToggleRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Boat Snow Overlay",
+        VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false,
+        val =>
+        {
+          if (VehicleGlobalConfig.BoatSnowOverlay != null)
+          {
+            VehicleGlobalConfig.BoatSnowOverlay.Value = val;
+            VehiclePiecesController.ApplySnowOverlayToAllVehicles(val);
+          }
+        });
+      if (snowRow != null) commandsPanelToggleObjects.Add(snowRow);
     }
 
     public static void ToggleConvexHullDebugger()

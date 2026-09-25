@@ -854,9 +854,11 @@ public abstract class PrefabRegistryHelpers
       var childRenderer = desc.GetComponent<Renderer>();
       if (childRenderer != null) bounds.Encapsulate(childRenderer.bounds);
 
-      boxCol.center = new Vector3(0, bounds.max.y,
-        0);
-      boxCol.size = boxCol.center * 2;
+      boxCol.center = new Vector3(0, bounds.max.y, 0);
+      boxCol.size = new Vector3(
+        Mathf.Max(0.1f, Mathf.Abs(boxCol.center.x * 2f)),
+        Mathf.Max(0.1f, Mathf.Abs(boxCol.center.y * 2f)),
+        Mathf.Max(0.1f, Mathf.Abs(boxCol.center.z * 2f)));
     }
   }
 

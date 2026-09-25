@@ -1335,6 +1335,38 @@
       return pendingPiecesList ?? null;
     }
 
+    private static readonly int _AddSnowPropId = Shader.PropertyToID("_AddSnow");
+    private static MaterialPropertyBlock? _snowMpb;
+
+    public static void ApplySnowOverlayToAllVehicles(bool enabled)
+    {
+      foreach (var vpc in ActiveInstances.Values)
+      {
+        if (vpc != null && !vpc.IsInvalid())
+        {
+          vpc.UpdateSnowOverlay(enabled);
+        }
+      }
+    }
+
+    public void UpdateSnowOverlay(bool enabled)
+    {
+      _snowMpb ??= new MaterialPropertyBlock();
+      var val = enabled ? 1f : 0f;
+      foreach (var piece in m_pieces)
+      {
+        if (piece == null) continue;
+        var renderers = piece.GetComponentsInChildren<Renderer>(true);
+        foreach (var r in renderers)
+        {
+          if (r == null) continue;
+          r.GetPropertyBlock(_snowMpb);
+          _snowMpb.SetFloat(_AddSnowPropId, val);
+          r.SetPropertyBlock(_snowMpb);
+        }
+      }
+    }
+
     /**
      * Side Effect to be used when initialization state changes. This allows for starting the ActivatePendingPiecesCoroutine
      */

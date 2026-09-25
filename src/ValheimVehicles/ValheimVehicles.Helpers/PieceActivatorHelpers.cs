@@ -2,6 +2,7 @@
 
   using System.Collections.Generic;
   using UnityEngine;
+  using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Interfaces;
 
 #endregion
@@ -16,6 +17,7 @@ public static class PieceActivatorHelpers
   private static readonly int RippleDistance =
     Shader.PropertyToID("_RippleDistance");
   private static readonly int ValueNoise = Shader.PropertyToID("_ValueNoise");
+  private static readonly int AddSnow = Shader.PropertyToID("_AddSnow");
   /// <summary>
   /// Gets the RaycastPieceActivator which is used for Swivels and VehiclePiecesController components. These components are responsible for activation and parenting of vehicle pieces and will always exist above the current piece in transform hierarchy.
   /// </summary>
@@ -49,11 +51,18 @@ public static class PieceActivatorHelpers
      * It fixes shadow flicker on all of valheim's prefabs with boats
      * If this is removed, the raft is seizure inducing.
      */
+    if (netView == null) return;
     var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
+    var suppressSnow = !(VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false);
+    MaterialPropertyBlock? snowMpb = null;
+    if (suppressSnow)
+    {
+      snowMpb = new MaterialPropertyBlock();
+    }
+
     foreach (var meshRenderer in meshes)
     {
-      // foreach (var meshRendererMaterial in meshRenderer.materials)
-      //   FixMaterial(meshRendererMaterial);
+      if (meshRenderer == null) continue;
 
       if (meshRenderer.sharedMaterials.Length > 0)
       {
@@ -71,6 +80,13 @@ public static class PieceActivatorHelpers
           materials[j] = FixMaterial(materials[j]);
         meshRenderer.materials = materials;
       }
+
+      if (suppressSnow && snowMpb != null)
+      {
+        meshRenderer.GetPropertyBlock(snowMpb);
+        snowMpb.SetFloat(AddSnow, 0f);
+        meshRenderer.SetPropertyBlock(snowMpb);
+      }
     }
   }
   
@@ -83,8 +99,11 @@ public static class PieceActivatorHelpers
   {
     if (!material) return null;
 
+    var suppressSnow = !(VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false);
+    var hasSnow = material.HasProperty(AddSnow);
+
     // Check if material has any of the target properties
-    if (!material.HasFloat(RippleDistance) && !material.HasFloat(ValueNoise) && !material.HasFloat(TriplanarLocalPos))
+    if (!material.HasFloat(RippleDistance) && !material.HasFloat(ValueNoise) && !material.HasFloat(TriplanarLocalPos) && !(suppressSnow && hasSnow))
     {
       return material; // No need to fix
     }
@@ -105,6 +124,12 @@ public static class PieceActivatorHelpers
 
     newMaterial.SetFloat(RippleDistance, 0f);
     newMaterial.SetFloat(ValueNoise, 0f);
+
+    if (suppressSnow && hasSnow)
+    {
+      newMaterial.SetFloat(AddSnow, 0f);
+      newMaterial.DisableKeyword("_ADDSNOW_ON");
+    }
 
     // Cache the fixed material
     FixMaterialUniqueInstances[material] = newMaterial;

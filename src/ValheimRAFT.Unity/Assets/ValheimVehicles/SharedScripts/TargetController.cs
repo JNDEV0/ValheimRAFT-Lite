@@ -1,4 +1,4 @@
-﻿// ReSharper disable ArrangeNamespaceBody
+// ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
 #region
@@ -82,6 +82,7 @@ namespace ValheimVehicles.SharedScripts
     private readonly Collider[] _enemyBuffer = new Collider[32];
     private readonly Dictionary<int, CoroutineHandle> _manualFireCannonsRoutines = new();
 
+    [System.NonSerialized]
     private readonly Dictionary<Transform, DefenseAreaTrigger> _playerAreaTriggers = new();
 
     private readonly List<GameObject> _spawnedDefenseAreaTriggers = new();

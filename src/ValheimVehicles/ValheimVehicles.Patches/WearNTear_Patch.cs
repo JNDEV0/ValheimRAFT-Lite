@@ -174,6 +174,59 @@
       return false;
     }
 
+    [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.Damage))]
+    [HarmonyPrefix]
+    private static bool WearNTear_DamagePrefix(WearNTear __instance, HitData hit)
+    {
+      if (__instance == null || hit == null) return true;
+
+      // Base water vehicle pieces never take damage
+      if (PrefabNames.IsVehicle(__instance.gameObject.name))
+        return false;
+
+      // Determine if this piece is attached to a vehicle / boat
+      var isVehiclePart = __instance.GetComponentInParent<VehiclePiecesController>() != null;
+      if (!isVehiclePart)
+      {
+        var nview = __instance.m_nview != null ? __instance.m_nview : __instance.GetComponent<ZNetView>();
+        if (nview != null && nview.GetZDO() != null && VehiclePiecesController.GetParentID(nview.GetZDO()) != 0)
+        {
+          isVehiclePart = true;
+        }
+      }
+
+      if (isVehiclePart)
+      {
+        var attacker = hit.GetAttacker();
+        if (attacker is Player)
+        {
+          if (!(VehicleGlobalConfig.BoatDamagePlayer?.Value ?? false))
+          {
+            hit.m_damage = default;
+            return false;
+          }
+        }
+        else if (attacker != null)
+        {
+          if (!(VehicleGlobalConfig.BoatDamageMobs?.Value ?? false))
+          {
+            hit.m_damage = default;
+            return false;
+          }
+        }
+        else // Environmental, impact, collision, water
+        {
+          if (!(VehicleGlobalConfig.BoatDamageEnv?.Value ?? false))
+          {
+            hit.m_damage = default;
+            return false;
+          }
+        }
+      }
+
+      return true;
+    }
+
     [HarmonyPatch(typeof(WearNTear), "ApplyDamage")]
     [HarmonyPrefix]
     private static bool WearNTear_ApplyDamage(WearNTear __instance, float damage)

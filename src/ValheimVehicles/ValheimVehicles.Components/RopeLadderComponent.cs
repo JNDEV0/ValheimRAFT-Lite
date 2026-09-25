@@ -430,16 +430,15 @@
         }
       }
 
-      // CRITICAL FAIL-SAFE: Enforce anatomical limits relative to hip attach point
-      // Leg reach: feet must be between 0.35m and 1.15m below the hip. NEVER above the hip!
-      var maxFootY = hipY - 0.35f;
+      // Allow natural leg reach & knee flexion: stepping foot can lift up to 0.15m below hip
+      var maxFootY = hipY - 0.15f;
       var minFootY = hipY - 1.15f;
       leftFootPos.y = Mathf.Clamp(leftFootPos.y, Mathf.Max(minFootY, ladderBottomY), maxFootY);
       rightFootPos.y = Mathf.Clamp(rightFootPos.y, Mathf.Max(minFootY, ladderBottomY), maxFootY);
 
-      // Hands must be at chest/head level above the hip
+      // Hands: allow extended upward reach when climbing up for visual realism
       var minHandY = hipY + 0.30f;
-      var maxHandY = hipY + 1.10f;
+      var maxHandY = currentMoveDir == MoveDirection.Up ? hipY + 1.35f : hipY + 1.15f;
       leftHandPos.y = Mathf.Clamp(leftHandPos.y, minHandY, maxHandY);
       rightHandPos.y = Mathf.Clamp(rightHandPos.y, minHandY, maxHandY);
 

@@ -6944,9 +6944,12 @@
         var normalizedClamp = maxTotalAngle > 0f ? (maxTotalAngle / 89f) : 1f;
         var turnFraction = normalizedClamp > 0f ? Mathf.Clamp(GetRudderValue() / normalizedClamp, -1f, 1f) : 0f;
 
+        // Realistic visual steering deflection: clamp rudder to a maximum of 45° deflection
+        var visualMaxAngle = Mathf.Min(maxAngle * 0.5f, 45f);
+
         var newRotation = Quaternion.Slerp(
           rudder.PivotPoint.localRotation,
-          Quaternion.Euler(0f, maxAngle * (0f - turnFraction), 0f), 0.5f);
+          Quaternion.Euler(0f, visualMaxAngle * (0f - turnFraction), 0f), 0.5f);
 
         rudder.PivotPoint.localRotation = newRotation;
       }

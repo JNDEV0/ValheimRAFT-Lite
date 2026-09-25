@@ -322,6 +322,11 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       });
     }
     AttachPoint = transform.Find("attachpoint");
+    if (AttachPoint != null)
+    {
+      // Adjust slightly forward toward the wheel handles to eliminate gap
+      AttachPoint.localPosition = new Vector3(AttachPoint.localPosition.x, AttachPoint.localPosition.y, AttachPoint.localPosition.z + 0.18f);
+    }
     wheelTransform = transform.Find("controls/wheel");
     wheelLocalOffset = wheelTransform.position - transform.position;
     PrefabRegistryHelpers.IgnoreCameraCollisions(gameObject);
@@ -443,10 +448,8 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     {
       foreach (var playerInstance in playerOnShipViaShipInstance)
       {
-        Logger.LogDebug(
-          $"Interact PlayerId {playerInstance.GetPlayerID()}, currentPlayerId: {player.GetPlayerID()}");
         if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
-        if (ControllersInstance == null || ControllersInstance.MovementController) continue;
+        if (ControllersInstance?.MovementController == null) continue;
         ControllersInstance.MovementController.SendRequestControl(
           playerInstance.GetPlayerID());
         return true;
@@ -458,8 +461,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
     if (playerOnShip == null && !WaterZoneUtils.IsOnboard(player))
     {
-      Logger.LogDebug("Player is not on Ship");
-      return false;
+      Logger.LogDebug("Player is not on Ship via standard check, but within wheel range");
     }
 
 

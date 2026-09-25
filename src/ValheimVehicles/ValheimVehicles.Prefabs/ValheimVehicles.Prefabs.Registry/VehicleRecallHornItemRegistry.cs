@@ -15,37 +15,21 @@ public class VehicleRecallHornItemRegistry : RegisterPrefab<VehicleRecallHornIte
   {
     GameObject? hornPrefab = null;
 
-    try
+    if (PrefabManager.Instance.GetPrefab("Tankard_Odin") != null)
     {
       hornPrefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.VesselHorn, "Tankard_Odin");
     }
-    catch (Exception e)
+    else if (PrefabManager.Instance.GetPrefab("TankardAnniversary") != null)
     {
-      LoggerProvider.LogDebug($"Tankard_Odin clone failed: {e.Message}, trying TankardAnniversary");
+      hornPrefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.VesselHorn, "TankardAnniversary");
     }
-
-    if (!hornPrefab)
+    else if (PrefabManager.Instance.GetPrefab("Tankard") != null)
     {
-      try
-      {
-        hornPrefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.VesselHorn, "TankardAnniversary");
-      }
-      catch (Exception e)
-      {
-        LoggerProvider.LogDebug($"TankardAnniversary clone failed: {e.Message}, trying Tankard");
-      }
+      hornPrefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.VesselHorn, "Tankard");
     }
-
-    if (!hornPrefab)
+    else
     {
-      try
-      {
-        hornPrefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.VesselHorn, "Tankard");
-      }
-      catch (Exception e)
-      {
-        LoggerProvider.LogError($"All horn clones failed: {e.Message}");
-      }
+      LoggerProvider.LogError("All horn base prefabs (Tankard_Odin, TankardAnniversary, Tankard) were not found.");
     }
 
     if (!hornPrefab)

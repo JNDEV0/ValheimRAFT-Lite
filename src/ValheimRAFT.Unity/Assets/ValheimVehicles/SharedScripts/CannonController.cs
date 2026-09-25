@@ -131,6 +131,7 @@ namespace ValheimVehicles.SharedScripts
     // --- State ---
     private readonly Dictionary<BarrelPart, Cannonball> _loadedCannonballs = new();
     internal readonly List<Cannonball> _trackedLoadedCannonballs = new();
+    [System.NonSerialized]
     private Queue<Cannonball> _cannonballPool = new();
 
     public readonly List<BarrelPart> shootingBarrelParts = new();

@@ -30,6 +30,16 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   private const string VehicleGlobalBaseKey = "VehicleGlobal";
   private const string VehicleSoundKey = $"{VehicleGlobalBaseKey}:Sound";
   private const string VehicleGlobalUpdateKey = $"{VehicleGlobalBaseKey}:Updates";
+  private const string VehicleDamageKey = $"{VehicleGlobalBaseKey}:Damage";
+  private const string VehicleSnowKey = $"{VehicleGlobalBaseKey}:Snow";
+
+  // boat damage toggles (all false by default: no damage to boat parts)
+  public static ConfigEntry<bool> BoatDamageEnv = null!;
+  public static ConfigEntry<bool> BoatDamageMobs = null!;
+  public static ConfigEntry<bool> BoatDamagePlayer = null!;
+
+  // snow overlay toggle (false by default)
+  public static ConfigEntry<bool> BoatSnowOverlay = null!;
 
   public override void OnBindConfig(ConfigFile config)
   {
@@ -37,6 +47,8 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
     CreateVehicleUpdaterConfig(config);
     CreateLocalizationConfig(config);
     CreateHornConfig(config);
+    CreateDamageConfig(config);
+    CreateSnowConfig(config);
   }
 
   private static void CreateHornConfig(ConfigFile config)
@@ -101,5 +113,35 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
     EnableShipSailSounds.SettingChanged += VehicleManager.UpdateAllShipSounds;
     EnableShipWakeSounds.SettingChanged += VehicleManager.UpdateAllShipSounds;
     EnableShipInWaterSounds.SettingChanged += VehicleManager.UpdateAllShipSounds;
+  }
+
+  private static void CreateDamageConfig(ConfigFile config)
+  {
+    BoatDamageEnv = config.BindUnique(VehicleDamageKey,
+      "BoatDamageEnv", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Allow environmental damage (rocks, water wear, impacts) to boat parts. Disabled by default.",
+        false, false));
+
+    BoatDamageMobs = config.BindUnique(VehicleDamageKey,
+      "BoatDamageMobs", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Allow enemy/mob attack damage to boat parts. Disabled by default.",
+        false, false));
+
+    BoatDamagePlayer = config.BindUnique(VehicleDamageKey,
+      "BoatDamagePlayer", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Allow player attack/weapon damage to boat parts. Disabled by default. Does not affect deconstruction via hammer.",
+        false, false));
+  }
+
+  private static void CreateSnowConfig(ConfigFile config)
+  {
+    BoatSnowOverlay = config.BindUnique(VehicleSnowKey,
+      "BoatSnowOverlay", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Allow snow overlay on boat parts when at high altitude / mountain biomes. Disabled by default to prevent visual flickering during flight/movement.",
+        false, false));
   }
 }

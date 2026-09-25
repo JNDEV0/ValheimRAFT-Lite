@@ -1,3 +1,4 @@
+using UnityEngine;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -25,6 +26,18 @@ public class ShipSteeringWheelPrefab : RegisterPrefab<ShipSteeringWheelPrefab>
 
     rudderWheelComponent.wheelTransform = prefab.transform.Find("controls/wheel");
     rudderWheelComponent.UpdateSpokes();
+
+    // Add dedicated, responsive colliders for the steering wheel
+    var postCollider = prefab.AddComponent<BoxCollider>();
+    postCollider.center = new Vector3(0f, 0.5f, 0f);
+    postCollider.size = new Vector3(0.35f, 1.0f, 0.35f);
+
+    if (rudderWheelComponent.wheelTransform != null)
+    {
+      var wheelCollider = rudderWheelComponent.wheelTransform.gameObject.AddComponent<BoxCollider>();
+      wheelCollider.center = Vector3.zero;
+      wheelCollider.size = new Vector3(0.95f, 0.95f, 0.25f);
+    }
 
     PrefabRegistryHelpers.SetWearNTear(prefab);
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
