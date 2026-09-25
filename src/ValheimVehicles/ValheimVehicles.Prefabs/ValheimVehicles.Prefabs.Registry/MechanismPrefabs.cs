@@ -332,7 +332,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
       [
         new RequirementConfig
         {
-          Amount = 2,
+          Amount = 10,
           Item = "Wood",
           Recover = true
         }
@@ -344,10 +344,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
   {
     RegisterToggleSwitch();
 
-#if DEBUG
-    // power pylons are not ready. And do nothing for now.
     RegisterPowerPylonPrefab();
-#endif
     // RegisterCoalEngine();
     RegisterPowerSourceEitr();
     RegisterPowerStorageEitr();

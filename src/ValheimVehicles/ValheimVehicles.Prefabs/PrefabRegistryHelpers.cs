@@ -225,13 +225,17 @@ public abstract class PrefabRegistryHelpers
       foreach (var materialVariant in materialVariants)
       {
         var materialName = materialVariant.ToLower();
+        var isWood4x4 = materialVariant == HullMaterial.Wood && sizeVariant == PrefabNames.PrefabSizeVariant.FourByFour;
         PieceDataDictionary.Add(
           PrefabNames.GetHullSlabName(materialVariant,
             sizeVariant), new PieceData
           {
-            Name =
-              $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}",
-            Description = pieceDescription,
+            Name = isWood4x4
+              ? "$valheim_vehicles_hull_slab_wood_4x4"
+              : $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}",
+            Description = isWood4x4
+              ? "$valheim_vehicles_hull_slab_wood_4x4_desc"
+              : pieceDescription,
             Icon = spriteAtlas.GetSprite(
               $"{iconBaseName}_{materialName}_{sizeName}")
           });
@@ -335,11 +339,32 @@ public abstract class PrefabRegistryHelpers
 
     if (!PieceDataDictionary.ContainsKey(prefabName))
     {
+      var isWood = materialVariant == HullMaterial.Wood;
+      string woodKey = "";
+      if (isWood)
+      {
+        if (sizeVariant == PrefabNames.PrefabSizeVariant.TwoByTwo)
+        {
+          woodKey = directionVariant == PrefabNames.DirectionVariant.Left
+            ? "valheim_vehicles_hull_rib_corner_floor_wood_left_2x2"
+            : "valheim_vehicles_hull_rib_corner_floor_wood_right_2x2";
+        }
+        else
+        {
+          woodKey = directionVariant == PrefabNames.DirectionVariant.Left
+            ? "valheim_vehicles_hull_rib_corner_floor_wood_left_2x4"
+            : "valheim_vehicles_hull_rib_corner_floor_wood_right_2x4";
+        }
+      }
+
       var pieceData = new PieceData
       {
-        Name =
-          $"{pieceName} $valheim_vehicles_material_{materialName} {prefabSizeName} $valheim_vehicles_direction_{directionName}",
-        Description = pieceDescription,
+        Name = isWood
+          ? $"${woodKey}"
+          : $"{pieceName} $valheim_vehicles_material_{materialName} {prefabSizeName} $valheim_vehicles_direction_{directionName}",
+        Description = isWood
+          ? $"${woodKey}_desc"
+          : pieceDescription,
         Icon = icon
       };
       PieceDataDictionary.Add(prefabName, pieceData);
@@ -376,10 +401,32 @@ public abstract class PrefabRegistryHelpers
       sprite = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ErrorIcon);
     }
 
+    var isWoodCorner = materialVariant == HullMaterial.Wood;
+    var cornerName = pieceName;
+    var cornerDesc = pieceDescription;
+    if (isWoodCorner)
+    {
+      if (directionVariant == null)
+      {
+        cornerName = "$valheim_vehicles_hull_rib_corner_wood_2x2x2";
+        cornerDesc = "$valheim_vehicles_hull_rib_corner_wood_2x2x2_desc";
+      }
+      else if (directionVariant == PrefabNames.DirectionVariant.Left)
+      {
+        cornerName = "$valheim_vehicles_hull_rib_corner_wood_left_2x2x4";
+        cornerDesc = "$valheim_vehicles_hull_rib_corner_wood_left_2x2x4_desc";
+      }
+      else
+      {
+        cornerName = "$valheim_vehicles_hull_rib_corner_wood_right_2x2x4";
+        cornerDesc = "$valheim_vehicles_hull_rib_corner_wood_right_2x2x4_desc";
+      }
+    }
+
     var pieceData = new PieceData
     {
-      Name = pieceName,
-      Description = pieceDescription,
+      Name = cornerName,
+      Description = cornerDesc,
       Icon = sprite
     };
 
@@ -474,8 +521,8 @@ public abstract class PrefabRegistryHelpers
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterWoodPrefabName,
       new PieceData
       {
-        Name = "$valheim_vehicles_hull_center $valheim_vehicles_material_wood",
-        Description = $"$valheim_vehicles_hull_center_desc {woodMatDesc}",
+        Name = "$valheim_vehicles_hull_center_wood",
+        Description = "$valheim_vehicles_hull_center_wood_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .HullCenterWood)
       });

@@ -76,6 +76,12 @@ public class RopeLadderPrefabRegistry : RegisterPrefab<RopeLadderPrefabRegistry>
             Amount = 10,
             Item = "Wood",
             Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 12,
+            Item = "Dandelion",
+            Recover = true
           }
         ]
       }));

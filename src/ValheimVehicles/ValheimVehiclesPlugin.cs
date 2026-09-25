@@ -143,6 +143,7 @@ public class ValheimVehiclesPlugin : MonoBehaviour
 
   private void OnLanguageChanged()
   {
+    ValheimRaftLocalization.ApplyActiveLanguage();
     ModTranslations.ForceUpdateTranslations();
     if (!ModTranslations.IsHealthy())
     {

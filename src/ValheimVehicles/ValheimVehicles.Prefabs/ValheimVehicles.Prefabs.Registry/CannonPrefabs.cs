@@ -585,10 +585,7 @@ public class CannonPrefabs : RegisterPrefab<CannonPrefabs>
 
     RegisterCannonFixedPrefab();
 
-#if DEBUG
-    // not ready for prod.
     RegisterCannonTurretPrefab();
-#endif
 
     RegisterPowderBarrelPrefab();
     RegisterCannonAreaControllerTelescopePrefab();

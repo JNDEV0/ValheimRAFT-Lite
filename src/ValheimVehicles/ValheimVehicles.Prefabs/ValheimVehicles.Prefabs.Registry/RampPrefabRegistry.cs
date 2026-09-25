@@ -106,6 +106,12 @@ public class RampPrefabRegistry : RegisterPrefab<RampPrefabRegistry>
           Amount = 4,
           Item = "BronzeNails",
           Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 10,
+          Item = "LeatherScraps",
+          Recover = true
         }
       ]
     }));
@@ -154,6 +160,12 @@ public class RampPrefabRegistry : RegisterPrefab<RampPrefabRegistry>
           {
             Amount = 8,
             Item = "IronNails",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 20,
+            Item = "LeatherScraps",
             Recover = true
           }
         ]

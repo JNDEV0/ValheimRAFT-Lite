@@ -60,7 +60,7 @@ public class DirtFloorPrefabRegistry : RegisterPrefab<DirtFloorPrefabRegistry>
         [
           new RequirementConfig
           {
-            Amount = 5 * size,
+            Amount = 10 * size,
             Item = "Wood",
             Recover = true
           },
@@ -68,6 +68,12 @@ public class DirtFloorPrefabRegistry : RegisterPrefab<DirtFloorPrefabRegistry>
           {
             Amount = 5 * size,
             Item = "Coal",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 2 * size,
+            Item = "GreydwarfEye",
             Recover = true
           }
         ]

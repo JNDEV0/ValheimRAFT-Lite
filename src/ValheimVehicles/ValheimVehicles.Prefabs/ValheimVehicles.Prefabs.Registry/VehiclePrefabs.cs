@@ -127,9 +127,21 @@
           [
             new RequirementConfig
             {
-              Amount = 72,
+              Amount = 20,
               Item = "Wood",
-              Recover = false
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 10,
+              Item = "RoundLog",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 8,
+              Item = "Resin",
+              Recover = true
             }
           ]
         }));
@@ -191,6 +203,6 @@
     public override void OnRegister()
     {
       RegisterWaterVehicleShipPrefab();
-      RegisterLandVehiclePrefab();
+      // RegisterLandVehiclePrefab(); // Disabled per build menu cleanup
     }
   }

@@ -45,8 +45,14 @@ public class ShipRudderPrefabs : RegisterPrefab<ShipRudderPrefabs>
       [
         new RequirementConfig
         {
-          Amount = 20,
+          Amount = 12,
           Item = "Wood",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "Resin",
           Recover = true
         }
       ]
@@ -95,14 +101,20 @@ public class ShipRudderPrefabs : RegisterPrefab<ShipRudderPrefabs>
       [
         new RequirementConfig
         {
-          Amount = 30,
-          Item = "FineWood",
+          Amount = 12,
+          Item = "RoundLog",
           Recover = true
         },
         new RequirementConfig
         {
-          Amount = 5,
-          Item = "Bronze",
+          Amount = 6,
+          Item = "Resin",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 2,
+          Item = "NeckTail",
           Recover = true
         }
       ],

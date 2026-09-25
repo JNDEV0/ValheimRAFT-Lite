@@ -50,8 +50,8 @@ public class PierPrefabRegistry : RegisterPrefab<PierPrefabRegistry>
     var customPiece = new CustomPiece(mbPierPolePrefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Name = "$mb_pier (" + pierPolePrefabPiece.m_name + ")",
-      Description = "$mb_pier_desc\n " + pierPolePrefabPiece.m_description,
+      Name = "$mb_pier_pole",
+      Description = "$mb_pier_pole_desc",
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Icon = pierPolePrefabPiece.m_icon,
@@ -61,6 +61,12 @@ public class PierPrefabRegistry : RegisterPrefab<PierPrefabRegistry>
         {
           Amount = 4,
           Item = "RoundLog",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 4,
+          Item = "Resin",
           Recover = true
         }
       ]
@@ -96,8 +102,8 @@ public class PierPrefabRegistry : RegisterPrefab<PierPrefabRegistry>
     var customPiece = new CustomPiece(pierWallPrefab, false, new PieceConfig
     {
       PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Name = "$mb_pier (" + pierWallPrefabPiece.m_name + ")",
-      Description = "$mb_pier_desc\n " + pierWallPrefabPiece.m_description,
+      Name = "$mb_pier_stone",
+      Description = "$mb_pier_stone_desc",
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
       Icon = pierWallPrefabPiece.m_icon,

@@ -65,6 +65,12 @@ public class VehicleCommands : ConsoleCommand
     public const string resetterrain = "resetterrain";
     public const string fixterrain = "fixterrain";
     public const string watermask = "watermask";
+    public const string giveMaterials = "give-materials";
+    public const string giveMaterials1 = "give-materials-1";
+    public const string giveMaterials2 = "give-materials-2";
+    public const string mats = "mats";
+    public const string mats1 = "mats1";
+    public const string mats2 = "mats2";
   }
 
   private struct CommandInfo
@@ -182,6 +188,30 @@ public class VehicleCommands : ConsoleCommand
       new CommandInfo(
         VehicleCommandArgs.watermask,
         "Toggles automated convex water mask generation for the closest vehicle"),
+
+      new CommandInfo(
+        VehicleCommandArgs.giveMaterials,
+        "Gives materials to unlock all boat parts. Optional args: [1|2|all].\nExamples: 'vehicle mats 1' (Part 1, 18 items), 'vehicle mats 2' (Part 2, 17 items), 'vehicle mats all' (all 35 items).\nAliases: vehicle mats, vehicle mats1, vehicle mats2"),
+
+      new CommandInfo(
+        VehicleCommandArgs.giveMaterials1,
+        "Alias for 'vehicle mats 1' (Part 1 woods & metals, 18 items)."),
+
+      new CommandInfo(
+        VehicleCommandArgs.giveMaterials2,
+        "Alias for 'vehicle mats 2' (Part 2 magic, eitr & fabrics, 17 items)."),
+
+      new CommandInfo(
+        VehicleCommandArgs.mats,
+        "Shortcut for give-materials. Usage: 'vehicle mats', 'vehicle mats 1', 'vehicle mats 2'."),
+
+      new CommandInfo(
+        VehicleCommandArgs.mats1,
+        "Shortcut for give-materials 1."),
+
+      new CommandInfo(
+        VehicleCommandArgs.mats2,
+        "Shortcut for give-materials 2."),
 
       new CommandInfo(
         VehicleCommandArgs.help,
@@ -305,6 +335,156 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.watermask:
         ToggleAutomatedWaterMask();
         break;
+      case VehicleCommandArgs.giveMaterials:
+      case VehicleCommandArgs.mats:
+        GiveAllBuildingMaterials(nextArgs);
+        break;
+      case VehicleCommandArgs.giveMaterials1:
+      case VehicleCommandArgs.mats1:
+        GiveAllBuildingMaterials(["1"]);
+        break;
+      case VehicleCommandArgs.giveMaterials2:
+      case VehicleCommandArgs.mats2:
+        GiveAllBuildingMaterials(["2"]);
+        break;
+    }
+  }
+
+  private void GiveAllBuildingMaterials(string[]? args = null)
+  {
+    var player = Player.m_localPlayer;
+    if (player == null)
+    {
+      Logger.LogMessage("No local player found. Must be in-game to give materials.");
+      return;
+    }
+
+    if (ObjectDB.instance == null)
+    {
+      Logger.LogMessage("ObjectDB not loaded.");
+      return;
+    }
+
+    string mode = "all";
+    if (args != null && args.Length > 0 && !string.IsNullOrEmpty(args[0]))
+    {
+      mode = args[0].Trim().ToLower();
+    }
+
+    string[] batch1 =
+    [
+      // Woods & Stone
+      "Wood",
+      "RoundLog",
+      "FineWood",
+      "ElderBark",
+      "Stone",
+      "Coal",
+
+      // Metals & Ores / Precursors
+      "CopperOre",
+      "Copper",
+      "TinOre",
+      "Tin",
+      "Bronze",
+      "BronzeNails",
+      "IronScrap",
+      "Iron",
+      "IronNails",
+
+      // Basics
+      "Resin",
+      "Chain",
+      "SurtlingCore"
+    ];
+
+    string[] batch2 =
+    [
+      // Advanced Metals & Stone
+      "BlackMetalScrap",
+      "BlackMetal",
+      "BlackMarble",
+
+      // Eitr & Magic Precursors
+      "Sap",
+      "Softtissue",
+      "Eitr",
+
+      // Organics & Fibers
+      "Tar",
+      "Coins",
+      "LeatherScraps",
+      "DeerHide",
+      "WolfPelt",
+      "Flax",
+      "LinenThread",
+      "YggdrasilWood",
+      "GreydwarfEye",
+      "Dandelion",
+      "NeckTail"
+    ];
+
+    string[] materialsToGive;
+    if (mode == "1" || mode == "tier1" || mode == "part1")
+    {
+      materialsToGive = batch1;
+    }
+    else if (mode == "2" || mode == "tier2" || mode == "part2")
+    {
+      materialsToGive = batch2;
+    }
+    else
+    {
+      materialsToGive = batch1.Concat(batch2).ToArray();
+    }
+
+    int addedToInv = 0;
+    int droppedAtFeet = 0;
+    var inventory = player.GetInventory();
+
+    foreach (var itemName in materialsToGive)
+    {
+      var prefab = ObjectDB.instance.GetItemPrefab(itemName);
+      if (prefab == null)
+      {
+        Logger.LogWarning($"Material prefab '{itemName}' not found in ObjectDB.");
+        continue;
+      }
+
+      var itemDrop = prefab.GetComponent<ItemDrop>();
+      if (itemDrop == null || itemDrop.m_itemData == null)
+      {
+        Logger.LogWarning($"Prefab '{itemName}' has no ItemDrop component.");
+        continue;
+      }
+
+      if (inventory != null)
+      {
+        var itemData = itemDrop.m_itemData.Clone();
+        itemData.m_stack = 1;
+        if (inventory.AddItem(itemData))
+        {
+          addedToInv++;
+        }
+        else
+        {
+          ItemDrop.DropItem(itemData, 1, player.transform.position + Vector3.up * 0.5f, player.transform.rotation);
+          droppedAtFeet++;
+        }
+      }
+
+      player.AddKnownItem(itemDrop.m_itemData);
+    }
+
+    player.UpdateKnownRecipesList();
+
+    if (droppedAtFeet > 0)
+    {
+      Logger.LogMessage($"[Vehicle] Added {addedToInv} materials to inventory. {droppedAtFeet} materials dropped at your feet (inventory full). All {materialsToGive.Length} recipes unlocked!");
+    }
+    else
+    {
+      Logger.LogMessage($"[Vehicle] Successfully gave {addedToInv} materials to inventory! All recipes unlocked!");
     }
   }
 

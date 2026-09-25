@@ -292,13 +292,51 @@ public static class ValheimRaftLocalization
 
   private static string FindTranslationFileOnDisk(string language)
   {
+    var candidates = new List<string>();
+
     var root = FindTranslationsRootDirectory();
     if (!string.IsNullOrEmpty(root))
     {
-      var path = Path.Combine(root, language, "valheimraft.json");
-      if (File.Exists(path)) return path;
+      candidates.Add(Path.Combine(root, language, "valheimraft.json"));
+      candidates.Add(Path.Combine(root, "valheimraft.json"));
     }
-    return null;
+
+    try
+    {
+      var asmDir = Path.GetDirectoryName(typeof(ValheimRaftLocalization).Assembly.Location);
+      if (!string.IsNullOrEmpty(asmDir))
+      {
+        candidates.Add(Path.Combine(asmDir, "Assets", "Translations", language, "valheimraft.json"));
+        candidates.Add(Path.Combine(asmDir, "valheimraft.json"));
+        candidates.Add(Path.Combine(asmDir, "..", "Assets", "Translations", language, "valheimraft.json"));
+      }
+    }
+    catch { }
+
+    candidates.Add(Path.Combine(Paths.PluginPath, "ValheimRAFT", "valheimraft.json"));
+    candidates.Add(Path.Combine(Paths.PluginPath, "ValheimRAFT", "Assets", "Translations", language, "valheimraft.json"));
+
+    string bestCandidate = null;
+    long bestSize = -1;
+
+    foreach (var path in candidates)
+    {
+      try
+      {
+        if (File.Exists(path))
+        {
+          var info = new FileInfo(path);
+          if (info.Length > bestSize)
+          {
+            bestSize = info.Length;
+            bestCandidate = path;
+          }
+        }
+      }
+      catch { }
+    }
+
+    return bestCandidate;
   }
 
   private static string FindTranslationsRootDirectory()
@@ -410,6 +448,15 @@ public static class ValheimRaftLocalization
                            .Replace(@"\r", "\r")
                            .Replace(@"\t", "\t")
                            .Replace("\u0001", @"\");
+
+        if (val.Contains(@"\u"))
+        {
+          try
+          {
+            val = Regex.Replace(val, @"\\u([0-9a-fA-F]{4})", m => ((char)Convert.ToInt32(m.Groups[1].Value, 16)).ToString());
+          }
+          catch { }
+        }
 
         dict[key] = val;
         i = valEnd + 1;

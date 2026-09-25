@@ -69,12 +69,6 @@ public class RopeAnchorPrefabRegistry : RegisterPrefab<RopeAnchorPrefabRegistry>
           Amount = 4,
           Item = "BronzeNails",
           Recover = true
-        },
-        new RequirementConfig
-        {
-          Amount = 10,
-          Item = "Flax",
-          Recover = true
         }
       ]
     }));

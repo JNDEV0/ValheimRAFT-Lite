@@ -40,8 +40,20 @@ public class ShipSteeringWheelPrefab : RegisterPrefab<ShipSteeringWheelPrefab>
       [
         new RequirementConfig
         {
-          Amount = 10,
+          Amount = 20,
           Item = "Wood",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 12,
+          Item = "Resin",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "LeatherScraps",
           Recover = true
         }
       ]
