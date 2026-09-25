@@ -316,10 +316,10 @@ public class Teleport_Patch
 
     int loadedPieceCount = piecesController != null ? piecesController.m_pieces.Count : 0;
     int targetPieceCount = targetPieces.Count;
-    bool piecesReady = (targetPieceCount == 0) || (loadedPieceCount >= targetPieceCount) || (__instance.m_teleportTimer > 6f);
+    bool piecesReady = (targetPieceCount == 0) || (loadedPieceCount >= targetPieceCount) || (__instance.m_teleportTimer > 20f);
 
-    // Do not abort prematurely. Wait for area, vehicle/portal, and pieces, with 4s fallback timeout.
-    var canComplete = (isAreaReady && (isVehicleReady || isPortalReady) && piecesReady) || __instance.m_teleportTimer > 4f;
+    // Do not abort prematurely. Wait for area, vehicle/portal, and pieces, with 20s fallback timeout.
+    var canComplete = (isAreaReady && (isVehicleReady || isPortalReady) && piecesReady) || __instance.m_teleportTimer > 20f;
     if (!canComplete)
     {
       return false;

@@ -109,14 +109,19 @@ namespace ValheimVehicles.SharedScripts
       anchorStateFadeText = anchorStateFadeTextTransform.gameObject.AddComponent<HoverFadeText>();
     }
 
-    private void Start()
+    public virtual void Start()
     {
       // Initialize LineRenderer for rope visualization
       if (ropeLine == null) ropeLine = GetComponent<LineRenderer>();
       UpdateRopeVisual();
-      UpdateAnchorState(AnchorState.Recovered, GetCurrentStateText());
-
-      anchorRb.transform.localPosition = anchorStartLocalPosition;
+      if (currentState == AnchorState.Recovered || currentState == AnchorState.Idle)
+      {
+        UpdateAnchorState(AnchorState.Recovered, GetCurrentStateText());
+        if (anchorRb != null)
+        {
+          anchorRb.transform.localPosition = anchorStartLocalPosition;
+        }
+      }
     }
 
     /// <summary>
@@ -137,6 +142,7 @@ namespace ValheimVehicles.SharedScripts
     {
       if (!isActiveAndEnabled) return;
       if (anchorRb == null || anchorTransform == null) return;
+      if (currentState != AnchorState.Recovered && currentState != AnchorState.Idle) return;
 
       if (transform.position.sqrMagnitude - anchorTransform.position.sqrMagnitude > 0.5f)
       {

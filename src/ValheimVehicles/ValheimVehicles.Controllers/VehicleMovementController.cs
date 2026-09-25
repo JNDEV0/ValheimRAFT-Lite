@@ -7729,7 +7729,8 @@
     {
       if (OnboardController != null && OnboardController.m_localPlayers.Count > 0) return;
       HasPendingAnchor = false;
-      if (Manager != null && Manager.IsLandVehicle)
+      bool hasPhysicalAnchor = PiecesController != null && PiecesController.m_anchorMechanismComponents.Any(a => a != null);
+      if (Manager != null && Manager.IsLandVehicle || !hasPhysicalAnchor)
         SendSetAnchor(AnchorState.Anchored);
       else
         SendSetAnchor(AnchorState.Lowering);
@@ -7757,7 +7758,8 @@
         return;
       }
 
-      if (Manager != null && Manager.IsLandVehicle)
+      bool hasPhysicalAnchor = PiecesController != null && PiecesController.m_anchorMechanismComponents.Any(a => a != null);
+      if (Manager != null && Manager.IsLandVehicle || !hasPhysicalAnchor)
         SendSetAnchor(AnchorState.Anchored);
       else
         SendSetAnchor(AnchorState.Lowering);
@@ -9081,6 +9083,19 @@
         return;
       }
 
+      bool hasPhysicalAnchor = PiecesController != null && PiecesController.m_anchorMechanismComponents.Any(a => a != null);
+      if (!hasPhysicalAnchor)
+      {
+        var targetState = (isAnchored || vehicleAnchorState == AnchorState.Anchored || vehicleAnchorState == AnchorState.Lowering)
+          ? AnchorState.Recovered
+          : AnchorState.Anchored;
+        SendSetAnchor(targetState);
+        ShowWheelHoverMessage(targetState == AnchorState.Anchored
+          ? $"[<color=red><b>{ModTranslations.AnchorPrefab_anchoredText}</b></color>]"
+          : $"[<color=green><b>{ModTranslations.AnchorPrefab_RecoveredAnchorText}</b></color>]");
+        return;
+      }
+
       var newState = (isAnchored || vehicleAnchorState == AnchorState.Lowering || vehicleAnchorState == AnchorState.Anchored)
         ? AnchorState.Reeling
         : AnchorState.Lowering;
@@ -9588,7 +9603,8 @@
           return;
         }
 
-        if (Manager != null && Manager.IsLandVehicle)
+        bool hasPhysicalAnchor = PiecesController != null && PiecesController.m_anchorMechanismComponents.Any(a => a != null);
+        if (Manager != null && Manager.IsLandVehicle || !hasPhysicalAnchor)
           SendSetAnchor(AnchorState.Anchored);
         else
           SendSetAnchor(AnchorState.Lowering);

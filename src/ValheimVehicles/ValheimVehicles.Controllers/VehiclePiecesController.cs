@@ -898,8 +898,13 @@
             if (MovementController != null)
             {
               MovementController.UpdateAnchorCapabilities();
-              anchorMechanismController.UpdateAnchorState(MovementController
-                .vehicleAnchorState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(MovementController.vehicleAnchorState, Manager != null && Manager.IsLandVehicle));
+              var aState = MovementController.vehicleAnchorState;
+              anchorMechanismController.UpdateAnchorState(aState,
+                VehicleAnchorMechanismController.GetCurrentStateTextStatic(aState, Manager != null && Manager.IsLandVehicle));
+              if (MovementController.isAnchored || aState == AnchorState.Anchored)
+              {
+                anchorMechanismController.UpdateAnchorPositionIfNotNearGround();
+              }
             }
             break;
           }
@@ -2996,8 +3001,10 @@
       anchorComponent.TryGuardAgainstAnchorSyncIssues();
 
       // Ensure anchor head sits on seabed if vessel is already anchored on load
-      if (MovementController != null && MovementController.isAnchored)
+      if (MovementController != null && (MovementController.isAnchored || MovementController.vehicleAnchorState == AnchorState.Anchored))
       {
+        var aState = MovementController.vehicleAnchorState;
+        anchorComponent.UpdateAnchorState(aState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(aState, Manager != null && Manager.IsLandVehicle));
         anchorComponent.UpdateAnchorPositionIfNotNearGround();
       }
     }
@@ -3007,23 +3014,23 @@
     /// <param name="anchorState"></param>
     public void UpdateAnchorState(AnchorState anchorState)
     {
-      if (lastAnchorState == anchorState)
-      {
-        return;
-      }
-
       var isLandVehicle = MovementController != null && MovementController.Manager is
       {
         IsLandVehicle: true
       };
 
-
       var currentWheelStateText = VehicleAnchorMechanismController.GetCurrentStateTextStatic(anchorState, isLandVehicle);
       foreach (var anchorComponent in m_anchorMechanismComponents)
       {
         if (!anchorComponent) continue;
-        if (anchorState != anchorComponent.currentState)
+        if (anchorState != anchorComponent.currentState || (anchorState == AnchorState.Anchored && anchorComponent.anchorTransform != null && anchorComponent.anchorTransform.localPosition == anchorComponent.GetAnchorStartLocalPosition()))
+        {
           anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
+          if (anchorState == AnchorState.Anchored)
+          {
+            anchorComponent.UpdateAnchorPositionIfNotNearGround();
+          }
+        }
       }
 
       if (_steeringWheelPiece)

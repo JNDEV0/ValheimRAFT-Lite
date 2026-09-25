@@ -15,7 +15,7 @@
   /// </summary>
   public class VehicleAnchorMechanismController : AnchorMechanismController
   {
-    public const float maxAnchorDistance = 40f;
+    public const float maxAnchorDistance = 2000f;
 
     public static void SyncHudAnchorValues()
     {
@@ -30,6 +30,27 @@
     {
       base.Awake();
       CanUseHotkeys = false;
+      anchorDropDistance = maxAnchorDistance;
+    }
+
+    public override void Start()
+    {
+      base.Start();
+
+      if (MovementController == null && transform.root != null)
+      {
+        MovementController = transform.root.GetComponentInChildren<VehicleMovementController>();
+      }
+
+      if (MovementController != null)
+      {
+        var targetState = MovementController.vehicleAnchorState;
+        if (targetState == AnchorState.Anchored || targetState == AnchorState.Lowering)
+        {
+          UpdateAnchorState(targetState, GetCurrentStateTextStatic(targetState, IsLandVehicle()));
+          UpdateAnchorPositionIfNotNearGround();
+        }
+      }
     }
 
     public VehicleMovementController? MovementController;
@@ -47,11 +68,21 @@
         ? anchorRopeAttachStartPoint.position
         : transform.position;
 
-      var groundHeight = ZoneSystem.instance != null
-        ? ZoneSystem.instance.GetGroundHeight(worldPos)
-        : 0f;
+      // 1. Raycast downwards for terrain or seabed
+      var terrainMask = 1 << LayerMask.NameToLayer("terrain");
+      if (Physics.Raycast(worldPos, Vector3.down, out var hit, maxAnchorDistance, terrainMask))
+      {
+        return hit.distance;
+      }
 
-      return worldPos.y - groundHeight;
+      // 2. ZoneSystem height fallback
+      if (ZoneSystem.instance != null)
+      {
+        var groundHeight = ZoneSystem.instance.GetGroundHeight(worldPos);
+        return Mathf.Max(0f, worldPos.y - groundHeight);
+      }
+
+      return 0f;
     }
 
     public void UpdateDistanceToGround()
@@ -94,13 +125,19 @@
     public void UpdateAnchorPositionIfNotNearGround()
     {
       var deltaGround = GetDistanceToGround();
-      if (!(deltaGround > 2)) return;
+      if (!(deltaGround > 0.5f)) return;
       var clampedDepth = Mathf.Clamp(deltaGround, 1f, maxAnchorDistance);
       var newPos = GetAnchorStartLocalPosition();
       newPos.y -= clampedDepth;
       if (anchorTransform != null)
       {
         anchorTransform.localPosition = newPos;
+        var rb = anchorTransform.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+          rb.transform.localPosition = newPos;
+          rb.position = anchorTransform.position;
+        }
       }
       UpdateRopeVisual();
     }

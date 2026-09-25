@@ -247,6 +247,25 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       $"\n[<color=green><b>{ModTranslations.SharedKeys_Owner}: {_currentPlayerName}</b></color>]";
   }
 
+  private string GetBoatBedSpawnHoverText()
+  {
+    var vehicleId = ControllersInstance?.Manager?.PersistentZdoId ?? ControllersInstance?.PiecesController?.PersistentZdoId ?? 0;
+    if (vehicleId == 0 && m_nview != null && m_nview.GetZDO() != null)
+    {
+      vehicleId = VehiclePiecesController.GetParentID(m_nview.GetZDO());
+    }
+
+    if (vehicleId != 0)
+    {
+      bool isSpawnActive = BoatBedSpawnController.IsBoatSpawnActiveForVehicle(vehicleId);
+      string statusColor = isSpawnActive ? "green" : "orange";
+      string statusText = isSpawnActive ? "Active" : "Inactive";
+      return $"\n[Boat bed spawn: <color={statusColor}><b>{statusText}</b></color>]";
+    }
+
+    return "";
+  }
+
   private string GetBeachedHoverText()
   {
     return
@@ -276,6 +295,8 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
     if (onboardController.m_localPlayers.Any())
       hoverText += GetOwnerHoverText();
+
+    hoverText += GetBoatBedSpawnHoverText();
 
     if (movementController.isBeached)
       hoverText += GetBeachedHoverText();

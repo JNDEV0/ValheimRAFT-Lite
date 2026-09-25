@@ -78,6 +78,10 @@ public static class BoatBedSpawn_Patches
   {
     var bedZdo = __instance.m_nview != null ? __instance.m_nview.GetZDO() : null;
     var vehicleId = bedZdo != null ? bedZdo.GetInt(VehicleZdoVars.MBParentId, 0) : 0;
+    if (vehicleId == 0 && bedZdo != null)
+    {
+      vehicleId = VehiclePiecesController.GetParentID(bedZdo);
+    }
     if (vehicleId == 0)
     {
       var vpc = __instance.GetComponentInParent<VehiclePiecesController>();
@@ -171,7 +175,7 @@ public static class BoatBedSpawn_Patches
     }
 
     bool areaReady = ZNetScene.instance != null && ZNetScene.instance.IsAreaReady(bedWorldPos);
-    if ((__instance.m_respawnWait > __instance.m_respawnLoadDuration && areaReady) || __instance.m_respawnWait > 5f)
+    if ((__instance.m_respawnWait > __instance.m_respawnLoadDuration && areaReady) || __instance.m_respawnWait > 20f)
     {
       point = bedWorldPos;
       __result = true;
