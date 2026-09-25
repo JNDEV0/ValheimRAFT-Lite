@@ -860,11 +860,19 @@
 
         otherManager.MovementController.isWaitingForParentVehicleToBeReady = true;
 
+        if (!m_body.isKinematic)
+        {
+          m_body.linearVelocity = Vector3.zero;
+          m_body.angularVelocity = Vector3.zero;
+        }
+
+        if (!otherManager.MovementController.m_body.isKinematic)
+        {
+          otherManager.MovementController.m_body.linearVelocity = Vector3.zero;
+          otherManager.MovementController.m_body.angularVelocity = Vector3.zero;
+        }
+
         otherManager.MovementController.m_body.isKinematic = true;
-
-        m_body.linearVelocity = Vector3.zero;
-
-        m_body.angularVelocity = Vector3.zero;
 
         // nest the vehicle. This will not parent it, but it will bind the piece to the parent position, ensuring things are accurately synced.
 
@@ -910,9 +918,11 @@
 
         }
 
-        m_body.linearVelocity = Vector3.zero;
-
-        m_body.angularVelocity = Vector3.zero;
+        if (!m_body.isKinematic)
+        {
+          m_body.linearVelocity = Vector3.zero;
+          m_body.angularVelocity = Vector3.zero;
+        }
 
         foreach (var disabledCollider in disabledColliders)
 
@@ -1015,9 +1025,12 @@
       var newVelocity = (bounceDir * bounceSpeed) + lateral;
       newVelocity.y = currentVel.y * 0.5f;
 
-      m_body.linearVelocity = newVelocity;
-      m_sailForce = Vector3.zero;
-      _impactBounceTimer = 0.6f;
+      if (!m_body.isKinematic)
+      {
+        m_body.linearVelocity = newVelocity;
+        m_sailForce = Vector3.zero;
+        _impactBounceTimer = 0.6f;
+      }
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -1971,9 +1984,9 @@
       {
         if (!m_body.isKinematic)
         {
-          m_body.isKinematic = true;
           m_body.linearVelocity = Vector3.zero;
           m_body.angularVelocity = Vector3.zero;
+          m_body.isKinematic = true;
         }
       }
       else
@@ -3082,6 +3095,7 @@
     public void ClampVehicleAcceleration()
 
     {
+      if (m_body == null || m_body.isKinematic) return;
 
       var currentVelocity = m_body.linearVelocity;
 
@@ -3349,19 +3363,19 @@
 
         Quaternion.Euler(transformedX, eulerY, transformedZ);
 
-      m_body.linearVelocity = Vector3.zero;
-
-      m_body.angularVelocity = Vector3.zero;
-
-
-
-
+      if (!m_body.isKinematic)
+      {
+        m_body.linearVelocity = Vector3.zero;
+        m_body.angularVelocity = Vector3.zero;
+      }
 
       Physics.SyncTransforms();
 
-      m_body.linearVelocity = Vector3.zero;
-
-      m_body.angularVelocity = Vector3.zero;
+      if (!m_body.isKinematic)
+      {
+        m_body.linearVelocity = Vector3.zero;
+        m_body.angularVelocity = Vector3.zero;
+      }
 
 
 
@@ -4043,7 +4057,7 @@
 
 
 
-      // Move current vertical velocity toward desired at a fixed acceleration
+      if (m_body == null || m_body.isKinematic) return;
 
       var v = m_body.linearVelocity; // use .linearVelocity if that's your field, but .velocity is standard
 
@@ -4373,9 +4387,11 @@
 
         m_body.MovePosition(new Vector3(position.x, ShipFloatationObj.AverageGroundLevel + 3f, position.z));
 
-        m_body.linearVelocity = Vector3.zero;
-
-        m_body.angularVelocity = Vector3.zero;
+        if (!m_body.isKinematic)
+        {
+          m_body.linearVelocity = Vector3.zero;
+          m_body.angularVelocity = Vector3.zero;
+        }
 
       }
 
@@ -6436,6 +6452,7 @@
     private void ApplyAnchorAngularBrake()
 
     {
+      if (m_body == null || m_body.isKinematic) return;
 
       // hardcoded, simple
 
@@ -7350,7 +7367,7 @@
 
     {
 
-      if (VehicleSpeed == Ship.Speed.Stop || isAnchored)
+      if (VehicleSpeed == Ship.Speed.Stop || isAnchored || m_body == null || m_body.isKinematic)
 
         return;
 
@@ -7425,6 +7442,7 @@
     private void ApplyTurnStability()
 
     {
+      if (m_body == null || m_body.isKinematic) return;
 
       var up = Vector3.up;
 
@@ -7506,7 +7524,7 @@
 
     {
 
-      if (VehicleSpeed == Ship.Speed.Stop || isAnchored)
+      if (VehicleSpeed == Ship.Speed.Stop || isAnchored || m_body == null || m_body.isKinematic)
 
         return;
 
@@ -9358,21 +9376,18 @@
 
 
 
-      m_body.isKinematic = isTeleporting;
-
       if (isTeleporting)
-
       {
-
-        m_body.linearVelocity = Vector3.zero;
-
-        m_body.angularVelocity = Vector3.zero;
-
+        if (!m_body.isKinematic)
+        {
+          m_body.linearVelocity = Vector3.zero;
+          m_body.angularVelocity = Vector3.zero;
+        }
+        m_body.isKinematic = true;
       }
-
       else
-
       {
+        m_body.isKinematic = false;
 
         // Teleport finished normally — stop the watchdog so it doesn't fire
 

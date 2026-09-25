@@ -208,7 +208,7 @@ public static class BoatBedSpawn_Patches
       {
         vpc.Manager.OnboardController.AddPlayerToLocalShip(__result);
       }
-      if (__result.m_body != null)
+      if (__result.m_body != null && !__result.m_body.isKinematic)
       {
         __result.m_body.linearVelocity = Vector3.zero;
       }

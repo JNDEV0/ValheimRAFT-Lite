@@ -3726,9 +3726,12 @@
             var character = nv.GetComponent<Character>();
             if (character != null && character.m_body != null)
             {
+              if (!character.m_body.isKinematic)
+              {
+                character.m_body.linearVelocity = Vector3.zero;
+                character.m_body.angularVelocity = Vector3.zero;
+              }
               character.m_body.isKinematic = true;
-              character.m_body.linearVelocity = Vector3.zero;
-              character.m_body.angularVelocity = Vector3.zero;
               characterDestinations[nv] = destPos;
             }
           }
@@ -3762,9 +3765,12 @@
           var character = nv.GetComponent<Character>();
           if (character != null && character.m_body != null)
           {
+            if (!character.m_body.isKinematic)
+            {
+              character.m_body.linearVelocity = Vector3.zero;
+              character.m_body.angularVelocity = Vector3.zero;
+            }
             character.m_body.isKinematic = true;
-            character.m_body.linearVelocity = Vector3.zero;
-            character.m_body.angularVelocity = Vector3.zero;
             characterDestinations[nv] = destPos;
           }
 

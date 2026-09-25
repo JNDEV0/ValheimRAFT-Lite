@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
@@ -280,7 +280,7 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
       if (Quaternion.Angle(transform.rotation, rotation) > 1.0 / 1000.0)
         transform.rotation = Quaternion.Slerp(transform.rotation, rotation, dt * smoothTime);
     }
-    if ((bool)(Object)m_body)
+    if ((bool)(Object)m_body && !m_body.isKinematic)
     {
       m_body.useGravity = false;
       if (m_syncBodyVelocity && m_nview.HasOwner())

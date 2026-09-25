@@ -48,25 +48,6 @@ public class TMPProHelpers
         Debug.LogWarning($"[TMP] Could not gather game font assets: {e.Message}");
       }
 
-      // Generate dynamic Arial fallback for extended unicode coverage
-      try
-      {
-        var arial = Resources.GetBuiltinResource<Font>("Arial.ttf");
-        if (arial)
-        {
-          var arialSdf = TMP_FontAsset.CreateFontAsset(arial);
-          if (arialSdf)
-          {
-            if (!liberation.fallbackFontAssetTable.Contains(arialSdf))
-              liberation.fallbackFontAssetTable.Add(arialSdf);
-
-            if (!TMP_Settings.fallbackFontAssets.Contains(arialSdf))
-              TMP_Settings.fallbackFontAssets.Add(arialSdf);
-          }
-        }
-      }
-      catch { }
-
       Debug.Log("[TMP] Default font set to LiberationSans with system and game fallbacks");
     }
   }

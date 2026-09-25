@@ -263,7 +263,7 @@ public class Teleport_Patch
     var dir = targetRot * Vector3.forward;
     __instance.transform.position = targetPos;
     __instance.transform.rotation = targetRot;
-    if (__instance.m_body != null)
+    if (__instance.m_body != null && !__instance.m_body.isKinematic)
     {
       __instance.m_body.linearVelocity = Vector3.zero;
     }
