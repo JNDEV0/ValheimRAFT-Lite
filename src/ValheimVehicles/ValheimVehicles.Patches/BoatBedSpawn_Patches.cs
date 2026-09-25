@@ -17,13 +17,6 @@ public static class BoatBedSpawn_Patches
   {
     if (user != Player.m_localPlayer) return;
 
-    var profile = Game.instance != null ? Game.instance.GetPlayerProfile() : null;
-    if (profile == null) return;
-
-    // Check if the bed was just set as custom spawn, or if it is currently player's bed
-    var isSpawnSet = Vector3.Distance(profile.GetCustomSpawnPoint(), __instance.GetSpawnPoint()) < 0.2f;
-    if (!isSpawnSet && !__instance.IsMine()) return;
-
     var bedZdo = __instance.m_nview != null ? __instance.m_nview.GetZDO() : null;
     var vehicleId = bedZdo != null ? bedZdo.GetInt(VehicleZdoVars.MBParentId, 0) : 0;
     if (vehicleId == 0)
@@ -34,12 +27,23 @@ public static class BoatBedSpawn_Patches
 
     if (vehicleId != 0)
     {
-      BoatBedSpawnController.SetBoatSpawn(__instance, vehicleId);
+      if (__instance.IsMine())
+      {
+        BoatBedSpawnController.SetBoatSpawn(__instance, vehicleId);
+      }
     }
     else
     {
-      // Bound to an off-vehicle / land bed!
-      BoatBedSpawnController.ClearBoatSpawn();
+      // Interacted with an off-vehicle / land bed!
+      var profile = Game.instance?.GetPlayerProfile();
+      if (profile != null)
+      {
+        var isLandSpawn = Vector3.Distance(profile.GetCustomSpawnPoint(), __instance.GetSpawnPoint()) < 0.2f;
+        if (isLandSpawn || __instance.IsMine())
+        {
+          BoatBedSpawnController.ClearBoatSpawn();
+        }
+      }
     }
   }
 
@@ -62,10 +66,43 @@ public static class BoatBedSpawn_Patches
     if (vehicleId != 0 && BoatBedSpawnController.IsBoatSpawnActiveForVehicle(vehicleId))
     {
       __result = true;
-      return false; // Skip vanilla 1-meter check!
+      return false; // Skip vanilla 1-meter check on moving boats!
     }
 
     return true;
+  }
+
+  [HarmonyPatch(typeof(Bed), nameof(Bed.GetHoverText))]
+  [HarmonyPostfix]
+  public static void Bed_GetHoverText_Postfix(Bed __instance, ref string __result)
+  {
+    var bedZdo = __instance.m_nview != null ? __instance.m_nview.GetZDO() : null;
+    var vehicleId = bedZdo != null ? bedZdo.GetInt(VehicleZdoVars.MBParentId, 0) : 0;
+    if (vehicleId == 0)
+    {
+      var vpc = __instance.GetComponentInParent<VehiclePiecesController>();
+      if (vpc != null) vehicleId = vpc.PersistentZdoId;
+    }
+
+    if (vehicleId != 0)
+    {
+      bool isBoatSpawn = BoatBedSpawnController.IsBoatSpawnActiveForVehicle(vehicleId);
+
+      // If boat bed spawn is active and player owns this bed, replace "Set spawn point" with "Sleep"
+      if (isBoatSpawn && __instance.IsMine())
+      {
+        var setSpawnToken = Localization.instance != null ? Localization.instance.Localize("$piece_bed_setspawn") : "Set spawn point";
+        var sleepToken = Localization.instance != null ? Localization.instance.Localize("$piece_bed_sleep") : "Sleep";
+        if (__result.Contains(setSpawnToken))
+        {
+          __result = __result.Replace(setSpawnToken, sleepToken);
+        }
+      }
+
+      // Add status line: "Boat bed spawn: Active" / "Boat bed spawn: Inactive"
+      string statusText = isBoatSpawn ? "<color=green>Active</color>" : "<color=orange>Inactive</color>";
+      __result += $"\nBoat bed spawn: {statusText}";
+    }
   }
 
   [HarmonyPatch(typeof(Piece), nameof(Piece.OnDestroy))]
@@ -88,31 +125,62 @@ public static class BoatBedSpawn_Patches
     }
   }
 
+  [HarmonyPatch(typeof(ZoneSystem), nameof(ZoneSystem.FindFloor))]
+  [HarmonyPrefix]
+  public static bool ZoneSystem_FindFloor_Prefix(ZoneSystem __instance, Vector3 p, ref float height, ref bool __result)
+  {
+    // Check if there is a vehicle deck/piece under this point
+    var mask = __instance.m_solidRayMask | (1 << LayerHelpers.CustomRaftLayer);
+    if (Physics.Raycast(p + Vector3.up * 1.5f, Vector3.down, out var hit, 1000f, mask))
+    {
+      height = hit.point.y;
+      __result = true;
+      return false; // Found floor on vehicle deck or terrain!
+    }
+    return true; // Let vanilla handle
+  }
+
   [HarmonyPatch(typeof(Game), "FindSpawnPoint")]
   [HarmonyPrefix]
-  public static void FindSpawnPoint_Prefix(Game __instance)
+  public static bool FindSpawnPoint_Prefix(Game __instance, ref Vector3 point, ref bool inBed, float dt, ref bool __result)
   {
     var boundVehicleId = BoatBedSpawnController.GetBoundVehicleId();
-    if (boundVehicleId == 0) return;
+    if (boundVehicleId == 0) return true; // Land bed / vanilla spawn
 
-    if (VehicleRecallController.GetVehicleLocation(boundVehicleId, out var targetPos, out var targetRot, out var isLoaded, out var vm))
-    {
-      var offset = BoatBedSpawnController.GetBoundBedOffset();
-      var bedWorldPos = targetPos + targetRot * offset + Vector3.up * 0.5f;
-
-      var profile = __instance.GetPlayerProfile();
-      if (profile != null)
-      {
-        profile.SetCustomSpawnPoint(bedWorldPos);
-      }
-    }
-    else
+    if (!VehicleRecallController.GetVehicleLocation(boundVehicleId, out var targetPos, out var targetRot, out var isLoaded, out var vm))
     {
       LoggerProvider.LogWarning($"[BoatBedSpawn] Vehicle #{boundVehicleId} not found; clearing boat spawn.");
       BoatBedSpawnController.ClearBoatSpawn();
       var profile = __instance.GetPlayerProfile();
       profile?.ClearCustomSpawnPoint();
+      return true; // Let vanilla fallback to world altar
     }
+
+    var offset = BoatBedSpawnController.GetBoundBedOffset();
+    var bedWorldPos = targetPos + targetRot * offset + Vector3.up * 0.5f;
+
+    var p = __instance.GetPlayerProfile();
+    p?.SetCustomSpawnPoint(bedWorldPos);
+
+    __instance.m_respawnWait += dt;
+    inBed = true;
+
+    if (ZNet.instance != null)
+    {
+      ZNet.instance.SetReferencePosition(bedWorldPos);
+    }
+
+    bool areaReady = ZNetScene.instance != null && ZNetScene.instance.IsAreaReady(bedWorldPos);
+    if ((__instance.m_respawnWait > __instance.m_respawnLoadDuration && areaReady) || __instance.m_respawnWait > 5f)
+    {
+      point = bedWorldPos;
+      __result = true;
+      return false; // Successfully found boat bed spawn point! Skip vanilla FindBedNearby!
+    }
+
+    point = Vector3.zero;
+    __result = false;
+    return false; // Still waiting for area load
   }
 
   [HarmonyPatch(typeof(Minimap), nameof(Minimap.UpdatePins))]
@@ -138,7 +206,7 @@ public static class BoatBedSpawn_Patches
       }
       if (__result.m_body != null)
       {
-        __result.m_body.velocity = Vector3.zero;
+        __result.m_body.linearVelocity = Vector3.zero;
       }
     }
   }

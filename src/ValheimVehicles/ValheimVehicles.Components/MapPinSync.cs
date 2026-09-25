@@ -17,6 +17,7 @@ using Jotunn.Managers;
 using UnityEngine;
 
 using ValheimVehicles.BepInExConfig;
+using ValheimVehicles.Controllers;
 
 using ValheimVehicles.Prefabs;
 
@@ -543,12 +544,17 @@ public class MapPinSync : MonoBehaviour
       {
         zdoVehicleName = "ValheimRAFT";
       }
-      if (getPin.m_name != zdoVehicleName)
+
+      var vehicleId = vehiclePin.Value.zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
+      var isSpawnSet = vehicleId != 0 && BoatBedSpawnController.IsBoatSpawnActiveForVehicle(vehicleId);
+      var displayName = isSpawnSet ? $"{zdoVehicleName} [Spawn]" : zdoVehicleName;
+
+      if (getPin.m_name != displayName)
       {
-        getPin.m_name = zdoVehicleName;
+        getPin.m_name = displayName;
         if (getPin.m_NamePinData?.PinNameText != null)
         {
-          getPin.m_NamePinData.PinNameText.text = zdoVehicleName;
+          getPin.m_NamePinData.PinNameText.text = displayName;
         }
       }
 
@@ -621,7 +627,9 @@ public class MapPinSync : MonoBehaviour
         {
           zdoVehicleName = "ValheimRAFT";
         }
-        var pinLabel = zdoVehicleName;
+        var vehicleId = zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
+        var isSpawnSet = vehicleId != 0 && BoatBedSpawnController.IsBoatSpawnActiveForVehicle(vehicleId);
+        var pinLabel = isSpawnSet ? $"{zdoVehicleName} [Spawn]" : zdoVehicleName;
 
         var pinData = Minimap.instance.AddPin(position,
           Minimap.PinType.Icon4,

@@ -2,6 +2,7 @@ using ValheimVehicles.Controllers;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
+using ZdoWatcher;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -210,6 +211,10 @@ public class Teleport_Patch
 
     var targetZdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(targetZdoid) : null;
     var parentId = targetZdo != null ? targetZdo.GetInt(VehicleZdoVars.MBParentId, 0) : 0;
+    if (parentId == 0 && targetZdo != null)
+    {
+      parentId = targetZdo.GetInt(ZdoVarController.PersistentUidHash, 0);
+    }
     if (parentId == 0)
     {
       return true;
@@ -313,8 +318,8 @@ public class Teleport_Patch
     int targetPieceCount = targetPieces.Count;
     bool piecesReady = (targetPieceCount == 0) || (loadedPieceCount >= targetPieceCount) || (__instance.m_teleportTimer > 6f);
 
-    // Do not abort prematurely at 4 seconds. Wait for area, vehicle/portal, and pieces, with 10s fallback timeout.
-    var canComplete = (isAreaReady && (isVehicleReady || isPortalReady) && piecesReady) || __instance.m_teleportTimer > 10f;
+    // Do not abort prematurely. Wait for area, vehicle/portal, and pieces, with 4s fallback timeout.
+    var canComplete = (isAreaReady && (isVehicleReady || isPortalReady) && piecesReady) || __instance.m_teleportTimer > 4f;
     if (!canComplete)
     {
       return false;
@@ -438,7 +443,7 @@ public class Teleport_Patch
     if ((bool)tp)
       return tp.transform.position + tp.transform.forward * 1.6f + Vector3.up * 0.2f;
 
-    return go.transform.position + go.transform.forward * 1.6f + Vector3.up * 0.2f;
+    return go.transform.position;
   }
 
   private static IEnumerator DebouncedTeleportCoordinateUpdater(

@@ -4,6 +4,7 @@ using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
+using ValheimVehicles.Patches;
 using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.SharedScripts.Enums;
@@ -207,12 +208,15 @@ public static class VehicleRecallController
 
     Vector3 landingPos;
     Quaternion landingRot = targetRot;
+    ZDO? wheelZdo = null;
 
     if (isLoaded && vm != null)
     {
       var wheel = vm.GetComponentInChildren<SteeringWheelComponent>();
       if (wheel != null)
       {
+        var wheelNv = wheel.GetComponent<ZNetView>();
+        if (wheelNv != null && wheelNv.IsValid()) wheelZdo = wheelNv.GetZDO();
         landingPos = wheel.transform.position - wheel.transform.forward * 0.8f + Vector3.up * 0.1f;
         landingRot = wheel.transform.rotation;
         if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselRecall] Target wheel found at {wheel.transform.position}, landing player at {landingPos}");
@@ -233,7 +237,6 @@ public static class VehicleRecallController
     {
       // Unloaded vessel: try to find steering wheel ZDO offset
       var wheelHash = PrefabNames.ShipSteeringWheel.GetStableHashCode();
-      ZDO? wheelZdo = null;
 
       var pieces = VehiclePiecesController.EnsurePiecesForVehicle(vehicleId);
       foreach (var pz in pieces)
@@ -284,6 +287,13 @@ public static class VehicleRecallController
     }
 
     PlaySfxAt("sfx_portal_activate", player.transform.position);
+
+    // Register into Teleport_Patch so vehicle deck is recognized and teleport animation does not hang
+    var targetZdoUid = wheelZdo != null ? wheelZdo.m_uid : (vm != null && vm.m_nview != null ? vm.m_nview.GetZDO().m_uid : ZDOID.None);
+    if (targetZdoUid != ZDOID.None)
+    {
+      Teleport_Patch.m_teleportTarget[player] = targetZdoUid;
+    }
 
     if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselRecall] Teleporting player {player.GetPlayerName()} to {landingPos} (Distant: {!isLoaded})");
     var accepted = player.TeleportTo(landingPos, landingRot, distantTeleport: !isLoaded);

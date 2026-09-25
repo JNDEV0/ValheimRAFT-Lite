@@ -133,8 +133,7 @@ public static class BoatBedSpawnController
 
   public static void UpdateMinimapBedPin(Minimap minimap)
   {
-    if (minimap == null || minimap.m_spawnPointPin == null)
-      return;
+    if (minimap == null) return;
 
     var boundVehicleId = GetBoundVehicleId();
     if (boundVehicleId == 0)
@@ -143,62 +142,14 @@ public static class BoatBedSpawnController
       return;
     }
 
-    var profile = Game.instance?.GetPlayerProfile();
-    if (profile == null || !profile.HaveCustomSpawnPoint())
+    // When boat spawn is active, hide vanilla's separate spawn pin so it never sits stranded in the water!
+    if (minimap.m_spawnPointPin != null && minimap.m_spawnPointPin.m_uiElement != null)
     {
-      ClearBoatSpawn();
-      return;
-    }
-
-    if (!VehicleRecallController.GetVehicleLocation(boundVehicleId, out var targetPos, out var targetRot, out _, out _))
-    {
-      // Boat was sunk, destroyed, or not found
-      ClearBoatSpawn();
-      return;
-    }
-
-    var expectedBedPos = targetPos + targetRot * GetBoundBedOffset();
-
-    // If player sets another bed offvehicle as spawn, profile spawn point will be far from the boat (> 35m)
-    var currentCustomSpawn = profile.GetCustomSpawnPoint();
-    if (Vector3.Distance(currentCustomSpawn, expectedBedPos) > 35f)
-    {
-      ClearBoatSpawn();
-      return;
-    }
-
-    // Keep world coordinates synced to boat location so vanilla IsPointVisible doesn't destroy the pin marker
-    profile.SetCustomSpawnPoint(expectedBedPos);
-    minimap.m_spawnPointPin.m_pos = expectedBedPos;
-
-    if (minimap.m_spawnPointPin.m_uiElement == null || !minimap.m_spawnPointPin.m_uiElement.gameObject.activeInHierarchy)
-    {
-      return;
-    }
-
-    var vehiclePin = MapPinSync.Instance?.GetVehiclePin(boundVehicleId);
-    if (vehiclePin == null || vehiclePin.m_uiElement == null || !vehiclePin.m_uiElement.gameObject.activeInHierarchy)
-    {
-      return;
-    }
-
-    // Dynamic offset based on minimap pin size:
-    var pinSize = minimap.m_mode == Minimap.MapMode.Large ? minimap.m_pinSizeLarge : minimap.m_pinSizeSmall;
-    var offsetY = pinSize * 0.85f; // Positioned cleanly above the boat/plane icon
-    if (MinimapConfig.BoatBedPinOffsetPosition != null &&
-        MinimapConfig.BoatBedPinOffsetPosition.Value == MinimapConfig.BoatBedPinPosition.UnderVehicleText)
-    {
-      offsetY = -pinSize * 1.15f; // Positioned under the ValheimRAFT vehicle name text
-    }
-
-    var vehGuiPos = vehiclePin.m_uiElement.anchoredPosition;
-    minimap.m_spawnPointPin.m_uiElement.anchoredPosition = vehGuiPos + new Vector2(0f, offsetY);
-    minimap.m_spawnPointPin.m_uiElement.gameObject.SetActive(true);
-
-    // Hide any name text on the bed pin so only the clean bed icon appears
-    if (minimap.m_spawnPointPin.m_NamePinData?.PinNameGameObject != null)
-    {
-      minimap.m_spawnPointPin.m_NamePinData.PinNameGameObject.SetActive(false);
+      minimap.m_spawnPointPin.m_uiElement.gameObject.SetActive(false);
+      if (minimap.m_spawnPointPin.m_NamePinData?.PinNameGameObject != null)
+      {
+        minimap.m_spawnPointPin.m_NamePinData.PinNameGameObject.SetActive(false);
+      }
     }
   }
 }
