@@ -33,7 +33,7 @@
     public float ladderRunSpeedMult => PrefabConfig.RopeLadderRunMultiplier.Value;
 
 
-    public int m_stepOffsetUp = 1;
+    public int m_stepOffsetUp = 2;
 
     public int m_stepOffsetDown = -1;
 
@@ -356,11 +356,17 @@
             : m_stepOffsetDown;
           var targetRung = footCenter + stepOffset;
 
-          if (currentMoveDir == MoveDirection.Up &&
-              m_currentLeft < m_currentRight ||
-              currentMoveDir == MoveDirection.Down &&
-              m_currentLeft > m_currentRight ||
-              !m_lastMovedLeft)
+          bool moveLeft;
+          if (currentMoveDir == MoveDirection.Up)
+          {
+            moveLeft = m_currentLeft < m_currentRight || (m_currentLeft == m_currentRight && !m_lastMovedLeft);
+          }
+          else
+          {
+            moveLeft = m_currentLeft > m_currentRight || (m_currentLeft == m_currentRight && !m_lastMovedLeft);
+          }
+
+          if (moveLeft)
           {
             m_targetLeft = targetRung;
             m_leftMoveTime = Time.time;
@@ -406,6 +412,12 @@
         leftHandPos = Vector3.Lerp(leftHandPos, targetLeftHandPos, leftAlpha);
         leftFootPos = Vector3.Lerp(leftFootPos, targetLeftFootPos, leftAlpha);
 
+        // Natural step arc: lift outward and upward during step transition
+        var arc = Mathf.Sin(leftAlpha * Mathf.PI);
+        leftFootPos.z += arc * 0.08f;
+        leftFootPos.y += arc * 0.05f;
+        leftHandPos.z += arc * 0.06f;
+
         if (Mathf.Approximately(leftAlpha, 1f))
         {
           m_currentLeft = m_targetLeft;
@@ -423,6 +435,12 @@
         rightHandPos = Vector3.Lerp(rightHandPos, targetRightHandPos, rightAlpha);
         rightFootPos = Vector3.Lerp(rightFootPos, targetRightFootPos, rightAlpha);
 
+        // Natural step arc: lift outward and upward during step transition
+        var arc = Mathf.Sin(rightAlpha * Mathf.PI);
+        rightFootPos.z += arc * 0.08f;
+        rightFootPos.y += arc * 0.05f;
+        rightHandPos.z += arc * 0.06f;
+
         if (Mathf.Approximately(rightAlpha, 1f))
         {
           m_currentRight = m_targetRight;
@@ -430,15 +448,15 @@
         }
       }
 
-      // Allow natural leg reach & knee flexion: stepping foot can lift up to 0.15m below hip
-      var maxFootY = hipY - 0.15f;
-      var minFootY = hipY - 1.15f;
+      // Allow natural leg reach & knee flexion: stepping foot can lift up to 0.20m below hip
+      var maxFootY = hipY - 0.20f;
+      var minFootY = hipY - 1.00f;
       leftFootPos.y = Mathf.Clamp(leftFootPos.y, Mathf.Max(minFootY, ladderBottomY), maxFootY);
       rightFootPos.y = Mathf.Clamp(rightFootPos.y, Mathf.Max(minFootY, ladderBottomY), maxFootY);
 
-      // Hands: allow extended upward reach when climbing up for visual realism
-      var minHandY = hipY + 0.30f;
-      var maxHandY = currentMoveDir == MoveDirection.Up ? hipY + 1.35f : hipY + 1.15f;
+      // Hands: allow extended upward reach when climbing up or down for visual realism
+      var minHandY = hipY + 0.35f;
+      var maxHandY = hipY + 1.40f;
       leftHandPos.y = Mathf.Clamp(leftHandPos.y, minHandY, maxHandY);
       rightHandPos.y = Mathf.Clamp(rightHandPos.y, minHandY, maxHandY);
 
@@ -457,6 +475,14 @@
       animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 1f);
       animator.SetIKPosition(AvatarIKGoal.RightFoot, rightFoot);
       animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 1f);
+
+      // Knee hints: guide knees to bend forward towards ladder rungs
+      var leftKneeHint = transform.TransformPoint(new Vector3(-0.2f, (hipY + leftFootPos.y) * 0.5f, 0.12f));
+      var rightKneeHint = transform.TransformPoint(new Vector3(0.2f, (hipY + rightFootPos.y) * 0.5f, 0.12f));
+      animator.SetIKHintPosition(AvatarIKHint.LeftKnee, leftKneeHint);
+      animator.SetIKHintPositionWeight(AvatarIKHint.LeftKnee, 0.9f);
+      animator.SetIKHintPosition(AvatarIKHint.RightKnee, rightKneeHint);
+      animator.SetIKHintPositionWeight(AvatarIKHint.RightKnee, 0.9f);
 
       // Orient wrists to naturally grip the horizontal rungs (fixes Image 1 stiffness)
       animator.SetIKRotation(AvatarIKGoal.LeftHand, transform.rotation);
