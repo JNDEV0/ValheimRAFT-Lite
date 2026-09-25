@@ -7729,8 +7729,7 @@
     {
       if (OnboardController != null && OnboardController.m_localPlayers.Count > 0) return;
       HasPendingAnchor = false;
-      bool hasPhysicalAnchor = PiecesController != null && PiecesController.m_anchorMechanismComponents.Any(a => a != null);
-      if (Manager != null && Manager.IsLandVehicle || !hasPhysicalAnchor)
+      if (Manager != null && Manager.IsLandVehicle)
         SendSetAnchor(AnchorState.Anchored);
       else
         SendSetAnchor(AnchorState.Lowering);
@@ -7740,6 +7739,11 @@
     {
       CancelInvoke(nameof(DelayedAnchor));
       HasPendingAnchor = false;
+      if (_virtualAnchorCoroutine != null)
+      {
+        StopCoroutine(_virtualAnchorCoroutine);
+        _virtualAnchorCoroutine = null;
+      }
     }
 
     /// <summary>
@@ -7758,8 +7762,7 @@
         return;
       }
 
-      bool hasPhysicalAnchor = PiecesController != null && PiecesController.m_anchorMechanismComponents.Any(a => a != null);
-      if (Manager != null && Manager.IsLandVehicle || !hasPhysicalAnchor)
+      if (Manager != null && Manager.IsLandVehicle)
         SendSetAnchor(AnchorState.Anchored);
       else
         SendSetAnchor(AnchorState.Lowering);
@@ -9083,19 +9086,6 @@
         return;
       }
 
-      bool hasPhysicalAnchor = PiecesController != null && PiecesController.m_anchorMechanismComponents.Any(a => a != null);
-      if (!hasPhysicalAnchor)
-      {
-        var targetState = (isAnchored || vehicleAnchorState == AnchorState.Anchored || vehicleAnchorState == AnchorState.Lowering)
-          ? AnchorState.Recovered
-          : AnchorState.Anchored;
-        SendSetAnchor(targetState);
-        ShowWheelHoverMessage(targetState == AnchorState.Anchored
-          ? $"[<color=red><b>{ModTranslations.AnchorPrefab_anchoredText}</b></color>]"
-          : $"[<color=green><b>{ModTranslations.AnchorPrefab_RecoveredAnchorText}</b></color>]");
-        return;
-      }
-
       var newState = (isAnchored || vehicleAnchorState == AnchorState.Lowering || vehicleAnchorState == AnchorState.Anchored)
         ? AnchorState.Reeling
         : AnchorState.Lowering;
@@ -9603,8 +9593,7 @@
           return;
         }
 
-        bool hasPhysicalAnchor = PiecesController != null && PiecesController.m_anchorMechanismComponents.Any(a => a != null);
-        if (Manager != null && Manager.IsLandVehicle || !hasPhysicalAnchor)
+        if (Manager != null && Manager.IsLandVehicle)
           SendSetAnchor(AnchorState.Anchored);
         else
           SendSetAnchor(AnchorState.Lowering);
@@ -9675,6 +9664,47 @@
       if (PiecesController != null)
       {
         PiecesController.UpdateAnchorState(state);
+      }
+
+      CheckVirtualAnchorTransition(state);
+    }
+
+    private Coroutine? _virtualAnchorCoroutine;
+
+    private void CheckVirtualAnchorTransition(AnchorState state)
+    {
+      if (_virtualAnchorCoroutine != null)
+      {
+        StopCoroutine(_virtualAnchorCoroutine);
+        _virtualAnchorCoroutine = null;
+      }
+
+      if (m_nview == null || !m_nview.IsValid() || !m_nview.IsOwner()) return;
+      if (Manager != null && Manager.IsLandVehicle) return;
+
+      bool hasPhysicalAnchor = PiecesController != null && PiecesController.m_anchorMechanismComponents.Any(a => a != null);
+      if (hasPhysicalAnchor) return;
+
+      if (state == AnchorState.Lowering)
+      {
+        _virtualAnchorCoroutine = StartCoroutine(VirtualAnchorTransitionRoutine(AnchorState.Anchored, 1.0f));
+      }
+      else if (state == AnchorState.Reeling)
+      {
+        _virtualAnchorCoroutine = StartCoroutine(VirtualAnchorTransitionRoutine(AnchorState.Recovered, 1.0f));
+      }
+    }
+
+    private IEnumerator VirtualAnchorTransitionRoutine(AnchorState targetState, float delay)
+    {
+      yield return new WaitForSeconds(delay);
+      _virtualAnchorCoroutine = null;
+      if (m_nview != null && m_nview.IsValid() && m_nview.IsOwner())
+      {
+        SendSetAnchor(targetState);
+        ShowWheelHoverMessage(targetState == AnchorState.Anchored
+          ? $"[<color=red><b>{ModTranslations.AnchorPrefab_anchoredText}</b></color>]"
+          : $"[<color=green><b>{ModTranslations.AnchorPrefab_RecoveredAnchorText}</b></color>]");
       }
     }
 
@@ -10067,7 +10097,7 @@
         return;
       }
 
-      if (isAnchored)
+      if (isAnchored || vehicleAnchorState == AnchorState.Lowering)
 
       {
 

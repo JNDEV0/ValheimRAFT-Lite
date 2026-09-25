@@ -934,7 +934,18 @@
 
             // Enforce that rudder faces the same forward direction as the vehicle / steering wheel
             var forwardDot = Vector3.Dot(rudder.transform.forward, transform.forward);
-            if (forwardDot < 0.2f)
+            var isInvalid = forwardDot < 0.2f;
+
+            if (!isInvalid && _steeringWheelPiece != null)
+            {
+              var wheelDot = Vector3.Dot(rudder.transform.forward, _steeringWheelPiece.transform.forward);
+              if (wheelDot < 0.2f)
+              {
+                isInvalid = true;
+              }
+            }
+
+            if (isInvalid)
             {
               var wnt = netView.GetComponent<WearNTear>();
               if (wnt != null)
@@ -991,12 +1002,49 @@
             }
             break;
           case SteeringWheelComponent wheel:
+          {
+            // Enforce that steering wheel faces forward relative to vehicle
+            var forwardDot = Vector3.Dot(wheel.transform.forward, transform.forward);
+            var isWheelInvalid = forwardDot < 0.2f;
+            string errorKey = "$valheim_vehicles_wheel_must_face_forward";
+
+            // If rudder(s) already exist, enforce that steering wheel faces same direction as rudder
+            m_rudderPieces.RemoveAll(r => r == null || !r);
+            if (!isWheelInvalid && m_rudderPieces.Count > 0)
+            {
+              var rudderDot = Vector3.Dot(wheel.transform.forward, m_rudderPieces[0].transform.forward);
+              if (rudderDot < 0.2f)
+              {
+                isWheelInvalid = true;
+                errorKey = "$valheim_vehicles_wheel_orientation_invalid";
+              }
+            }
+
+            if (isWheelInvalid)
+            {
+              var wnt = netView.GetComponent<WearNTear>();
+              if (wnt != null)
+              {
+                wnt.Destroy();
+              }
+              else if (netView.gameObject)
+              {
+                ZNetScene.instance.Destroy(netView.gameObject);
+              }
+              if (Player.m_localPlayer != null)
+              {
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize(errorKey));
+              }
+              break;
+            }
+
             OnAddUniquePieceDestroyPrevious(_steeringWheelPiece);
             _steeringWheelPiece = wheel;
             RotateVehicleForwardPosition();
 
             wheel.InitializeControls(netView, Manager);
             break;
+          }
           case TeleportWorld portal:
             m_portals.Add(netView);
             break;

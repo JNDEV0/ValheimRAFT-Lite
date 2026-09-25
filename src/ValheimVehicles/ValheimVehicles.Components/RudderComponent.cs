@@ -38,10 +38,10 @@ public class RudderComponent : MonoBehaviour
 
   public float RowSpeed => tier switch
   {
-    RudderTier.Basic => 5f,
-    RudderTier.Standard => 10f,
+    RudderTier.Basic => 4f,
+    RudderTier.Standard => 7.5f,
     RudderTier.Advanced => 15f,
-    _ => 5f
+    _ => 4f
   };
 
   private void Start()
