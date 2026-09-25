@@ -102,6 +102,13 @@
     {
       m_stepObject = transform.Find("step").gameObject;
       m_ropeLine = GetComponent<LineRenderer>();
+      if (m_ropeLine != null)
+      {
+        m_ropeLine.positionCount = 4;
+      }
+      var lodGroup = GetComponent<LODGroup>();
+      if (lodGroup != null) Destroy(lodGroup);
+
       m_exitPoint = transform.Find("exitpoint");
       m_collider = GetComponentInChildren<BoxCollider>();
       m_ghostObject = ZNetView.m_forceDisableInit;
@@ -292,13 +299,16 @@
           go.transform.localPosition =
             new Vector3(0f, (0f - m_stepDistance) * (float)m_steps.Count, 0f);
         }
+      }
 
+      if (m_ropeLine != null)
+      {
         m_ropeLine.useWorldSpace = false;
+        if (m_ropeLine.positionCount != 4) m_ropeLine.positionCount = 4;
+        var bottomY = (0f - m_stepDistance) * (float)m_steps.Count;
         m_ropeLine.SetPosition(0, new Vector3(0.4f, 0f, 0f));
-        m_ropeLine.SetPosition(1,
-          new Vector3(0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
-        m_ropeLine.SetPosition(2,
-          new Vector3(-0.4f, (0f - m_stepDistance) * (float)m_steps.Count, 0f));
+        m_ropeLine.SetPosition(1, new Vector3(0.4f, bottomY, 0f));
+        m_ropeLine.SetPosition(2, new Vector3(-0.4f, bottomY, 0f));
         m_ropeLine.SetPosition(3, new Vector3(-0.4f, 0f, 0f));
       }
 

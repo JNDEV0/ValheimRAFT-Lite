@@ -202,7 +202,7 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
 
     BallastClimbingOffset = config.BindUnique(GenericSectionName,
       "BallastClimbingOffset",
-      0.4f,
+      0.1f,
       ConfigHelpers.CreateConfigDescription(
         "Ascent and Descent speed for the vehicle in the water. This value is interpolated to prevent jitters.",
         true, true, new AcceptableValueRange<float>(0.01f, 10)));
@@ -256,7 +256,7 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
     );
 
     SailTier1Propulsion = config.BindUnique(GenericSectionName,
-      "SailTier1Propulsion", 3f,
+      "SailTier1Propulsion", 5f,
       ConfigHelpers.CreateConfigDescription(
         "Flat propulsion added per Raft sail (Tier 1).", true, false));
 

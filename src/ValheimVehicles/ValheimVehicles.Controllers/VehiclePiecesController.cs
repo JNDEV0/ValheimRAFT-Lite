@@ -3310,7 +3310,7 @@
     public float GetSumOfSailPropulsion()
     {
       GetTotalSailArea();
-      var tier1Gain = PropulsionConfig.SailTier1Propulsion?.Value ?? 3f;
+      var tier1Gain = PropulsionConfig.SailTier1Propulsion?.Value ?? 5f;
       var tier2Gain = PropulsionConfig.SailTier2Propulsion?.Value ?? 5f;
       var tier3Gain = PropulsionConfig.SailTier3Propulsion?.Value ?? 7f;
       var tier4Gain = PropulsionConfig.SailTier4Propulsion?.Value ?? 9f;

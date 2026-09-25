@@ -344,36 +344,9 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     PrefabRegistryHelpers.FixRopes(mbKarveMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(mbKarveMastPrefab);
 
-    PrefabRegistryController.AddPiece(new CustomPiece(mbKarveMastPrefab, true,
-      new PieceConfig
-      {
-        PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Description = GetTieredSailAreaText(2),
-        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("karvemast"),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
-        Enabled = true,
-        Requirements = new RequirementConfig[3]
-        {
-          new()
-          {
-            Amount = 30,
-            Item = "FineWood",
-            Recover = true
-          },
-          new()
-          {
-            Amount = 20,
-            Item = "RoundLog",
-            Recover = true
-          },
-          new()
-          {
-            Amount = 8,
-            Item = "TrollHide",
-            Recover = true
-          }
-        }
-      }));
+    // Kept registered in PrefabManager so existing built vessels load without issues,
+    // but hidden from the hammer build menu.
+    PrefabManager.Instance.AddPrefab(mbKarveMastPrefab);
   }
 
   private static void SetupMastSail(GameObject prefab, MastComponent mastComponent)

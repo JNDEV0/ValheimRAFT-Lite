@@ -31,6 +31,9 @@ public class RopeLadderPrefabRegistry : RegisterPrefab<RopeLadderPrefabRegistry>
     PrefabRegistryHelpers.AddNetViewWithPersistence(mbRopeLadderPrefab);
     PrefabRegistryHelpers.FixSnapPoints(mbRopeLadderPrefab);
 
+    var lodGroup = mbRopeLadderPrefab.GetComponent<LODGroup>();
+    if (lodGroup != null) Object.DestroyImmediate(lodGroup);
+
     var ropeLadder = mbRopeLadderPrefab.AddComponent<RopeLadderComponent>();
     var rope =
       LoadValheimAssets.raftMast.GetComponentInChildren<LineRenderer>(true);
