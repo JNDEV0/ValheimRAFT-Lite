@@ -51,11 +51,15 @@ public class VehicleHammerItemRegistry : RegisterPrefab<VehicleHammerItemRegistr
       itemDrop.m_nview = nv;
     }
 
+    LocalizationManager.Instance.AddToken("valheim_vehicles_hammer_name", "Boat Hammer", false);
+    LocalizationManager.Instance.AddToken("valheim_vehicles_hammer_description", "With this hammer you can build and repair your boat", false);
+
     var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.VehicleHammer);
 
     itemDrop.m_itemData.m_shared = new ItemDrop.ItemData.SharedData
     {
-      m_name = PrefabNames.VehicleHammer,
+      m_name = "$valheim_vehicles_hammer_name",
+      m_description = "$valheim_vehicles_hammer_description",
       m_maxQuality = 5,
       m_useDurability = true,
       m_useDurabilityDrain = 1f,

@@ -98,6 +98,7 @@ namespace ValheimVehicles.Prefabs.Registry
       // Keep labels & category indexes in sync on language or order changes
       Localization.OnLanguageChange += RefreshCategoriesAndLabels;
       PrefabConfig.VehicleHammerOrder.OnOrderChanged += _ => RefreshCategoriesAndLabels();
+      PieceManager.OnPiecesRegistered += EnsureRepairPieceAdded;
 
       var success = PieceManager.Instance.AddPieceTable(VehicleHammerTable);
 
@@ -110,6 +111,31 @@ namespace ValheimVehicles.Prefabs.Registry
           "VehicleHammerTable failed to be added. Falling back to original hammer table for all items. " +
           "This is a bug and could break your game. Please report this.");
         VehicleHammerTable = null;
+      }
+    }
+
+    public static void EnsureRepairPieceAdded()
+    {
+      if (ObjectDB.instance == null) return;
+      var table = PieceManager.Instance.GetPieceTable(VehicleHammerTableName) ?? VehicleHammerTable?.PieceTable;
+      if (table == null || table.m_pieces == null) return;
+
+      if (table.m_pieces.Any(p => p != null && p.GetComponent<Piece>()?.m_repairPiece == true))
+      {
+        return;
+      }
+
+      var hammerPrefab = ObjectDB.instance.GetItemPrefab("Hammer");
+      if (hammerPrefab == null) return;
+      var hammerItem = hammerPrefab.GetComponent<ItemDrop>();
+      var vanillaTable = hammerItem?.m_itemData?.m_shared?.m_buildPieces;
+      if (vanillaTable == null || vanillaTable.m_pieces == null) return;
+
+      var repairPiece = vanillaTable.m_pieces.FirstOrDefault(p => p != null && p.GetComponent<Piece>()?.m_repairPiece == true);
+      if (repairPiece != null)
+      {
+        table.m_pieces.Insert(0, repairPiece);
+        LoggerProvider.LogInfo($"[VehicleHammer] Successfully added repair piece ({repairPiece.name}) to {VehicleHammerTableName}");
       }
     }
 

@@ -16,6 +16,7 @@
   using ValheimVehicles.Integrations;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
+  using ValheimVehicles.Prefabs.Registry;
   using ValheimVehicles.Propulsion.Rudder;
   using ValheimVehicles.SharedScripts;
   using Zolantris.Shared;
@@ -101,7 +102,7 @@
     {
       if (__instance.InPlaceMode())
       {
-        var selectedPiece = __instance.m_buildPieces.GetSelectedPiece();
+        var selectedPiece = __instance.m_buildPieces?.GetSelectedPiece();
         if (selectedPiece != null)
         {
           __result = selectedPiece.m_repairPiece || selectedPiece.m_removePiece;
@@ -111,12 +112,25 @@
       __result = false;
     }
 
+    [HarmonyPatch(typeof(Player), nameof(Player.SetPlaceMode))]
+    [HarmonyPrefix]
+    public static void Player_SetPlaceMode_Prefix(PieceTable buildPieces)
+    {
+      if (buildPieces != null && buildPieces.name == VehicleHammerTableRegistry.VehicleHammerTableName)
+      {
+        VehicleHammerTableRegistry.EnsureRepairPieceAdded();
+      }
+    }
+
     [HarmonyPatch(typeof(HammerItemElement), nameof(HammerItemElement.IsHammer))]
     [HarmonyPostfix]
     public static void HammerItemElement_IsHammer(HammerItemElement __instance, ItemDrop.ItemData item, bool __result)
     {
-      if (
-        item.m_shared.m_name == PrefabNames.VehicleHammer)
+      if (item != null && item.m_shared != null &&
+        (item.m_shared.m_name == PrefabNames.VehicleHammer ||
+         item.m_shared.m_name == "$valheim_vehicles_hammer_name" ||
+         item.m_shared.m_name == "Boat Hammer" ||
+         item.m_shared.m_name == "Vehicle Hammer"))
       {
         // ReSharper disable once RedundantAssignment
         __result = true;

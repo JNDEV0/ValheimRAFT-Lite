@@ -1136,7 +1136,8 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
 
       SetupHullPrefab(prefab, prefabName,
         hullMaterial,
-        materialCount, null, null, VehicleHammerTableCategories.Hull);
+        materialCount, null, null, VehicleHammerTableCategories.Hull,
+        addToPieceTable: !isInverse);
     }
     catch (Exception e)
     {
@@ -1575,7 +1576,8 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     int materialCount,
     Transform? hoistParent = null,
     string[]? hoistFilters = null,
-    string? hammerTableCategory = null
+    string? hammerTableCategory = null,
+    bool addToPieceTable = true
   )
   {
     if (hammerTableCategory == null || !VehicleHammerTableCategories.IsHammerTableCategory(hammerTableCategory))
@@ -1604,14 +1606,21 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       piece.m_allowRotatedOverlap = true;
       piece.m_noClipping = false;
 
-      PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
-        new PieceConfig
-        {
-          PieceTable = PrefabRegistryController.GetPieceTableName(),
-          Category = PrefabRegistryController.SetCategoryName(hammerTableCategory),
-          Enabled = true, // PrefabRegistryController will update this later based on if the prefab is disabled
-          Requirements = GetRequirements(hullMaterial, materialCount)
-        }));
+      if (addToPieceTable)
+      {
+        PrefabRegistryController.AddPiece(new CustomPiece(prefab, false,
+          new PieceConfig
+          {
+            PieceTable = PrefabRegistryController.GetPieceTableName(),
+            Category = PrefabRegistryController.SetCategoryName(hammerTableCategory),
+            Enabled = true, // PrefabRegistryController will update this later based on if the prefab is disabled
+            Requirements = GetRequirements(hullMaterial, materialCount)
+          }));
+      }
+      else
+      {
+        PrefabManager.Instance.AddPrefab(new CustomPrefab(prefab, false));
+      }
     }
     catch (Exception e)
     {

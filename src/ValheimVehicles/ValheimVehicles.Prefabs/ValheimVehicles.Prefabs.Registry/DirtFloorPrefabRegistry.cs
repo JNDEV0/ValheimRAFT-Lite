@@ -67,7 +67,7 @@ public class DirtFloorPrefabRegistry : RegisterPrefab<DirtFloorPrefabRegistry>
           new RequirementConfig
           {
             Amount = 5 * size,
-            Item = "Charcoal",
+            Item = "Coal",
             Recover = true
           }
         ]
