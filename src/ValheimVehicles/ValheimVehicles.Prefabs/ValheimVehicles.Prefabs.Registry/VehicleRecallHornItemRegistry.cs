@@ -56,7 +56,8 @@ public class VehicleRecallHornItemRegistry : RegisterPrefab<VehicleRecallHornIte
 
     // Register localization tokens directly with Jotunn so they never appear as [raw_token]
     LocalizationManager.Instance.AddToken("item_vessel_horn", "Horn of Loki", false);
-    LocalizationManager.Instance.AddToken("item_vessel_horn_desc", "[Left-Click] Teleport to boat\n[Right-Click] Bind to steering wheel", false);
+    LocalizationManager.Instance.AddToken("item_vessel_horn_desc", "[Left-Click] Teleport to boat\n[Middle-Click] Bind to boat\n[Right-Click] Teleport to Sacrificial Stones", false);
+    LocalizationManager.Instance.AddToken("valheim_vehicles_portal_not_supported", "Portals on boats are not supported. Use the Horn of Loki to teleport to/from the boat.", false);
 
     var nv = PrefabRegistryHelpers.AddNetViewWithPersistence(hornPrefab);
     var zSyncTransform = hornPrefab.GetComponent<ZSyncTransform>() ?? hornPrefab.AddComponent<ZSyncTransform>();

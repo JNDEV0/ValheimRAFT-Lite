@@ -227,6 +227,33 @@
           return gameObject;
         }
 
+        // Portals on boats are not supported - refund and notify player
+        if (gameObject.GetComponent<TeleportWorld>() != null || gameObject.name.ToLowerInvariant().Contains("portal"))
+        {
+          PatchSharedData.PlayerLastRayPiece = null;
+          var wnt = gameObject.GetComponent<WearNTear>();
+          if (wnt != null)
+          {
+            wnt.Destroy();
+          }
+          else
+          {
+            Object.Destroy(gameObject);
+          }
+          if (Player.m_localPlayer != null)
+          {
+            var msg = Localization.instance != null
+              ? Localization.instance.Localize("$valheim_vehicles_portal_not_supported")
+              : "Portals on boats are not supported. Use the Horn of Loki to teleport to/from the boat.";
+            if (string.IsNullOrEmpty(msg) || msg == "$valheim_vehicles_portal_not_supported")
+            {
+              msg = "Portals on boats are not supported. Use the Horn of Loki to teleport to/from the boat.";
+            }
+            Player.m_localPlayer.Message(MessageHud.MessageType.Center, msg);
+          }
+          return gameObject;
+        }
+
         if (piece.m_nview != null)
         {
           pieceController.AddNewPiece(piece.m_nview);

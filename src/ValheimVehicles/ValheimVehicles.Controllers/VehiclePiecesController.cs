@@ -1046,8 +1046,29 @@
             break;
           }
           case TeleportWorld portal:
-            m_portals.Add(netView);
+          {
+            var wnt = netView.GetComponent<WearNTear>();
+            if (wnt != null)
+            {
+              wnt.Destroy();
+            }
+            else if (netView.gameObject)
+            {
+              ZNetScene.instance.Destroy(netView.gameObject);
+            }
+            if (Player.m_localPlayer != null)
+            {
+              var msg = Localization.instance != null
+                ? Localization.instance.Localize("$valheim_vehicles_portal_not_supported")
+                : "Portals on boats are not supported. Use the Horn of Loki to teleport to/from the boat.";
+              if (string.IsNullOrEmpty(msg) || msg == "$valheim_vehicles_portal_not_supported")
+              {
+                msg = "Portals on boats are not supported. Use the Horn of Loki to teleport to/from the boat.";
+              }
+              Player.m_localPlayer.Message(MessageHud.MessageType.Center, msg);
+            }
             break;
+          }
           case RopeLadderComponent ladder:
             m_ladders.Add(ladder);
             ladder.vehiclePiecesController = this;

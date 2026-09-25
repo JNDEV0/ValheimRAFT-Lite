@@ -319,6 +319,64 @@ public static class VehicleRecallController
     player.Message(MessageHud.MessageType.Center, "Horn bound to boat!");
   }
 
+  public static bool TryGetSacrificialStonesPosition(out Vector3 position)
+  {
+    position = Vector3.zero;
+    if (ZoneSystem.instance != null)
+    {
+      if (ZoneSystem.instance.FindClosestLocation("StartTemple", Vector3.zero, out var loc))
+      {
+        position = loc.m_position;
+        if (ZoneSystem.instance.GetGroundHeight(position, out var gh))
+        {
+          position.y = Mathf.Max(position.y, gh) + 0.5f;
+        }
+        else
+        {
+          position.y += 0.5f;
+        }
+        return true;
+      }
+
+      if (ZoneSystem.instance.GetLocationIcon("StartTemple", out var iconPos))
+      {
+        position = iconPos;
+        if (ZoneSystem.instance.GetGroundHeight(position, out var gh))
+        {
+          position.y = Mathf.Max(position.y, gh) + 0.5f;
+        }
+        else
+        {
+          position.y += 0.5f;
+        }
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public static bool TeleportPlayerToSacrificialStones(Player player)
+  {
+    if (player == null) return false;
+
+    if (!TryGetSacrificialStonesPosition(out var stonePos))
+    {
+      player.Message(MessageHud.MessageType.Center, "Sacrificial Stones not found!");
+      return false;
+    }
+
+    PlaySfxAt("sfx_portal_activate", player.transform.position);
+
+    if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselRecall] Teleporting player {player.GetPlayerName()} to Sacrificial Stones at {stonePos}");
+    var accepted = player.TeleportTo(stonePos, Quaternion.identity, distantTeleport: true);
+    if (accepted)
+    {
+      player.Message(MessageHud.MessageType.Center, "Teleported to Sacrificial Stones!");
+    }
+    return accepted;
+  }
+
   private static void PlaySfxAt(string prefabName, Vector3 position)
   {
     if (ZNetScene.instance == null) return;

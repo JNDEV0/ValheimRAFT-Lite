@@ -11,7 +11,7 @@ namespace ValheimVehicles.Components;
 
 public static class VesselHornChanneler
 {
-  public enum HornAction { None, Teleport, Attune }
+  public enum HornAction { None, Teleport, Attune, TeleportStones }
 
   public static bool IsChanneling { get; private set; }
   public static float ChannelProgress { get; private set; }
@@ -162,11 +162,13 @@ public static class VesselHornChanneler
     var leftDown = Input.GetMouseButtonDown(0) || ZInput.GetMouseButtonDown(0);
     var rightHeld = Input.GetMouseButton(1) || ZInput.GetMouseButton(1);
     var rightDown = Input.GetMouseButtonDown(1) || ZInput.GetMouseButtonDown(1);
+    var middleHeld = Input.GetMouseButton(2) || (ZInput.instance != null && ZInput.GetMouseButton(2));
+    var middleDown = Input.GetMouseButtonDown(2) || (ZInput.instance != null && ZInput.GetMouseButtonDown(2));
 
     // Failsafe: Input release debouncing after an action completes
     if (_awaitingInputRelease)
     {
-      if (!leftHeld && !rightHeld)
+      if (!leftHeld && !rightHeld && !middleHeld)
       {
         _awaitingInputRelease = false;
       }
@@ -180,7 +182,7 @@ public static class VesselHornChanneler
     {
       if (leftHeld)
       {
-        // Teleport cooldown check
+        // Teleport to Boat cooldown check
         if (Time.time < _teleportCooldownUntil)
         {
           if (leftDown)
@@ -204,7 +206,7 @@ public static class VesselHornChanneler
         if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselHorn] Left click detected -> starting Teleport to Boat #{targetId} channel");
         StartAction(HornAction.Teleport, "Teleporting to Boat...", player, targetId);
       }
-      else if (rightHeld)
+      else if (middleHeld)
       {
         if (Time.time < _attuneCooldownUntil)
         {
@@ -215,12 +217,12 @@ public static class VesselHornChanneler
         var wheel = GetTargetSteeringWheel(player, interactDist);
         if (wheel == null)
         {
-          if (rightDown)
+          if (middleDown)
           {
             var wheelName = Localization.instance != null
               ? Localization.instance.Localize("$valheim_vehicles_wheel")
               : "Vehicle Wheel";
-            player.Message(MessageHud.MessageType.Center, $"Must bind at {wheelName}");
+            player.Message(MessageHud.MessageType.Center, $"[Middle-Click] Must bind at {wheelName}");
           }
           return;
         }
@@ -228,21 +230,38 @@ public static class VesselHornChanneler
         var vehicleId = VehicleRecallController.GetVehicleIdFromWheel(wheel);
         if (vehicleId == 0)
         {
-          if (rightDown)
+          if (middleDown)
           {
             player.Message(MessageHud.MessageType.Center, "Wheel is not attached to a boat!");
           }
           return;
         }
 
-        if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselHorn] Right click at wheel detected -> starting Bind Boat #{vehicleId} channel");
+        if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselHorn] Middle click at wheel detected -> starting Bind Boat #{vehicleId} channel");
         StartAction(HornAction.Attune, "Binding to Boat...", player, vehicleId);
+      }
+      else if (rightHeld)
+      {
+        // Teleport to Sacrificial Stones cooldown check
+        if (Time.time < _teleportCooldownUntil)
+        {
+          if (rightDown)
+          {
+            var remaining = Mathf.CeilToInt(_teleportCooldownUntil - Time.time);
+            player.Message(MessageHud.MessageType.Center, $"Horn on cooldown ({remaining}s)");
+          }
+          return;
+        }
+
+        if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselHorn] Right click detected -> starting Teleport to Sacrificial Stones channel");
+        StartAction(HornAction.TeleportStones, "Teleporting to Sacrificial Stones...", player, 0);
       }
     }
     else
     {
       var stillHeld = (CurrentAction == HornAction.Teleport && leftHeld) ||
-                      (CurrentAction == HornAction.Attune && rightHeld);
+                      (CurrentAction == HornAction.Attune && middleHeld) ||
+                      (CurrentAction == HornAction.TeleportStones && rightHeld);
 
       if (!stillHeld)
       {
@@ -369,6 +388,15 @@ public static class VesselHornChanneler
         LoggerProvider.LogWarning("[VesselHorn] Teleport action failed: No boat found in world!");
         player.Message(MessageHud.MessageType.Center, "Bind to a boat first");
       }
+      return;
+    }
+
+    if (action == HornAction.TeleportStones)
+    {
+      var cooldown = VehicleGlobalConfig.HornTeleportCooldownSeconds?.Value ?? 10.0f;
+      _teleportCooldownUntil = Time.time + cooldown;
+      VehicleRecallController.TeleportPlayerToSacrificialStones(player);
+      return;
     }
   }
 }

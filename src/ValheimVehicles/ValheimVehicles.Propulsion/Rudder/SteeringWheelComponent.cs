@@ -298,6 +298,11 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
     hoverText += GetBoatBedSpawnHoverText();
 
+    if (VesselHornChanneler.IsHoldingVesselHorn(Player.m_localPlayer))
+    {
+      hoverText += "\n[<color=yellow><b>Middle-Click</b></color>] Bind to Boat";
+    }
+
     if (movementController.isBeached)
       hoverText += GetBeachedHoverText();
 
