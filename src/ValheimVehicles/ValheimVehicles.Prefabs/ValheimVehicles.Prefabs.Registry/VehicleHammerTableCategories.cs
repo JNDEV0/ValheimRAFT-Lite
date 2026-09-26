@@ -16,19 +16,25 @@ namespace ValheimVehicles.Prefabs.Registry
   public static class VehicleHammerTableCategories
   {
     // Canonical (stable) category IDs used everywhere in config & code
-    public const string Vehicles = "Vehicles";
-    public const string Tools = "Tools";
-    public const string Propulsion = "Propulsion";
-    public const string Power = "Power";
-    public const string Structure = "Structure";
-    public const string Hull = "Hull";
+    public const string Resined = "Resined";
+    public const string Nailed = "Nailed";
+    public const string Iron = "Iron";
+    public const string Misc = "Misc";
     public const string Deprecated = "Deprecated";
+
+    // Backwards-compatible aliases for existing code references
+    public const string Vehicles = Misc;
+    public const string Tools = Misc;
+    public const string Propulsion = Misc;
+    public const string Power = Misc;
+    public const string Structure = Misc;
+    public const string Hull = Iron;
 
     /// <summary>
     /// Default order of canonical IDs (used to append any missing that user omitted).
     /// </summary>
     public static readonly List<string> AllVehicleHammerCategoriesFallbackNames =
-      new() { Tools, Hull, Structure, Power, Propulsion, Vehicles, Deprecated };
+      new() { Resined, Nailed, Iron, Misc, Deprecated };
 
     /// <summary>
     /// English canonical -> localization key ($key) mapping.
@@ -37,21 +43,70 @@ namespace ValheimVehicles.Prefabs.Registry
     private static readonly Dictionary<string, string> EnglishToLocKey =
       new(StringComparer.Ordinal)
       {
-        { Tools, "$valheim_vehicles_build_hammer_category_tools" },
-        { Hull, "$valheim_vehicles_build_hammer_category_hull" },
-        { Structure, "$valheim_vehicles_build_hammer_category_structure" },
-        { Power, "$valheim_vehicles_build_hammer_category_power" },
-        { Propulsion, "$valheim_vehicles_build_hammer_category_propulsion" },
-        { Vehicles, "$valheim_vehicles_build_hammer_category_vehicles" },
-        { Deprecated, "$valheim_vehicles_build_hammer_category_deprecated" }
+        { Resined, "$valheim_vehicles_build_hammer_category_resined" },
+        { Nailed, "$valheim_vehicles_build_hammer_category_nailed" },
+        { Iron, "$valheim_vehicles_build_hammer_category_iron" },
+        { Misc, "$valheim_vehicles_build_hammer_category_misc" },
+        { Deprecated, "$valheim_vehicles_build_hammer_category_deprecated" },
+        // Legacy mappings
+        { "Tools", "$valheim_vehicles_build_hammer_category_misc" },
+        { "Vehicles", "$valheim_vehicles_build_hammer_category_misc" },
+        { "Propulsion", "$valheim_vehicles_build_hammer_category_misc" },
+        { "Power", "$valheim_vehicles_build_hammer_category_misc" },
+        { "Structure", "$valheim_vehicles_build_hammer_category_misc" },
+        { "Hull", "$valheim_vehicles_build_hammer_category_iron" }
       };
+
+    /// <summary>
+    /// Categorizes a piece prefab into Resined, Nailed, Iron, or Misc.
+    /// </summary>
+    public static string GetCategoryForPiece(string name)
+    {
+      if (string.IsNullOrEmpty(name)) return Misc;
+      var clean = name.Replace("(Clone)", "").Trim();
+
+      // 1. Check Iron
+      if (clean.IndexOf("iron", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          clean.IndexOf("porthole", StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        return Iron;
+      }
+
+      // 2. Check Resined (specific legacy wood rib/prow pieces)
+      if (clean.StartsWith("ValheimVehicles_Ship_Hull_Prow_Wood", StringComparison.OrdinalIgnoreCase) ||
+          clean.StartsWith("ValheimVehicles_Ship_Hull_Rib_Wood", StringComparison.OrdinalIgnoreCase) ||
+          clean.StartsWith("ValheimVehicles_Ship_Hull_Rib_Corner_Wood", StringComparison.OrdinalIgnoreCase) ||
+          clean.StartsWith("ValheimVehicles_Ship_Hull_Rib_Corner_2x2x4", StringComparison.OrdinalIgnoreCase) ||
+          clean.StartsWith("ValheimVehicles_Hull_Slab_Wood_4x4", StringComparison.OrdinalIgnoreCase) ||
+          clean.StartsWith("ValheimVehicles_Ship_Hull_Rib_Corner_Floor", StringComparison.OrdinalIgnoreCase))
+      {
+        return Resined;
+      }
+
+      // 3. Check Nailed (v4 hulls, keel extensions, deck rails)
+      if (clean.IndexOf("hull", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          clean.IndexOf("keel", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          clean.IndexOf("rail", StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        return Nailed;
+      }
+
+      // 4. Everything else is Misc
+      return Misc;
+    }
 
     /// <summary>
     /// Returns true if the provided string is a valid canonical category ID (English).
     /// </summary>
     public static bool IsHammerTableCategory(string val)
     {
-      return AllVehicleHammerCategoriesFallbackNames.Contains(val);
+      return AllVehicleHammerCategoriesFallbackNames.Contains(val) ||
+             string.Equals(val, "Tools", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(val, "Hull", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(val, "Structure", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(val, "Power", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(val, "Propulsion", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(val, "Vehicles", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

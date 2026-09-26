@@ -6740,13 +6740,17 @@
     private static System.Reflection.MethodInfo? s_magicaSetParamMethod;
     private static bool s_magicaReflectionInitialized = false;
 
-    private static void UpdateMagicaCloth(MastComponent mast, bool isRetracted)
+    private static void UpdateMagicaCloth(MastComponent mast, bool isRetracted, float blendWeight = 1f)
     {
       if (mast == null) return;
 
-      foreach (var behaviour in mast.GetComponentsInChildren<Behaviour>(true))
+      var behaviours = (mast.m_magicaClothBehaviours != null && mast.m_magicaClothBehaviours.Count > 0)
+        ? mast.m_magicaClothBehaviours
+        : mast.GetComponentsInChildren<Behaviour>(true).Where(b => b != null && b.GetType().Name == "MagicaCloth").ToList();
+
+      foreach (var behaviour in behaviours)
       {
-        if (behaviour == null || behaviour.GetType().Name != "MagicaCloth") continue;
+        if (behaviour == null) continue;
 
         behaviour.enabled = !isRetracted && !mast.m_disableCloth;
 
@@ -6771,7 +6775,7 @@
             if (serializeData != null && s_magicaBlendWeightField != null)
             {
               var currentWeight = (float)s_magicaBlendWeightField.GetValue(serializeData);
-              var targetWeight = isRetracted ? 0f : 1f;
+              var targetWeight = isRetracted ? 0f : blendWeight;
               if (Mathf.Abs(currentWeight - targetWeight) > 0.01f)
               {
                 s_magicaBlendWeightField.SetValue(serializeData, targetWeight);
@@ -6848,14 +6852,74 @@
 
 
 
-        if (mast.m_sailObject != null)
+        if (mast.m_sailObject != null || mast.m_hasSailPositions)
         {
-          var sailScaleY = m_sailObject.transform.localScale.y;
+          var sailScaleY = m_sailObject != null ? m_sailObject.transform.localScale.y : 0f;
           var isRetracted = sailScaleY <= 0.05f;
 
-          if (mast.m_allowSailShrinking)
+          mast.InitSailPositions();
+
+          if (mast.m_hasSailPositions && mast.m_sailBottomTransform != null)
           {
-            mast.InitSailPositions();
+            // Bone-driven rigged sail (Longship, Drakkar)
+            float targetPos = 0f;
+            if (!isRetracted)
+            {
+              if (vehicleSpeed == Ship.Speed.Half)
+              {
+                targetPos = 0.5f;
+              }
+              else if (vehicleSpeed == Ship.Speed.Full)
+              {
+                targetPos = 1.0f;
+              }
+              else
+              {
+                targetPos = Mathf.Clamp01(sailScaleY);
+              }
+            }
+
+            mast.m_currentSailPosition = Mathf.MoveTowards(mast.m_currentSailPosition, targetPos, Time.fixedDeltaTime * 1.5f);
+
+            bool isSailActive = mast.m_currentSailPosition > 0.02f;
+
+            // Interpolate sail bottom position
+            Vector3 fromPos, toPos;
+            float lerpT;
+            if (mast.m_currentSailPosition < 0.5f)
+            {
+              fromPos = mast.m_sailFurledLocalPos;
+              toPos = mast.m_sailMidfurledLocalPos;
+              lerpT = mast.m_currentSailPosition / 0.5f;
+            }
+            else
+            {
+              fromPos = mast.m_sailMidfurledLocalPos;
+              toPos = mast.m_sailUnfurledLocalPos;
+              lerpT = (mast.m_currentSailPosition - 0.5f) / 0.5f;
+            }
+            mast.m_sailBottomTransform.localPosition = Vector3.Lerp(fromPos, toPos, lerpT);
+
+            // Toggle visibility of sail meshes and attached ropes
+            foreach (var r in mast.m_sailRenderers)
+            {
+              if (r != null) r.enabled = isSailActive;
+            }
+            foreach (var lr in mast.m_ropeRenderers)
+            {
+              if (lr != null) lr.enabled = isSailActive;
+            }
+
+            // Wind cloth physics: only active at full speed (speed 3)
+            bool clothPhysicsActive = targetPos >= 0.95f && isSailActive;
+            float blendWeight = clothPhysicsActive
+              ? (mast.m_sailBlendWeightCurve != null ? mast.m_sailBlendWeightCurve.Evaluate(mast.m_currentSailPosition) : 1f)
+              : 0f;
+            UpdateMagicaCloth(mast, isRetracted: !clothPhysicsActive, blendWeight: blendWeight);
+          }
+          else if (mast.m_allowSailShrinking && mast.m_sailObject != null)
+          {
+            // Standard mesh-scaled sail (Raft mast, Karve mast)
             var widthScale = mast.GetSailWidthScale();
             var targetScale = new Vector3(widthScale, Mathf.Max(0.01f, sailScaleY), 1f);
             mast.m_sailObject.transform.localScale = targetScale;
@@ -6866,24 +6930,32 @@
             newPos.y += (1f - targetScale.y) * mast.m_sailTopLocalY + verticalOffset;
             mast.m_sailObject.transform.localPosition = newPos;
 
+            bool isSailActive = !isRetracted && sailScaleY > 0.02f;
+
+            // Toggle visibility of sail meshes and attached ropes
+            foreach (var r in mast.m_sailRenderers)
+            {
+              if (r != null) r.enabled = isSailActive;
+            }
+            foreach (var lr in mast.m_ropeRenderers)
+            {
+              if (lr != null) lr.enabled = isSailActive;
+            }
+
+            // Wind cloth physics: only active at full speed (speed 3)
+            bool clothPhysicsActive = sailScaleY > 0.75f && isSailActive && !mast.m_disableCloth;
             if (mast.m_sailCloth != null)
             {
-              mast.m_sailCloth.enabled = !isRetracted && !mast.m_disableCloth;
-              if (!isRetracted && EnvMan.instance != null)
+              mast.m_sailCloth.enabled = clothPhysicsActive;
+              if (clothPhysicsActive && EnvMan.instance != null)
               {
                 mast.m_sailCloth.externalAcceleration = EnvMan.instance.GetWindForce();
               }
             }
 
-            UpdateMagicaCloth(mast, isRetracted);
-
-            var renderers = mast.m_sailObject.GetComponentsInChildren<Renderer>(true);
-            foreach (var r in renderers)
-            {
-              r.enabled = !isRetracted || sailScaleY > 0.02f;
-            }
+            UpdateMagicaCloth(mast, isRetracted: !clothPhysicsActive, blendWeight: clothPhysicsActive ? 1f : 0f);
           }
-          else
+          else if (mast.m_sailObject != null)
           {
             var widthScale = mast.GetSailWidthScale();
             mast.m_sailObject.transform.localScale = new Vector3(widthScale, 1f, 1f);

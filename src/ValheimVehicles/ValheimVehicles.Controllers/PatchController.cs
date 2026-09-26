@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using BepInEx;
 using BepInEx.Bootstrap;
 using HarmonyLib;
@@ -54,7 +54,8 @@ public static class PatchController
       typeof(Container_Patches),
       typeof(VehicleOwnership_Patches),
       typeof(ZNet_WorldSession_Patches),
-      typeof(VesselHorn_Patches)
+      typeof(VesselHorn_Patches),
+      typeof(ByUsagePieceList_Patch)
     );
 
     if (PatchConfig.MineRockPatch.Value)

@@ -467,6 +467,22 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       ]
     },
     {
+      "hull_bow_center_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 24, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_hull_bow_center_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 24, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
       "hull_bow_tri_left_iron", [
         new RequirementConfig { Item = "RoundLog", Amount = 16, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },

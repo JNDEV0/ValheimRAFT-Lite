@@ -133,6 +133,25 @@ namespace ValheimVehicles.Prefabs.Registry
       "MBBoardingRamp", // 119. Boarding Ramp
       "MBBoardingRamp_Wide", // 120. Wide Boarding Ramp
 
+      // Cannons, Turrets & Gunnery Control (moved up per user request)
+      "ValheimVehicles_Cannon_Fixed_Tier1", // Deck Cannon - fixed
+      "ValheimVehicles_Cannon_Turret_Tier1", // Turret Cannon - Auto
+      "ValheimVehicles_Powder_Barrel", // Powder Barrel - Ammo Storage
+      "ValheimVehicles_Cannon_Control_Center", // Gunnery Binnacle - Cannon Control Center
+
+      // Planters & Pier Supports (moved up per user request)
+      "MBDirtFloor_1x1", // Ship Planter - Small
+      "MBDirtFloor_2x2", // Ship Planter - Large
+      "MBPier_Stone", // Stone Piling - Pier Support
+      "MBPier_Pole", // Timber Piling - Pier Support
+
+      // Eitr Power System & Controls (moved up per user request)
+      "ValheimVehicles_Power_Source_Eitr", // Power Generator
+      "ValheimVehicles_Power_Storage_Eitr", // Battery / Power Storage
+      "ValheimVehicles_Power_Conduit_Charge_Plate", // Power Charge Plate
+      "ValheimVehicles_Power_Conduit_Drain_Plate", // Power Drain Plate
+      "ValheimVehicles_Mechanism_ToggleSwitch", // Toggle Switch - Boat Settings
+
       // Wood Hulls, Ribs, Prow, Decks, and Guard Rails
       "ValheimVehicles_Ship_Hull_Prow_Wood_2x2x4", // Resined Hull Cutwater - center
       "ValheimVehicles_Ship_Hull_Rib_Wood", // Resined Hull Midship Frame - Side
@@ -167,27 +186,32 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_hull_rail_45deg_wood", // Deck Guard-Rail - 45 deg
       "ValheimVehicles_hull_rail_corner_wood", // Deck Stern Guard-Rail - rounded
       "ValheimVehicles_hull_rail_prow_corner_left_wood", // Deck Prow Guard-Rail - Left
-      "ValheimVehicles_hull_rail_prow_corner_right_wood" // Deck Prow Guard-Rail - Right
-    };
+      "ValheimVehicles_hull_rail_prow_corner_right_wood", // Deck Prow Guard-Rail - Right
 
-    private static readonly string[] EndPieceOrder = new[]
-    {
-      "ValheimVehicles_Cannon_Fixed_Tier1", // 39. Deck Cannon - fixed
-      "ValheimVehicles_Cannon_Turret_Tier1", // 40. Turret Cannon - Auto
-      "ValheimVehicles_Powder_Barrel", // 42. Powder Barrel - Ammo Storage
-      "ValheimVehicles_Cannon_Control_Center", // 43. Gunnery Binnacle - Cannon Control Center
-      "MBDirtFloor_1x1", // 38. Ship Planter - Small
-      "MBDirtFloor_2x2", // 39. Ship Planter - Large
-      "MBPier_Stone", // 36. Stone Piling - Pier Support
-      "MBPier_Pole", // 37. Timber Piling - Pier Support
-      "ValheimVehicles_Power_Source_Eitr", // 48. Power Generator
-      "ValheimVehicles_Power_Storage_Eitr", // 49. Battery / Power Storage
-      "ValheimVehicles_Power_Conduit_Charge_Plate", // 50. Power Charge Plate
-      "ValheimVehicles_Power_Conduit_Drain_Plate", // 50. Power Drain Plate
-
-      // Iron-Plated Deck Plankings
-      "ValheimVehicles_Hull_Slab_Iron_2x2", // Iron-Plated Deck Planking - Small
-      "ValheimVehicles_hull_floor_4x4_iron", // Iron-Plated Deck Planking
+      // Iron-Plated Hulls, Ribs, Decks, and Guard Rails
+      "ValheimVehicles_hull_bow_center_iron", // Iron-Plated Hull Cutwater - center
+      "ValheimVehicles_hull_floor_keel_4x2_left_iron", // Iron-Plated Garboard Strake
+      "ValheimVehicles_hull_rib_iron", // Iron-Plated Hull Midship Frame - Side
+      "ValheimVehicles_hull_bow_tri_left_iron", // Iron-Plated Hull Front Prow - left
+      "ValheimVehicles_hull_bow_tri_right_iron", // Iron-Plated Hull Front Prow - right
+      "ValheimVehicles_hull_bow_curved_left_iron", // Iron-Plated Hull Rear stern - left
+      "ValheimVehicles_hull_bow_curved_right_iron", // Iron-Plated Hull Rear stern - right
+      "ValheimVehicles_hull_rib_aft_center_iron", // Iron-Plated Hull Rear Counter Stern - center
+      "ValheimVehicles_hull_rib_aft_left_iron", // Iron-Plated Hull Rear Counter Stern - Left
+      "ValheimVehicles_hull_rib_aft_right_iron", // Iron-Plated Hull Rear Counter Stern - Right
+      "ValheimVehicles_hull_seal_corner_left_iron", // Iron-Plated Deck Counter Stern Planking - Left
+      "ValheimVehicles_hull_seal_corner_right_iron", // Iron-Plated Deck Counter Stern Planking - Right
+      "ValheimVehicles_hull_seal_bow_left_iron", // Iron-Plated Deck Stern Planking - Left
+      "ValheimVehicles_hull_seal_bow_right_iron", // Iron-Plated Deck Stern Planking - Right
+      "ValheimVehicles_hull_seal_tri_bow_left_iron", // Iron-Plated Deck Prow Planking - Left
+      "ValheimVehicles_hull_seal_tri_bow_right_iron", // Iron-Plated Deck Prow Planking - Right
+      "ValheimVehicles_hull_rail_connector_iron", // Iron Guard-Rail - single
+      "ValheimVehicles_hull_rail_straight_iron", // Iron Guard-Rail - triple
+      "ValheimVehicles_hull_rail_25deg_iron", // Iron Guard-Rail - 25 deg
+      "ValheimVehicles_hull_rail_45deg_iron", // Iron Guard-Rail - 45 deg
+      "ValheimVehicles_hull_rail_corner_iron", // Iron Stern Guard-Rail - rounded
+      "ValheimVehicles_hull_rail_prow_corner_left_iron", // Iron Prow Guard-Rail - Left
+      "ValheimVehicles_hull_rail_prow_corner_right_iron", // Iron Prow Guard-Rail - Right
 
       // Iron-Plated Frame Walls & Portholes
       "ValheimVehicles_Hull_Wall_Iron_2x2", // Iron-Plated Frame Wall - Small
@@ -195,9 +219,14 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_ShipWindow_Wall_Porthole_2x2", // Iron-Plated Porthole Frame - Small
       "ValheimVehicles_ShipWindow_Wall_Porthole_4x4", // Iron-Plated Porthole Frame
       "ValheimVehicles_ShipWindow_Wall_Porthole_8x4", // Iron-Plated Porthole Frame - Large
-      "ValheimVehicles_ShipWindow_Floor_Porthole_4x4", // Iron-Plated Porthole Floor
+      "ValheimVehicles_ShipWindow_Floor_Porthole_4x4" // Iron-Plated Porthole Floor
+    };
 
-      "ValheimVehicles_Mechanism_ToggleSwitch" // 46. Toggle Switch - Boat Settings
+    private static readonly string[] EndPieceOrder = new[]
+    {
+      // Iron-Plated Deck Plankings (placed at the very end where cannons previously were)
+      "ValheimVehicles_Hull_Slab_Iron_2x2", // Iron-Plated Deck Planking - Small
+      "ValheimVehicles_hull_floor_4x4_iron" // Iron-Plated Deck Planking
     };
 
     private static readonly HashSet<string> RedundantPieces = new(StringComparer.OrdinalIgnoreCase)
@@ -336,6 +365,7 @@ namespace ValheimVehicles.Prefabs.Registry
       { "ValheimVehicles_Power_Conduit_Charge_Plate", new[] { "valheim_vehicles_mechanism_power_charge_plate", "valheim_vehicles_power_conduit_charge_plate", "powerconduitchargeplate" } },
       { "ValheimVehicles_Power_Conduit_Drain_Plate", new[] { "valheim_vehicles_mechanism_power_drain_plate", "valheim_vehicles_power_conduit_drain_plate", "powerconduitdrainplate" } },
       { "ValheimVehicles_Power_Pylon", new[] { "valheim_vehicles_mechanism_power_pylon", "powerpylon" } },
+      { "ValheimVehicles_hull_bow_center_iron", new[] { "hull_bow_center_iron", "valheimvehicles_hull_bow_center_iron", "valheim_vehicles_hull_bow_center_iron" } },
       { "ValheimVehicles_Hull_Slab_Iron_2x2", new[] { "hull_slab_iron_2x2", "valheimvehicles_hull_slab_iron_2x2", "valheim_vehicles_hull_slab_iron_2x2" } },
       { "ValheimVehicles_hull_floor_4x4_iron", new[] { "hull_floor_4x4_iron", "valheimvehicles_hull_floor_4x4_iron", "valheim_vehicles_hull_floor_4x4_iron", "hull_slab_iron_4x4", "valheimvehicles_hull_slab_iron_4x4", "valheim_vehicles_hull_slab_iron_4x4", "ValheimVehicles_Hull_Slab_Iron_4x4" } },
       { "ValheimVehicles_Hull_Wall_Iron_2x2", new[] { "hull_wall_iron_2x2", "valheimvehicles_hull_wall_iron_2x2", "valheim_vehicles_hull_wall_iron_2x2" } },

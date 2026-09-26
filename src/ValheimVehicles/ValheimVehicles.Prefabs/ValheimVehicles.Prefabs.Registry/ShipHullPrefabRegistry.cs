@@ -72,6 +72,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       "hull_rib_wood",
       "hull_rib_iron",
       "hull_bow_center_wood",
+      "hull_bow_center_iron",
       "hull_bow_curved_left_wood",
       "hull_bow_curved_right_wood",
       "hull_bow_curved_left_iron",
@@ -181,6 +182,13 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
         {
           Name = "$valheim_vehicles_hull_bow_center_wood",
           Description = "$valheim_vehicles_hull_bow_center_wood_desc"
+        }
+      },
+      {
+        "hull_bow_center_iron", new TranslationData
+        {
+          Name = "$valheim_vehicles_hull_bow_center_iron",
+          Description = "$valheim_vehicles_hull_bow_center_iron_desc"
         }
       },
       {
@@ -1096,6 +1104,16 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
 
       var icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(iconAssetName);
 
+      if (!icon || icon.name == SpriteNames.ErrorIcon)
+      {
+        if (iconAssetName.Contains("iron"))
+        {
+          var fallbackName = iconAssetName.Replace("iron", "wood");
+          var fallback = LoadValheimVehicleAssets.VehicleSprites.GetSprite(fallbackName);
+          if (fallback) icon = fallback;
+        }
+      }
+
       if (!icon)
       {
         icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ErrorIcon);
@@ -1596,9 +1614,10 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     bool addToPieceTable = true
   )
   {
+    var pieceCategory = VehicleHammerTableCategories.GetCategoryForPiece(prefabName);
     if (hammerTableCategory == null || !VehicleHammerTableCategories.IsHammerTableCategory(hammerTableCategory))
     {
-      hammerTableCategory = VehicleHammerTableCategories.Hull;
+      hammerTableCategory = pieceCategory;
     }
 
     try
@@ -1628,7 +1647,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
           new PieceConfig
           {
             PieceTable = PrefabRegistryController.GetPieceTableName(),
-            Category = PrefabRegistryController.SetCategoryName(hammerTableCategory),
+            Category = PrefabRegistryController.SetCategoryName(pieceCategory),
             Enabled = true, // PrefabRegistryController will update this later based on if the prefab is disabled
             Requirements = GetRequirements(prefabName, hullMaterial, materialCount)
           }));

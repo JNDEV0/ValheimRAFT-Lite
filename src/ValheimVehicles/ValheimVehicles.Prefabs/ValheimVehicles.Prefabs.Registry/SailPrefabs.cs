@@ -65,6 +65,29 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     vikingShipMastComponent.m_allowSailRotation = true;
     vikingShipMastComponent.m_allowSailShrinking = true;
 
+    var sourceVikingShip = LoadValheimAssets.vikingShipPrefab != null ? LoadValheimAssets.vikingShipPrefab.GetComponent<Ship>() : null;
+    if (sourceVikingShip != null && sourceVikingShip.m_sailFurledPosition != null && sourceVikingShip.m_sailMidfurledPosition != null && sourceVikingShip.m_sailUnfurledPosition != null)
+    {
+      var mastRoot = sourceVikingShip.m_mastObject != null ? sourceVikingShip.m_mastObject.transform : vikingShipMast.transform;
+      vikingShipMastComponent.m_sailFurledLocalPos = mastRoot.InverseTransformPoint(sourceVikingShip.m_sailFurledPosition.position);
+      vikingShipMastComponent.m_sailMidfurledLocalPos = mastRoot.InverseTransformPoint(sourceVikingShip.m_sailMidfurledPosition.position);
+      vikingShipMastComponent.m_sailUnfurledLocalPos = mastRoot.InverseTransformPoint(sourceVikingShip.m_sailUnfurledPosition.position);
+      vikingShipMastComponent.m_sailBlendWeightCurve = sourceVikingShip.m_sailBlendWeightCurve;
+      vikingShipMastComponent.m_hasSailPositions = true;
+
+      if (sourceVikingShip.m_sailBottomTransform != null)
+      {
+        var relPath = GetRelativeChildPath(mastRoot, sourceVikingShip.m_sailBottomTransform);
+        vikingShipMastComponent.m_sailBottomRelativePath = relPath;
+        vikingShipMastComponent.m_sailBottomTransform = !string.IsNullOrEmpty(relPath) ? vikingShipMastPrefab.transform.Find(relPath) : null;
+        if (vikingShipMastComponent.m_sailBottomTransform == null)
+        {
+          vikingShipMastComponent.m_sailBottomTransform = vikingShipMastPrefab.GetComponentsInChildren<Transform>(true)
+            .FirstOrDefault(t => t.name == sourceVikingShip.m_sailBottomTransform.name);
+        }
+      }
+    }
+
     // shipCollider
     PrefabRegistryHelpers.AddSnapPoint("$hud_snappoint_bottom",
       vikingShipMastPrefab);
@@ -87,20 +110,26 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
         [
           new RequirementConfig
           {
-            Amount = 10,
+            Amount = 20,
             Item = "FineWood",
             Recover = true
           },
           new RequirementConfig
           {
-            Amount = 2,
+            Amount = 10,
             Item = "RoundLog",
             Recover = true
           },
           new RequirementConfig
           {
-            Amount = 6,
-            Item = "WolfPelt",
+            Amount = 10,
+            Item = "DeerHide",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 10,
+            Item = "IronNails",
             Recover = true
           }
         ]
@@ -130,6 +159,29 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     mastComponent.m_allowSailRotation = true;
     mastComponent.m_allowSailShrinking = true;
 
+    var sourceDrakkar = LoadValheimAssets.drakkarPrefab != null ? LoadValheimAssets.drakkarPrefab.GetComponent<Ship>() : null;
+    if (sourceDrakkar != null && sourceDrakkar.m_sailFurledPosition != null && sourceDrakkar.m_sailMidfurledPosition != null && sourceDrakkar.m_sailUnfurledPosition != null)
+    {
+      var mastRoot = sourceDrakkar.m_mastObject != null ? sourceDrakkar.m_mastObject.transform : drakkalMast.transform;
+      mastComponent.m_sailFurledLocalPos = mastRoot.InverseTransformPoint(sourceDrakkar.m_sailFurledPosition.position);
+      mastComponent.m_sailMidfurledLocalPos = mastRoot.InverseTransformPoint(sourceDrakkar.m_sailMidfurledPosition.position);
+      mastComponent.m_sailUnfurledLocalPos = mastRoot.InverseTransformPoint(sourceDrakkar.m_sailUnfurledPosition.position);
+      mastComponent.m_sailBlendWeightCurve = sourceDrakkar.m_sailBlendWeightCurve;
+      mastComponent.m_hasSailPositions = true;
+
+      if (sourceDrakkar.m_sailBottomTransform != null)
+      {
+        var relPath = GetRelativeChildPath(mastRoot, sourceDrakkar.m_sailBottomTransform);
+        mastComponent.m_sailBottomRelativePath = relPath;
+        mastComponent.m_sailBottomTransform = !string.IsNullOrEmpty(relPath) ? prefab.transform.Find(relPath) : null;
+        if (mastComponent.m_sailBottomTransform == null)
+        {
+          mastComponent.m_sailBottomTransform = prefab.GetComponentsInChildren<Transform>(true)
+            .FirstOrDefault(t => t.name == sourceDrakkar.m_sailBottomTransform.name);
+        }
+      }
+    }
+
     // shipCollider
     PrefabRegistryHelpers.AddSnapPoint("$hud_snappoint_bottom", prefab);
 
@@ -151,13 +203,25 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
         new RequirementConfig
         {
           Amount = 20,
-          Item = "Wood",
+          Item = "Ashwood",
           Recover = true
         },
         new RequirementConfig
         {
           Amount = 20,
           Item = "LinenThread",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 10,
+          Item = "IronNails",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 5,
+          Item = "CeramicPlate",
           Recover = true
         }
       ]
@@ -389,5 +453,20 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     }
 
     mastComponent.m_sailWidthScale = 1.65f;
+  }
+
+  private static string GetRelativeChildPath(Transform root, Transform target)
+  {
+    if (target == null || root == null || target == root) return "";
+    var segments = new System.Collections.Generic.List<string>();
+    var curr = target;
+    while (curr != null && curr != root)
+    {
+      segments.Add(curr.name);
+      curr = curr.parent;
+    }
+    if (curr != root) return target.name;
+    segments.Reverse();
+    return string.Join("/", segments);
   }
 }

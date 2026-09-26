@@ -24,9 +24,70 @@ public class MastComponent : MonoBehaviour
   public float m_sailTopLocalY = 0f;
   public bool m_hasInitializedSailPositions = false;
 
+  // Bone-driven / Rigged sail support (Longship, Drakkar)
+  public Transform? m_sailBottomTransform;
+  public string m_sailBottomRelativePath = "";
+  public Vector3 m_sailFurledLocalPos;
+  public Vector3 m_sailMidfurledLocalPos;
+  public Vector3 m_sailUnfurledLocalPos;
+  public bool m_hasSailPositions = false;
+  public AnimationCurve? m_sailBlendWeightCurve;
+  public float m_currentSailPosition = 0f;
+
+  public List<Renderer> m_sailRenderers = new();
+  public List<LineRenderer> m_ropeRenderers = new();
+  public List<Behaviour> m_magicaClothBehaviours = new();
+
   public void InitSailPositions()
   {
-    if (m_hasInitializedSailPositions || m_sailObject == null || m_sailObject == gameObject) return;
+    if (m_hasInitializedSailPositions) return;
+
+    // Cache sail renderers
+    m_sailRenderers.Clear();
+    if (m_sailObject != null && m_sailObject != gameObject)
+    {
+      m_sailRenderers.AddRange(m_sailObject.GetComponentsInChildren<Renderer>(true));
+    }
+    else
+    {
+      var renderers = GetComponentsInChildren<Renderer>(true);
+      foreach (var r in renderers)
+      {
+        if (r.name.IndexOf("sail", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            r.name.IndexOf("cloth", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            r is SkinnedMeshRenderer)
+        {
+          m_sailRenderers.Add(r);
+        }
+      }
+    }
+
+    // Cache rope line renderers
+    m_ropeRenderers.Clear();
+    m_ropeRenderers.AddRange(GetComponentsInChildren<LineRenderer>(true));
+
+    // Cache MagicaCloth behaviours
+    m_magicaClothBehaviours.Clear();
+    foreach (var b in GetComponentsInChildren<Behaviour>(true))
+    {
+      if (b != null && b.GetType().Name == "MagicaCloth")
+      {
+        m_magicaClothBehaviours.Add(b);
+      }
+    }
+
+    // Resolve m_sailBottomTransform if path was saved
+    if (m_sailBottomTransform == null && !string.IsNullOrEmpty(m_sailBottomRelativePath))
+    {
+      m_sailBottomTransform = transform.Find(m_sailBottomRelativePath);
+    }
+
+    if (m_sailObject == null || m_sailObject == gameObject)
+    {
+      m_hasInitializedSailPositions = true;
+      return;
+    }
+
     m_initialSailLocalPos = m_sailObject.transform.localPosition;
 
     var mf = m_sailObject.GetComponentInChildren<MeshFilter>(true);
