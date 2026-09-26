@@ -118,7 +118,9 @@ namespace ValheimVehicles.Prefabs.Registry
     private static readonly string[] StartPieceOrder = new[]
     {
       "ValheimVehicles_WaterVehicleShip", // 1. Main Keel
-      "ValheimVehicles_ShipKeel", // 112. Keel Extension 4x8
+      "ValheimVehicles_ShipKeel", // Nailed Keel Extension 4x8 (Wood)
+      "ValheimVehicles_Ship_Hull_Wood", // Nailed Keel Extension (Wood)
+      "ValheimVehicles_Ship_Hull_Iron", // Iron-Plated Keel Extension (Iron)
       "ValheimVehicles_ShipSteeringWheel", // 45. Ship's Helm
       "ValheimVehicles_ShipRudderBasic", // 47. Steering Oar
       "ValheimVehicles_ShipRudderAdvanced_Wood", // 51/52. Sternpost Rudder
@@ -183,6 +185,15 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_Power_Conduit_Charge_Plate", // 50. Power Charge Plate
       "ValheimVehicles_Power_Conduit_Drain_Plate", // 50. Power Drain Plate
       "ValheimVehicles_Power_Pylon", // Power Pylon
+
+      // Iron-Plated Frame Walls & Portholes
+      "ValheimVehicles_Hull_Wall_Iron_2x2", // Iron-Plated Frame Wall - Small
+      "ValheimVehicles_Hull_Wall_Iron_4x4", // Iron-Plated Frame Wall
+      "ValheimVehicles_ShipWindow_Wall_Porthole_2x2", // Iron-Plated Porthole Frame - Small
+      "ValheimVehicles_ShipWindow_Wall_Porthole_4x4", // Iron-Plated Porthole Frame
+      "ValheimVehicles_ShipWindow_Wall_Porthole_8x4", // Iron-Plated Porthole Frame - Large
+      "ValheimVehicles_ShipWindow_Floor_Porthole_4x4", // Iron-Plated Porthole Floor
+
       "ValheimVehicles_Mechanism_ToggleSwitch" // 46. Toggle Switch - Boat Settings
     };
 
@@ -240,7 +251,42 @@ namespace ValheimVehicles.Prefabs.Registry
       "hull_rib_prow_seal_iron",
       "ValheimVehicles_Hull_Rib_Prow_Seal_iron",
       "Hull_Rib_Prow_Seal_iron",
-      "ValheimVehicles_hull_prow_seal_iron"
+      "ValheimVehicles_hull_prow_seal_iron",
+
+      // Porthole Window 6x4 (Iron)
+      "WindowWallPorthole6x4",
+      "WindowWallPorthole6x4Prefab",
+      "ValheimVehicles_ShipWindow_Wall_Porthole_6x4",
+      "valheim_vehicles_shipwindow_wall_porthole_6x4",
+      "ShipWindow_Wall_Porthole_6x4",
+      "hull_wall_window_porthole_iron_6x4",
+
+      // Hull-Rib Side 2x2x2 (Iron)
+      "hull_rib_iron",
+      "hull_rib_iron_2x2x2",
+      "ValheimVehicles_Ship_Hull_Rib_Iron",
+      "Ship_Hull_Rib_Iron",
+
+      // Hull-Rib Prow (Iron)
+      "hull_prow_iron_2x2x4",
+      "ValheimVehicles_Ship_Hull_Prow_Iron_2x2x4",
+      "Ship_Hull_Prow_Iron_2x2x4",
+
+      // Hull-Rib Prow Sleek (Iron) 2x2x8 (Left & Right)
+      "ValheimVehicles_Ship_Hull_Prow_Rib_sleek_2x2x8_Iron_left",
+      "ValheimVehicles_Ship_Hull_Prow_Rib_sleek_2x2x8_Iron_right",
+      "Ship_Hull_Prow_Rib_sleek_2x2x8_Iron_left",
+      "Ship_Hull_Prow_Rib_sleek_2x2x8_Iron_right",
+      "hull_prow_rib_sleek_2x2x8_iron_left",
+      "hull_prow_rib_sleek_2x2x8_iron_right",
+
+      // Hull-Rib Prow Cutter (Iron) 2x2x8 (Left & Right)
+      "ValheimVehicles_Ship_Hull_Prow_Rib_cutter_2x2x8_Iron_left",
+      "ValheimVehicles_Ship_Hull_Prow_Rib_cutter_2x2x8_Iron_right",
+      "Ship_Hull_Prow_Rib_cutter_2x2x8_Iron_left",
+      "Ship_Hull_Prow_Rib_cutter_2x2x8_Iron_right",
+      "hull_prow_rib_cutter_2x2x8_iron_left",
+      "hull_prow_rib_cutter_2x2x8_iron_right"
     };
 
     private static string NormalizePieceName(string name)
@@ -256,7 +302,8 @@ namespace ValheimVehicles.Prefabs.Registry
 
     private static readonly Dictionary<string, string[]> PieceAliases = new(StringComparer.OrdinalIgnoreCase)
     {
-      { "ValheimVehicles_ShipKeel", new[] { "valheimvehicles_ship_hull_wood", "shipkeel", "mbkeel" } },
+      { "ValheimVehicles_ShipKeel", new[] { "valheimvehicles_ship_hull_wood", "shipkeel", "mbkeel", "valheim_vehicles_hull_center_wood", "hull_center_wood", "ship_hull_wood" } },
+      { "ValheimVehicles_Ship_Hull_Iron", new[] { "valheimvehicles_ship_hull_iron", "shiphullcenteriron", "ship_hull_iron", "valheim_vehicles_hull_center_iron", "hull_center_iron" } },
       { "ValheimVehicles_ShipSteeringWheel", new[] { "mb_steering_wheel", "shipsteeringwheel", "steeringwheel" } },
       { "ValheimVehicles_ShipRudderBasic", new[] { "valheim_vehicles_rudder_basic", "shiprudderbasic", "rudderbasic" } },
       { "ValheimVehicles_ShipRudderAdvanced_Wood", new[] { "valheim_vehicles_rudder_advanced", "shiprudderadvancedwood", "shiprudderadvancedsinglewood" } },
@@ -281,6 +328,12 @@ namespace ValheimVehicles.Prefabs.Registry
       { "ValheimVehicles_Power_Conduit_Charge_Plate", new[] { "valheim_vehicles_mechanism_power_charge_plate", "valheim_vehicles_power_conduit_charge_plate", "powerconduitchargeplate" } },
       { "ValheimVehicles_Power_Conduit_Drain_Plate", new[] { "valheim_vehicles_mechanism_power_drain_plate", "valheim_vehicles_power_conduit_drain_plate", "powerconduitdrainplate" } },
       { "ValheimVehicles_Power_Pylon", new[] { "valheim_vehicles_mechanism_power_pylon", "powerpylon" } },
+      { "ValheimVehicles_Hull_Wall_Iron_2x2", new[] { "hull_wall_iron_2x2", "valheimvehicles_hull_wall_iron_2x2", "valheim_vehicles_hull_wall_iron_2x2" } },
+      { "ValheimVehicles_Hull_Wall_Iron_4x4", new[] { "hull_wall_iron_4x4", "valheimvehicles_hull_wall_iron_4x4", "valheim_vehicles_hull_wall_iron_4x4" } },
+      { "ValheimVehicles_ShipWindow_Wall_Porthole_2x2", new[] { "shipwindow_wall_porthole_2x2", "valheimvehicles_shipwindow_wall_porthole_2x2", "windowwallporthole2x2", "hull_wall_window_porthole_iron_2x2" } },
+      { "ValheimVehicles_ShipWindow_Wall_Porthole_4x4", new[] { "shipwindow_wall_porthole_4x4", "valheimvehicles_shipwindow_wall_porthole_4x4", "windowwallporthole4x4", "hull_wall_window_porthole_iron_4x4" } },
+      { "ValheimVehicles_ShipWindow_Wall_Porthole_8x4", new[] { "shipwindow_wall_porthole_8x4", "valheimvehicles_shipwindow_wall_porthole_8x4", "windowwallporthole8x4", "hull_wall_window_porthole_iron_8x4" } },
+      { "ValheimVehicles_ShipWindow_Floor_Porthole_4x4", new[] { "shipwindow_floor_porthole_4x4", "valheimvehicles_shipwindow_floor_porthole_4x4", "windowfloorporthole4x4", "hull_floor_window_porthole_iron_4x4" } },
       { "ValheimVehicles_Mechanism_ToggleSwitch", new[] { "valheim_vehicles_mechanism_toggle_switch", "mechanismtoggleswitch", "toggleswitch" } }
     };
 

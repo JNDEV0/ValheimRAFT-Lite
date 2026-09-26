@@ -136,12 +136,87 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         new RequirementConfig { Item = "Coal", Amount = 20, Recover = true }
       ]
     },
-    // Keel Extension
+    // Keel Extension (Wood / Nailed)
     {
       PrefabNames.ShipHullCenterWoodPrefabName, [
         new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
         new RequirementConfig { Item = "RoundLog", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Resin", Amount = 8, Recover = true }
+      ]
+    },
+    {
+      PrefabNames.ShipKeel, [
+        new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
+        new RequirementConfig { Item = "RoundLog", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 8, Recover = true }
+      ]
+    },
+    // Iron-Plated Keel Extension
+    {
+      PrefabNames.ShipHullCenterIronPrefabName, [
+        new RequirementConfig { Item = "RoundLog", Amount = 20, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 8, Recover = true }
+      ]
+    },
+    // Iron-Plated Deck Planking & Frame Walls
+    {
+      PrefabNames.GetHullSlabName(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwo), [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      PrefabNames.GetHullSlabName(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.FourByFour), [
+        new RequirementConfig { Item = "RoundLog", Amount = 24, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      PrefabNames.GetHullWallName(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwo), [
+        new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      PrefabNames.GetHullWallName(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.FourByFour), [
+        new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 8, Recover = true }
+      ]
+    },
+    // Iron-Plated Portholes
+    {
+      PrefabNames.WindowWallPorthole2x2Prefab, [
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "FineWood", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "BronzeNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      PrefabNames.WindowWallPorthole4x4Prefab, [
+        new RequirementConfig { Item = "Iron", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "FineWood", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "BronzeNails", Amount = 8, Recover = true }
+      ]
+    },
+    {
+      PrefabNames.WindowWallPorthole8x4Prefab, [
+        new RequirementConfig { Item = "Iron", Amount = 16, Recover = true },
+        new RequirementConfig { Item = "FineWood", Amount = 16, Recover = true },
+        new RequirementConfig { Item = "BronzeNails", Amount = 16, Recover = true }
+      ]
+    },
+    {
+      PrefabNames.WindowFloorPorthole4x4Prefab, [
+        new RequirementConfig { Item = "Iron", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "FineWood", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "BronzeNails", Amount = 8, Recover = true }
       ]
     },
     // Resined Hulls

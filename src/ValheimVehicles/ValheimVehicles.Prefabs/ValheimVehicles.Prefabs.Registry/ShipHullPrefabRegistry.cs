@@ -536,7 +536,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
   {
     RegisterWindowWallPorthole2x2Iron();
     RegisterWindowWallPorthole4x4Iron();
-    RegisterWindowWallPorthole6x4Iron();
+    // RegisterWindowWallPorthole6x4Iron(); // Disabled per build menu cleanup
     RegisterWindowWallPorthole8x4Iron();
     RegisterWindowFloorPorthole4x4Iron();
     // RegisterWindowPortholeIronStandalone(); // Disabled per build menu cleanup
@@ -572,7 +572,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
   public void RegisterDeprecatedHulls()
   {
     RegisterHullRib(HullMaterial.Wood, PrefabNames.PrefabSizeVariant.TwoByTwoByTwo);
-    RegisterHullRib(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByTwo);
+    // RegisterHullRib(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByTwo); // Disabled per build menu cleanup
 
     // Step 11: Removed hull-rib side 2x1x2 (wood)
     // RegisterHullRib(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByOneByTwo); // Disabled per build menu cleanup
@@ -613,17 +613,17 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     RegisterHullCornerFloor(HullMaterial.Iron, PrefabNames.DirectionVariant.Right, PrefabNames.PrefabSizeVariant.TwoByEight);
 
     RegisterHullProw(HullMaterial.Wood, PrefabNames.PrefabSizeVariant.TwoByTwoByFour);
-    RegisterHullProw(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByFour);
+    // RegisterHullProw(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByFour); // Disabled per build menu cleanup
 
     // RegisterHullProwSeal(); // Disabled per build menu cleanup
 
     // Step 12: Removed both hull-rib prow sleek (wood) 2x2x8 (left/right)
 
-    RegisterHullProwSpecialVariant(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Left, "cutter");
-    RegisterHullProwSpecialVariant(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Right, "cutter");
+    // RegisterHullProwSpecialVariant(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Left, "cutter"); // Disabled per build menu cleanup
+    // RegisterHullProwSpecialVariant(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Right, "cutter"); // Disabled per build menu cleanup
 
-    RegisterHullProwSpecialVariant(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Left, "sleek");
-    RegisterHullProwSpecialVariant(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Right, "sleek");
+    // RegisterHullProwSpecialVariant(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Left, "sleek"); // Disabled per build menu cleanup
+    // RegisterHullProwSpecialVariant(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwoByEight, PrefabNames.DirectionVariant.Right, "sleek"); // Disabled per build menu cleanup
 
     // todo remove iteration as it can be less stable when prefabs are updated with new variants.
 

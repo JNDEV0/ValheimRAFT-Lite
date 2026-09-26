@@ -2,6 +2,7 @@ using HarmonyLib;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
 using ValheimVehicles.SharedScripts;
@@ -32,15 +33,7 @@ public class ShipKeelPrefab : RegisterPrefab<ShipKeelPrefab>
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.ShipKeel),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
-      Requirements =
-      [
-        new RequirementConfig
-        {
-          Amount = 10,
-          Item = "Wood",
-          Recover = true
-        }
-      ]
+      Requirements = PrefabRecipeConfig.GetRequirements(PrefabNames.ShipKeel)
     }));
   }
 }

@@ -226,16 +226,23 @@ public abstract class PrefabRegistryHelpers
       {
         var materialName = materialVariant.ToLower();
         var isWood4x4 = materialVariant == HullMaterial.Wood && sizeVariant == PrefabNames.PrefabSizeVariant.FourByFour;
+        var isIron = materialVariant == HullMaterial.Iron;
+        var nameKey = isWood4x4
+          ? "$valheim_vehicles_hull_slab_wood_4x4"
+          : isIron
+            ? $"$valheim_vehicles_hull_slab_iron_{sizeName}"
+            : $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}";
+        var descKey = isWood4x4
+          ? "$valheim_vehicles_hull_slab_wood_4x4_desc"
+          : isIron
+            ? $"$valheim_vehicles_hull_slab_iron_{sizeName}_desc"
+            : pieceDescription;
         PieceDataDictionary.Add(
           PrefabNames.GetHullSlabName(materialVariant,
             sizeVariant), new PieceData
           {
-            Name = isWood4x4
-              ? "$valheim_vehicles_hull_slab_wood_4x4"
-              : $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}",
-            Description = isWood4x4
-              ? "$valheim_vehicles_hull_slab_wood_4x4_desc"
-              : pieceDescription,
+            Name = nameKey,
+            Description = descKey,
             Icon = spriteAtlas.GetSprite(
               $"{iconBaseName}_{materialName}_{sizeName}")
           });
@@ -265,13 +272,19 @@ public abstract class PrefabRegistryHelpers
       foreach (var materialVariant in materialVariants)
       {
         var materialName = materialVariant.ToLower();
+        var isIron = materialVariant == HullMaterial.Iron;
+        var nameKey = isIron
+          ? $"$valheim_vehicles_hull_wall_iron_{sizeName}"
+          : $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}";
+        var descKey = isIron
+          ? $"$valheim_vehicles_hull_wall_iron_{sizeName}_desc"
+          : pieceDescription;
         PieceDataDictionary.Add(
           PrefabNames.GetHullWallName(materialVariant,
             sizeVariant), new PieceData
           {
-            Name =
-              $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}",
-            Description = pieceDescription,
+            Name = nameKey,
+            Description = descKey,
             Icon = spriteAtlas.GetSprite(
               $"{iconBaseName}_{materialName}_{sizeName}")
           });
@@ -530,8 +543,8 @@ public abstract class PrefabRegistryHelpers
     PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPrefabName,
       new PieceData
       {
-        Name = "$valheim_vehicles_hull_center $valheim_vehicles_material_iron",
-        Description = $"valheim_vehicles_hull_center_desc {ironMatDesc}",
+        Name = "$valheim_vehicles_hull_center_iron",
+        Description = "$valheim_vehicles_hull_center_iron_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .HullCenterIron)
       });
@@ -600,8 +613,8 @@ public abstract class PrefabRegistryHelpers
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole2x2Prefab,
       new PieceData
       {
-        Name = "$valheim_vehicles_window_wall_porthole 2x2",
-        Description = "$valheim_vehicles_window_wall_porthole_desc 2x2",
+        Name = "$valheim_vehicles_window_wall_porthole_2x2",
+        Description = "$valheim_vehicles_window_wall_porthole_2x2_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WindowWallPorthole2x2)
       });
@@ -609,8 +622,8 @@ public abstract class PrefabRegistryHelpers
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole4x4Prefab,
       new PieceData
       {
-        Name = "$valheim_vehicles_window_wall_porthole 4x4",
-        Description = "$valheim_vehicles_window_wall_porthole_desc 4x4",
+        Name = "$valheim_vehicles_window_wall_porthole_4x4",
+        Description = "$valheim_vehicles_window_wall_porthole_4x4_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WindowWallPorthole4x4)
       });
@@ -627,8 +640,8 @@ public abstract class PrefabRegistryHelpers
     PieceDataDictionary.Add(PrefabNames.WindowWallPorthole8x4Prefab,
       new PieceData
       {
-        Name = "$valheim_vehicles_window_wall_porthole 8x4",
-        Description = "$valheim_vehicles_window_wall_porthole_desc 8x4",
+        Name = "$valheim_vehicles_window_wall_porthole_8x4",
+        Description = "$valheim_vehicles_window_wall_porthole_8x4_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WindowWallPorthole8x4)
       });
@@ -636,8 +649,8 @@ public abstract class PrefabRegistryHelpers
     PieceDataDictionary.Add(PrefabNames.WindowFloorPorthole4x4Prefab,
       new PieceData
       {
-        Name = "$valheim_vehicles_window_floor_porthole 4x4",
-        Description = "$valheim_vehicles_window_floor_porthole_desc 4x4",
+        Name = "$valheim_vehicles_window_floor_porthole_4x4",
+        Description = "$valheim_vehicles_window_floor_porthole_4x4_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .WindowFloorPorthole4x4Prefab)
       });
