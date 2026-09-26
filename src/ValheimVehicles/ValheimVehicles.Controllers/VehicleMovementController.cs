@@ -6859,63 +6859,17 @@
 
           mast.InitSailPositions();
 
-          if (mast.m_hasSailPositions && mast.m_sailBottomTransform != null)
+          if (mast.m_hasSailPositions)
           {
-            // Bone-driven rigged sail (Longship, Drakkar)
-            float targetPos = 0f;
-            if (!isRetracted)
-            {
-              if (vehicleSpeed == Ship.Speed.Half)
-              {
-                targetPos = 0.5f;
-              }
-              else if (vehicleSpeed == Ship.Speed.Full)
-              {
-                targetPos = 1.0f;
-              }
-              else
-              {
-                targetPos = Mathf.Clamp01(sailScaleY);
-              }
-            }
-
-            mast.m_currentSailPosition = Mathf.MoveTowards(mast.m_currentSailPosition, targetPos, Time.fixedDeltaTime * 1.5f);
-
-            bool isSailActive = mast.m_currentSailPosition > 0.02f;
-
-            // Interpolate sail bottom position
-            Vector3 fromPos, toPos;
-            float lerpT;
-            if (mast.m_currentSailPosition < 0.5f)
-            {
-              fromPos = mast.m_sailFurledLocalPos;
-              toPos = mast.m_sailMidfurledLocalPos;
-              lerpT = mast.m_currentSailPosition / 0.5f;
-            }
-            else
-            {
-              fromPos = mast.m_sailMidfurledLocalPos;
-              toPos = mast.m_sailUnfurledLocalPos;
-              lerpT = (mast.m_currentSailPosition - 0.5f) / 0.5f;
-            }
-            mast.m_sailBottomTransform.localPosition = Vector3.Lerp(fromPos, toPos, lerpT);
-
-            // Toggle visibility of sail meshes and attached ropes
+            // Rigged sails (Longship, Drakkar): Keep renderers enabled in default stable state
             foreach (var r in mast.m_sailRenderers)
             {
-              if (r != null) r.enabled = isSailActive;
+              if (r != null) r.enabled = true;
             }
             foreach (var lr in mast.m_ropeRenderers)
             {
-              if (lr != null) lr.enabled = isSailActive;
+              if (lr != null) lr.enabled = true;
             }
-
-            // Wind cloth physics: only active at full speed (speed 3)
-            bool clothPhysicsActive = targetPos >= 0.95f && isSailActive;
-            float blendWeight = clothPhysicsActive
-              ? (mast.m_sailBlendWeightCurve != null ? mast.m_sailBlendWeightCurve.Evaluate(mast.m_currentSailPosition) : 1f)
-              : 0f;
-            UpdateMagicaCloth(mast, isRetracted: !clothPhysicsActive, blendWeight: blendWeight);
           }
           else if (mast.m_allowSailShrinking && mast.m_sailObject != null)
           {

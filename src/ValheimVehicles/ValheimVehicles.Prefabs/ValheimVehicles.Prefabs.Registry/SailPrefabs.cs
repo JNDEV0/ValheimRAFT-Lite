@@ -98,42 +98,9 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     PrefabRegistryHelpers.FixRopes(vikingShipMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(vikingShipMastPrefab);
 
-    PrefabRegistryController.AddPiece(new CustomPiece(vikingShipMastPrefab, true,
-      new PieceConfig
-      {
-        PieceTable = PrefabRegistryController.GetPieceTableName(),
-        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-          .VikingMast),
-        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
-        Enabled = true,
-        Requirements =
-        [
-          new RequirementConfig
-          {
-            Amount = 20,
-            Item = "FineWood",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 10,
-            Item = "RoundLog",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 10,
-            Item = "DeerHide",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 10,
-            Item = "IronNails",
-            Recover = true
-          }
-        ]
-      }));
+    // Kept registered in PrefabManager so existing built vessels load without issues,
+    // but hidden from the hammer build menu per user request.
+    PrefabManager.Instance.AddPrefab(vikingShipMastPrefab);
   }
 
   private void RegisterDrakkalMast()
@@ -191,41 +158,9 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     PrefabRegistryHelpers.FixRopes(prefab);
     PrefabRegistryHelpers.FixCollisionLayers(prefab);
 
-    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
-    {
-      PieceTable = PrefabRegistryController.GetPieceTableName(),
-      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
-        .VikingMast),
-      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
-      Enabled = true,
-      Requirements =
-      [
-        new RequirementConfig
-        {
-          Amount = 20,
-          Item = "Ashwood",
-          Recover = true
-        },
-        new RequirementConfig
-        {
-          Amount = 20,
-          Item = "LinenThread",
-          Recover = true
-        },
-        new RequirementConfig
-        {
-          Amount = 10,
-          Item = "IronNails",
-          Recover = true
-        },
-        new RequirementConfig
-        {
-          Amount = 5,
-          Item = "CeramicPlate",
-          Recover = true
-        }
-      ]
-    }));
+    // Kept registered in PrefabManager so existing built vessels load without issues,
+    // but hidden from the hammer build menu per user request.
+    PrefabManager.Instance.AddPrefab(prefab);
   }
 
 
