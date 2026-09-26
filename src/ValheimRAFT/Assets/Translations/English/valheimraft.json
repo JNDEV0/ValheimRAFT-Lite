@@ -451,6 +451,11 @@
   "valheim_vehicles_hull_bow_tri_left_wood": "Nailed Hull Front Prow - left",
   "mb_rope_anchor_desc": "A mount to secure rope rigging to. Crucial for securing dock lines, sails, and other tension-bearing rope systems. <color=yellow>Tie it off right with a proper knot, lest our sails blow away!</color>",
   "mb_rope_ladder": "Jacob's Ladder",
-  "valheim_vehicles_hull_rail_prow_corner_right_wood": "Deck Prow Guard-Rail - Right",
-  "valheim_vehicles_hull_bow_tri_right_wood": "Nailed Hull Front Prow - right"
+  "valheim_vehicles_hull_bow_tri_right_wood": "Nailed Hull Front Prow - right",
+  "valheim_vehicles_hull_center_wood": "Keel Extension",
+  "valheim_vehicles_hull_center_wood_desc": "A sea-sturdy center hull piece. Time to build a sturdy ship. Made of basic Wood. A structural extension piece used to lengthen the main keel. <color=yellow>More belly for the beast. Keep it tight, unless ye like a soggy cargo hold.</color>",
+  "valheim_vehicles_keel": "Keel Extension",
+  "valheim_vehicles_keel_desc": "A sea-sturdy center hull piece. Time to build a sturdy ship. Made of basic Wood. A structural extension piece used to lengthen the main keel. <color=yellow>More belly for the beast. Keep it tight, unless ye like a soggy cargo hold.</color>",
+  "valheim_vehicles_hull_center": "Keel Extension",
+  "valheim_vehicles_hull_center_desc": "A sea-sturdy center hull piece. Time to build a sturdy ship. A structural extension piece used to lengthen the main keel. <color=yellow>More belly for the beast. Keep it tight, unless ye like a soggy cargo hold.</color>"
 }
