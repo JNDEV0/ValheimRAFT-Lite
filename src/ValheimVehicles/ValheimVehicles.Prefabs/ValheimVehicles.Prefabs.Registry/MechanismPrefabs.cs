@@ -344,7 +344,7 @@ public class MechanismPrefabs : RegisterPrefab<MechanismPrefabs>
   {
     RegisterToggleSwitch();
 
-    RegisterPowerPylonPrefab();
+    // RegisterPowerPylonPrefab(); // Disabled from build menu per user request
     // RegisterCoalEngine();
     RegisterPowerSourceEitr();
     RegisterPowerStorageEitr();

@@ -184,7 +184,10 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_Power_Storage_Eitr", // 49. Battery / Power Storage
       "ValheimVehicles_Power_Conduit_Charge_Plate", // 50. Power Charge Plate
       "ValheimVehicles_Power_Conduit_Drain_Plate", // 50. Power Drain Plate
-      "ValheimVehicles_Power_Pylon", // Power Pylon
+
+      // Iron-Plated Deck Plankings
+      "ValheimVehicles_Hull_Slab_Iron_2x2", // Iron-Plated Deck Planking - Small
+      "ValheimVehicles_hull_floor_4x4_iron", // Iron-Plated Deck Planking
 
       // Iron-Plated Frame Walls & Portholes
       "ValheimVehicles_Hull_Wall_Iron_2x2", // Iron-Plated Frame Wall - Small
@@ -261,8 +264,13 @@ namespace ValheimVehicles.Prefabs.Registry
       "ShipWindow_Wall_Porthole_6x4",
       "hull_wall_window_porthole_iron_6x4",
 
-      // Hull-Rib Side 2x2x2 (Iron)
-      "hull_rib_iron",
+      // Power Pylon (disabled per user request)
+      "ValheimVehicles_Power_Pylon",
+      "valheim_vehicles_mechanism_power_pylon",
+      "power_pylon",
+      "powerpylon",
+
+      // Hull-Rib Side 2x2x2 (Iron) - do not match v4 hull_rib_iron!
       "hull_rib_iron_2x2x2",
       "ValheimVehicles_Ship_Hull_Rib_Iron",
       "Ship_Hull_Rib_Iron",
@@ -328,6 +336,8 @@ namespace ValheimVehicles.Prefabs.Registry
       { "ValheimVehicles_Power_Conduit_Charge_Plate", new[] { "valheim_vehicles_mechanism_power_charge_plate", "valheim_vehicles_power_conduit_charge_plate", "powerconduitchargeplate" } },
       { "ValheimVehicles_Power_Conduit_Drain_Plate", new[] { "valheim_vehicles_mechanism_power_drain_plate", "valheim_vehicles_power_conduit_drain_plate", "powerconduitdrainplate" } },
       { "ValheimVehicles_Power_Pylon", new[] { "valheim_vehicles_mechanism_power_pylon", "powerpylon" } },
+      { "ValheimVehicles_Hull_Slab_Iron_2x2", new[] { "hull_slab_iron_2x2", "valheimvehicles_hull_slab_iron_2x2", "valheim_vehicles_hull_slab_iron_2x2" } },
+      { "ValheimVehicles_hull_floor_4x4_iron", new[] { "hull_floor_4x4_iron", "valheimvehicles_hull_floor_4x4_iron", "valheim_vehicles_hull_floor_4x4_iron", "hull_slab_iron_4x4", "valheimvehicles_hull_slab_iron_4x4", "valheim_vehicles_hull_slab_iron_4x4", "ValheimVehicles_Hull_Slab_Iron_4x4" } },
       { "ValheimVehicles_Hull_Wall_Iron_2x2", new[] { "hull_wall_iron_2x2", "valheimvehicles_hull_wall_iron_2x2", "valheim_vehicles_hull_wall_iron_2x2" } },
       { "ValheimVehicles_Hull_Wall_Iron_4x4", new[] { "hull_wall_iron_4x4", "valheimvehicles_hull_wall_iron_4x4", "valheim_vehicles_hull_wall_iron_4x4" } },
       { "ValheimVehicles_ShipWindow_Wall_Porthole_2x2", new[] { "shipwindow_wall_porthole_2x2", "valheimvehicles_shipwindow_wall_porthole_2x2", "windowwallporthole2x2", "hull_wall_window_porthole_iron_2x2" } },

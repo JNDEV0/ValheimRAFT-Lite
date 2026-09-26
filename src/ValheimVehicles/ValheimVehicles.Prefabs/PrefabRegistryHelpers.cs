@@ -353,31 +353,45 @@ public abstract class PrefabRegistryHelpers
     if (!PieceDataDictionary.ContainsKey(prefabName))
     {
       var isWood = materialVariant == HullMaterial.Wood;
-      string woodKey = "";
+      var isIron = materialVariant == HullMaterial.Iron;
+      string nameKey;
+      string descKey;
       if (isWood)
       {
-        if (sizeVariant == PrefabNames.PrefabSizeVariant.TwoByTwo)
-        {
-          woodKey = directionVariant == PrefabNames.DirectionVariant.Left
+        var woodKey = sizeVariant == PrefabNames.PrefabSizeVariant.TwoByTwo
+          ? (directionVariant == PrefabNames.DirectionVariant.Left
             ? "valheim_vehicles_hull_rib_corner_floor_wood_left_2x2"
-            : "valheim_vehicles_hull_rib_corner_floor_wood_right_2x2";
-        }
-        else
-        {
-          woodKey = directionVariant == PrefabNames.DirectionVariant.Left
+            : "valheim_vehicles_hull_rib_corner_floor_wood_right_2x2")
+          : (directionVariant == PrefabNames.DirectionVariant.Left
             ? "valheim_vehicles_hull_rib_corner_floor_wood_left_2x4"
-            : "valheim_vehicles_hull_rib_corner_floor_wood_right_2x4";
-        }
+            : "valheim_vehicles_hull_rib_corner_floor_wood_right_2x4");
+        nameKey = $"${woodKey}";
+        descKey = $"${woodKey}_desc";
+      }
+      else if (isIron)
+      {
+        var dirStr = directionVariant == PrefabNames.DirectionVariant.Left ? "left" : "right";
+        var sizeStr = sizeVariant switch
+        {
+          PrefabNames.PrefabSizeVariant.TwoByTwo => "2x2",
+          PrefabNames.PrefabSizeVariant.TwoByFour => "2x4",
+          PrefabNames.PrefabSizeVariant.TwoByEight => "2x8",
+          _ => "2x2"
+        };
+        var ironKey = $"valheim_vehicles_hull_rib_corner_floor_iron_{dirStr}_{sizeStr}";
+        nameKey = $"${ironKey}";
+        descKey = $"${ironKey}_desc";
+      }
+      else
+      {
+        nameKey = $"{pieceName} $valheim_vehicles_material_{materialName} {prefabSizeName} $valheim_vehicles_direction_{directionName}";
+        descKey = pieceDescription;
       }
 
       var pieceData = new PieceData
       {
-        Name = isWood
-          ? $"${woodKey}"
-          : $"{pieceName} $valheim_vehicles_material_{materialName} {prefabSizeName} $valheim_vehicles_direction_{directionName}",
-        Description = isWood
-          ? $"${woodKey}_desc"
-          : pieceDescription,
+        Name = nameKey,
+        Description = descKey,
         Icon = icon
       };
       PieceDataDictionary.Add(prefabName, pieceData);
@@ -415,6 +429,7 @@ public abstract class PrefabRegistryHelpers
     }
 
     var isWoodCorner = materialVariant == HullMaterial.Wood;
+    var isIronCorner = materialVariant == HullMaterial.Iron;
     var cornerName = pieceName;
     var cornerDesc = pieceDescription;
     if (isWoodCorner)
@@ -433,6 +448,32 @@ public abstract class PrefabRegistryHelpers
       {
         cornerName = "$valheim_vehicles_hull_rib_corner_wood_right_2x2x4";
         cornerDesc = "$valheim_vehicles_hull_rib_corner_wood_right_2x2x4_desc";
+      }
+    }
+    else if (isIronCorner)
+    {
+      if (directionVariant == null)
+      {
+        cornerName = "$valheim_vehicles_hull_rib_corner_iron_2x2x2";
+        cornerDesc = "$valheim_vehicles_hull_rib_corner_iron_2x2x2_desc";
+      }
+      else if (sizeVariant == PrefabNames.PrefabSizeVariant.TwoByTwoByFour)
+      {
+        cornerName = directionVariant == PrefabNames.DirectionVariant.Left
+          ? "$valheim_vehicles_hull_rib_corner_iron_left_2x2x4"
+          : "$valheim_vehicles_hull_rib_corner_iron_right_2x2x4";
+        cornerDesc = directionVariant == PrefabNames.DirectionVariant.Left
+          ? "$valheim_vehicles_hull_rib_corner_iron_left_2x2x4_desc"
+          : "$valheim_vehicles_hull_rib_corner_iron_right_2x2x4_desc";
+      }
+      else if (sizeVariant == PrefabNames.PrefabSizeVariant.TwoByOneByEight)
+      {
+        cornerName = directionVariant == PrefabNames.DirectionVariant.Left
+          ? "$valheim_vehicles_hull_rib_corner_iron_left_2x1x8"
+          : "$valheim_vehicles_hull_rib_corner_iron_right_2x1x8";
+        cornerDesc = directionVariant == PrefabNames.DirectionVariant.Left
+          ? "$valheim_vehicles_hull_rib_corner_iron_left_2x1x8_desc"
+          : "$valheim_vehicles_hull_rib_corner_iron_right_2x1x8_desc";
       }
     }
 

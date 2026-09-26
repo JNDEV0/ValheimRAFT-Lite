@@ -130,8 +130,8 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_floor_4x4_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_slab $valheim_vehicles_material_iron 4x4",
-          Description = "$valheim_vehicles_hull_slab_desc"
+          Name = "$valheim_vehicles_hull_floor_4x4_iron",
+          Description = "$valheim_vehicles_hull_floor_4x4_iron_desc"
         }
       },
       {
@@ -151,15 +151,15 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_floor_keel_4x2_left_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_with_keel $valheim_vehicles_direction_left $valheim_vehicles_material_iron 4x2",
-          Description = "$valheim_vehicles_hull_with_keel_desc"
+          Name = "$valheim_vehicles_hull_floor_keel_4x2_left_iron",
+          Description = "$valheim_vehicles_hull_floor_keel_4x2_left_iron_desc"
         }
       },
       {
         "hull_floor_keel_4x2_right_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_with_keel $valheim_vehicles_direction_right $valheim_vehicles_material_iron 4x2",
-          Description = "$valheim_vehicles_hull_with_keel_desc"
+          Name = "$valheim_vehicles_hull_floor_keel_4x2_left_iron",
+          Description = "$valheim_vehicles_hull_floor_keel_4x2_left_iron_desc"
         }
       },
       {
@@ -172,8 +172,8 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_rib_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rib_side $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rib_side_desc"
+          Name = "$valheim_vehicles_hull_rib_iron",
+          Description = "$valheim_vehicles_hull_rib_iron_desc"
         }
       },
       {
@@ -200,15 +200,15 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_bow_curved_left_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rib_prow_desc"
+          Name = "$valheim_vehicles_hull_bow_curved_left_iron",
+          Description = "$valheim_vehicles_hull_bow_curved_left_iron_desc"
         }
       },
       {
         "hull_bow_curved_right_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rib_prow_desc"
+          Name = "$valheim_vehicles_hull_bow_curved_right_iron",
+          Description = "$valheim_vehicles_hull_bow_curved_right_iron_desc"
         }
       },
       {
@@ -228,15 +228,15 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_bow_tri_left_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rib_prow_desc"
+          Name = "$valheim_vehicles_hull_bow_tri_left_iron",
+          Description = "$valheim_vehicles_hull_bow_tri_left_iron_desc"
         }
       },
       {
         "hull_bow_tri_right_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rib_prow_desc"
+          Name = "$valheim_vehicles_hull_bow_tri_right_iron",
+          Description = "$valheim_vehicles_hull_bow_tri_right_iron_desc"
         }
       },
       {
@@ -263,22 +263,22 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_rib_aft_center_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_center $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rib_aft_desc"
+          Name = "$valheim_vehicles_hull_rib_aft_center_iron",
+          Description = "$valheim_vehicles_hull_rib_aft_center_iron_desc"
         }
       },
       {
         "hull_rib_aft_left_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rib_aft_desc"
+          Name = "$valheim_vehicles_hull_rib_aft_left_iron",
+          Description = "$valheim_vehicles_hull_rib_aft_left_iron_desc"
         }
       },
       {
         "hull_rib_aft_right_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rib_prow $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rib_aft_desc"
+          Name = "$valheim_vehicles_hull_rib_aft_right_iron",
+          Description = "$valheim_vehicles_hull_rib_aft_right_iron_desc"
         }
       },
       {
@@ -326,15 +326,15 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_seal_bow_left_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_prow_seal_desc"
+          Name = "$valheim_vehicles_hull_seal_bow_left_iron",
+          Description = "$valheim_vehicles_hull_seal_bow_left_iron_desc"
         }
       },
       {
         "hull_seal_bow_right_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_curved $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_prow_seal_desc"
+          Name = "$valheim_vehicles_hull_seal_bow_right_iron",
+          Description = "$valheim_vehicles_hull_seal_bow_right_iron_desc"
         }
       },
       {
@@ -354,15 +354,15 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_seal_corner_left_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_aft_seal $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_aft_seal_desc"
+          Name = "$valheim_vehicles_hull_seal_corner_left_iron",
+          Description = "$valheim_vehicles_hull_seal_corner_left_iron_desc"
         }
       },
       {
         "hull_seal_corner_right_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_aft_seal $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_aft_seal_desc"
+          Name = "$valheim_vehicles_hull_seal_corner_right_iron",
+          Description = "$valheim_vehicles_hull_seal_corner_right_iron_desc"
         }
       },
       {
@@ -410,15 +410,15 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_seal_tri_bow_left_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_prow_seal_desc"
+          Name = "$valheim_vehicles_hull_seal_tri_bow_left_iron",
+          Description = "$valheim_vehicles_hull_seal_tri_bow_left_iron_desc"
         }
       },
       {
         "hull_seal_tri_bow_right_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_prow_seal $valheim_vehicles_hull_variant_triangular $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_prow_seal_desc"
+          Name = "$valheim_vehicles_hull_seal_tri_bow_right_iron",
+          Description = "$valheim_vehicles_hull_seal_tri_bow_right_iron_desc"
         }
       },
       {
@@ -473,50 +473,50 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       {
         "hull_rail_straight_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rail_variant_straight $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rail_desc"
+          Name = "$valheim_vehicles_hull_rail_straight_iron",
+          Description = "$valheim_vehicles_hull_rail_straight_iron_desc"
         }
       },
       {
         "hull_rail_connector_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rail_variant_connector $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rail_desc"
+          Name = "$valheim_vehicles_hull_rail_connector_iron",
+          Description = "$valheim_vehicles_hull_rail_connector_iron_desc"
         }
       },
       {
         "hull_rail_25deg_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rail_variant_25 $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rail_desc"
+          Name = "$valheim_vehicles_hull_rail_25deg_iron",
+          Description = "$valheim_vehicles_hull_rail_25deg_iron_desc"
         }
       },
       {
         "hull_rail_45deg_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rail_variant_45 $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rail_desc"
+          Name = "$valheim_vehicles_hull_rail_45deg_iron",
+          Description = "$valheim_vehicles_hull_rail_45deg_iron_desc"
         }
       },
       {
         "hull_rail_corner_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rail_variant_aft_corner $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rail_desc"
+          Name = "$valheim_vehicles_hull_rail_corner_iron",
+          Description = "$valheim_vehicles_hull_rail_corner_iron_desc"
         }
       },
       {
         "hull_rail_prow_corner_left_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rail_variant_prow_corner $valheim_vehicles_direction_left $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rail_desc"
+          Name = "$valheim_vehicles_hull_rail_prow_corner_left_iron",
+          Description = "$valheim_vehicles_hull_rail_prow_corner_left_iron_desc"
         }
       },
       {
         "hull_rail_prow_corner_right_iron", new TranslationData
         {
-          Name = "$valheim_vehicles_hull_rail_variant_prow_corner $valheim_vehicles_direction_right $valheim_vehicles_material_iron",
-          Description = "$valheim_vehicles_hull_rail_desc"
+          Name = "$valheim_vehicles_hull_rail_prow_corner_right_iron",
+          Description = "$valheim_vehicles_hull_rail_prow_corner_right_iron_desc"
         }
       }
     };
@@ -1657,19 +1657,33 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
       if (!PrefabRegistryHelpers.PieceDataDictionary.ContainsKey(prefabName))
       {
         var isWood = hullMaterial == HullMaterial.Wood;
+        var isIron = hullMaterial == HullMaterial.Iron;
         var hullMaterialDescription =
           ShipHulls.GetHullMaterialDescription(hullMaterial);
         var sizeVariantString = PrefabNames.GetPrefabSizeVariantName(sizeVariant);
         var spriteAssetName = LoadValheimVehicleAssets.GetShipHullRibAssetName(hullMaterial, sizeVariant);
+        string ribName;
+        string ribDesc;
+        if (isWood)
+        {
+          ribName = "$valheim_vehicles_hull_rib_wood_2x2x2";
+          ribDesc = "$valheim_vehicles_hull_rib_wood_2x2x2_desc";
+        }
+        else if (isIron && sizeVariant == PrefabNames.PrefabSizeVariant.TwoByOneByEight)
+        {
+          ribName = "$valheim_vehicles_hull_rib_iron_2x1x8";
+          ribDesc = "$valheim_vehicles_hull_rib_iron_2x1x8_desc";
+        }
+        else
+        {
+          ribName = $"$valheim_vehicles_hull_rib_side {sizeVariantString} $valheim_vehicles_material_{hullMaterial.ToLower()}";
+          ribDesc = $"$valheim_vehicles_hull_rib_side_desc {hullMaterialDescription}";
+        }
         PrefabRegistryHelpers.PieceDataDictionary.Add(prefabName
           , new PrefabRegistryHelpers.PieceData
           {
-            Name = isWood
-              ? "$valheim_vehicles_hull_rib_wood_2x2x2"
-              : $"$valheim_vehicles_hull_rib_side {sizeVariantString} $valheim_vehicles_material_{hullMaterial.ToLower()}",
-            Description = isWood
-              ? "$valheim_vehicles_hull_rib_wood_2x2x2_desc"
-              : $"$valheim_vehicles_hull_rib_side_desc {hullMaterialDescription}",
+            Name = ribName,
+            Description = ribDesc,
             Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(spriteAssetName)
           });
       }

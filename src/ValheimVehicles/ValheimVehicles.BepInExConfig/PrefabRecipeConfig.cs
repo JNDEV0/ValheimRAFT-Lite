@@ -441,6 +441,257 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         new RequirementConfig { Item = "Wood", Amount = 24, Recover = true }
       ]
     },
+    // Iron-Plated Hulls & Rails (v4)
+    {
+      "hull_floor_4x4_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 24, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_floor_keel_4x2_left_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 11, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 24, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_bow_tri_left_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 16, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_bow_tri_right_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 16, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_bow_curved_left_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 16, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_bow_curved_right_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 16, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_aft_center_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 24, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_aft_left_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 24, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_aft_right_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 24, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_seal_bow_left_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_seal_bow_right_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_seal_corner_left_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_seal_corner_right_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_seal_tri_bow_left_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_seal_tri_bow_right_iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rail_connector_iron", [
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      "hull_rail_straight_iron", [
+        new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
+      ]
+    },
+    {
+      "hull_rail_25deg_iron", [
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rail_45deg_iron", [
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rail_corner_iron", [
+        new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
+      ]
+    },
+    {
+      "hull_rail_prow_corner_left_iron", [
+        new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
+      ]
+    },
+    {
+      "hull_rail_prow_corner_right_iron", [
+        new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
+      ]
+    },
+    // Solid Iron Hulls
+    {
+      "ValheimVehicles_Ship_Hull_Rib_2x1x8_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 8, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_2x2x4_Left_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_2x2x4_Right_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_2x1x8_Left_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_2x1x8_Right_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
+      ]
+    },
+    // Iron-Reinforced Corner Floors
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_Left_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_Right_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Left_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Right_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Left_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", [
+        new RequirementConfig { Item = "RoundLog", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
+      ]
+    },
     // hull materials
     {
       GetHullMaterialRecipe(HullMaterial.Iron), [
