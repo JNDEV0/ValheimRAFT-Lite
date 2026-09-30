@@ -29,7 +29,7 @@ public static class VehicleOwnership_Patches
         if (ZdoWatchController.GetPersistentID(zdo, out var pId) &&
             (VehicleManager.VehicleInstances.ContainsKey(pId) || VehiclePiecesController.ActiveInstances.ContainsKey(pId)))
           return true;
-        if (VehiclePiecesController.VehicleParentIdCache.ContainsKey(zdo)) return true;
+        if (VehiclePiecesController.VehicleParentIdCache.ContainsKey(zdo.m_uid)) return true;
       }
     }
 

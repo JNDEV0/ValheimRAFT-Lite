@@ -155,7 +155,7 @@ public class MapPinSync : MonoBehaviour
 
     if (ZNet.instance == null || Minimap.instance == null) return;
 
-    ZdoWatchController.Instance.GetAllZdoGuids();
+    ZdoWatchController.Instance.GetAllZdoIdGuids();
 
     // clear everything first
 
@@ -484,7 +484,8 @@ public class MapPinSync : MonoBehaviour
 
 
 
-    var guids = ZdoWatchController.Instance.GetAllZdoGuids();
+    if (ZDOMan.instance == null) return;
+    var guids = ZdoWatchController.Instance.GetAllZdoIdGuids();
 
 
 
@@ -496,7 +497,8 @@ public class MapPinSync : MonoBehaviour
 
     {
 
-      var zdo = pair.Value;
+      var zdo = ZDOMan.instance.GetZDO(pair.Value);
+      if (zdo == null) continue;
 
       var prefab = ZNetScene.instance.GetPrefab(zdo.GetPrefab());
 

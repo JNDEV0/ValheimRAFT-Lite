@@ -28,7 +28,10 @@
     [HarmonyPostfix]
     private static void ZNetView_Awake(ZNetView __instance)
     {
-      if (__instance.m_zdo == null) return;
+      if (__instance.m_zdo == null || __instance.m_ghost) return;
+
+      // Automatically attempts to attach/register to its parent vehicle if MBParentId is set
+      VehiclePiecesController.TryInitPieceFromNetView(__instance);
 
       // for any vehicle like components
       BasePieceActivatorComponent.InitPiece(__instance);

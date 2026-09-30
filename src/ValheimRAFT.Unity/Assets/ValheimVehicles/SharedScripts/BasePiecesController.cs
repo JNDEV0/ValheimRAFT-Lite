@@ -35,6 +35,9 @@
       public static float RebuildPieceMaxDelay = 60f;
       internal static float RebuildBoundsDelayPerPiece = 0.02f;
 
+      // unstable for now
+      public bool UNSTABLE_canUpdateVehicleCentral = false;
+
       public static bool isBasicHullCalculation = false;
 
       public static int clusterThreshold = 500;
@@ -269,6 +272,13 @@
         _rebuildBoundsRoutineInstance = StartCoroutine(RebuildBoundsThrottleRoutine(() => RebuildBounds()));
       }
 
+      protected void CompleteSuccessfulBoundsRebuild()
+      {
+        _lastRebuildPieceRevision = _lastPieceRevision;
+        _lastRebuildItemCount = m_prefabPieceDataItems.Count;
+        _lastRebuildTime = Time.fixedTime;
+      }
+
       /// <summary>
       /// - This RebuildBounds must be called within the override if overridden. 
       /// - Additional logic is implemented in the VehiclePiecesController
@@ -304,10 +314,27 @@
           return;
         }
 
-        UpdateVehicleTrueCenter();
+        // this method currently shifts pieces origin and is not guaranteed to run on all pieces that exist for Valheim.
+        if (UNSTABLE_canUpdateVehicleCentral)
+        {
+          UpdateVehicleTrueCenter((success) =>
+          {
+            if (!success)
+            {
+              RequestBoundsRebuild();
+              return;
+            }
+
+            CompleteSuccessfulBoundsRebuild();
+          });
+        }
+        else
+        {
+          CompleteSuccessfulBoundsRebuild();
+        }
       }
 
-      public virtual void UpdateVehicleTrueCenter()
+      public virtual void UpdateVehicleTrueCenter(Action<bool>? onComplete = null)
       {
         var currentBounds = m_convexHullAPI.GetConvexHullBounds(true);
 
@@ -317,21 +344,26 @@
         {
           // Rebuild immediately using the shifted piece transforms so the final convex hull
           // and movement bounds are aligned to the new effective origin.
-          TryGenerateConvexHull(clusterThreshold, shiftedSucceeded =>
+          TryGenerateConvexHull(clusterThreshold, (success) =>
           {
-            if (!shiftedSucceeded)
+            if (success)
             {
-              RequestBoundsRebuild();
-              return;
+              FinalizeBoundsGenerationAfterShift();
+              Physics.SyncTransforms();
+              onComplete?.Invoke(true);
             }
-
-            FinalizeBoundsGenerationAfterShift();
+            else
+            {
+              onComplete?.Invoke(false);
+            }
           });
 
           return;
         }
 
         FinalizeBoundsGenerationAfterShift();
+        Physics.SyncTransforms();
+        onComplete?.Invoke(true);
       }
 
       protected virtual Vector3 GetDesiredLocalOriginShift(Bounds bounds)

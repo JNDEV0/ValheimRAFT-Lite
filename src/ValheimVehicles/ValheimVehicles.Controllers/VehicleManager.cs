@@ -66,6 +66,15 @@
 
     public static readonly Dictionary<int, VehicleManager> VehicleInstances = new();
 
+    public static VehicleManager? GetVehicle(int persistentId)
+    {
+      if (persistentId != 0 && VehicleInstances.TryGetValue(persistentId, out var vehicle))
+      {
+        return vehicle;
+      }
+      return null;
+    }
+
     private GameObject _piecesContainer;
     private GameObject _ghostContainer;
     private ImpactEffect _impactEffect;

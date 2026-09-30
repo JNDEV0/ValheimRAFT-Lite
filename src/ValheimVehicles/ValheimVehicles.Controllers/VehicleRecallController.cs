@@ -239,12 +239,16 @@ public static class VehicleRecallController
       var wheelHash = PrefabNames.ShipSteeringWheel.GetStableHashCode();
 
       var pieces = VehiclePiecesController.EnsurePiecesForVehicle(vehicleId);
-      foreach (var pz in pieces)
+      if (ZDOMan.instance != null)
       {
-        if (pz != null && pz.IsValid() && pz.GetPrefab() == wheelHash)
+        foreach (var pzId in pieces)
         {
-          wheelZdo = pz;
-          break;
+          var pz = ZDOMan.instance.GetZDO(pzId);
+          if (pz != null && pz.IsValid() && pz.GetPrefab() == wheelHash)
+          {
+            wheelZdo = pz;
+            break;
+          }
         }
       }
 

@@ -34,8 +34,9 @@ public class Teleport_Patch
     int vanillaCount = 0;
     int modCount = 0;
 
-    foreach (var zdo in pieces)
+    foreach (var zdoId in pieces)
     {
+      var zdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(zdoId) : null;
       if (zdo == null || !zdo.IsValid()) continue;
       var prefab = zdo.GetPrefab();
       var prefabGo = ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(prefab) : null;
@@ -295,8 +296,9 @@ public class Teleport_Patch
     var targetPieces = VehiclePiecesController.EnsurePiecesForVehicle(parentId);
     if (ZNetScene.instance != null)
     {
-      foreach (var pZdo in targetPieces)
+      foreach (var pZdoId in targetPieces)
       {
+        var pZdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(pZdoId) : null;
         if (pZdo != null && pZdo.IsValid() && ZNetScene.instance.FindInstance(pZdo) == null)
         {
           var pHash = pZdo.GetPrefab();
@@ -308,7 +310,7 @@ public class Teleport_Patch
           }
           catch (System.Exception ex)
           {
-            Jotunn.Logger.LogWarning($"[BoatPortal] Failed to create object for piece {pZdo.m_uid}: {ex.Message}");
+            Jotunn.Logger.LogWarning($"[BoatPortal] Failed to create object for piece {pZdoId}: {ex.Message}");
           }
         }
       }
