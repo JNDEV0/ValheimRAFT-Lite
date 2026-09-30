@@ -567,5 +567,6 @@
   "valheim_vehicles_tame_success": "Greydwarf hired as Ship Sailor!",
   "valheim_vehicles_tame_failed": "The Greydwarf accepted the offering but refused your contract!",
   "valheim_vehicles_sailor_unfed_warning": "A Sailor Greydwarf is unfed! Resin needed in ship chests.",
-  "valheim_vehicles_sailor_mutinied": "An unfed Greydwarf has mutinied and abandoned ship!"
+  "valheim_vehicles_sailor_mutinied": "An unfed Greydwarf has mutinied and abandoned ship!",
+  "valheim_vehicles_workbench_boat_only": "Make a workbench on land to build off the boat"
 }

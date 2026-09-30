@@ -606,6 +606,21 @@
 
       base.Awake();
 
+      if (m_nview != null && m_nview.GetZDO() != null)
+      {
+        var anchorVal = (AnchorState)m_nview.GetZDO().GetInt(VehicleZdoVars.VehicleAnchorState, (int)AnchorState.Recovered);
+        if (IsAnchorDropped(anchorVal))
+        {
+          vehicleAnchorState = anchorVal;
+          isAnchored = true;
+          if (m_body != null)
+          {
+            m_body.linearVelocity = Vector3.zero;
+            m_body.angularVelocity = Vector3.zero;
+            m_body.isKinematic = true;
+          }
+        }
+      }
     }
 
 

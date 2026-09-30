@@ -10,6 +10,7 @@ using ValheimVehicles.Compat;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Components;
 using ValheimVehicles.Constants;
+using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Enums;
 using ValheimVehicles.Helpers;
@@ -147,10 +148,26 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
     if (vm != null)
     {
-      InitializeControls(m_nview ?? GetComponent<ZNetView>(), vm);
-      if (vm.PiecesController != null && m_nview != null && !vm.PiecesController.m_pieces.Contains(m_nview))
+      var nv = m_nview ?? GetComponent<ZNetView>();
+      if (nv != null && nv.GetZDO() != null && nv.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0) == 0 && vm.PersistentZdoId != 0)
       {
-        vm.PiecesController.AddPiece(m_nview);
+        nv.GetZDO().Set(VehicleZdoVars.MBParentId, vm.PersistentZdoId);
+        nv.GetZDO().Set(VehicleZdoVars.IsVehiclePieceHash, 1);
+      }
+
+      if (vm.PiecesController != null)
+      {
+        var container = vm.PiecesController.GetPiecesContainer();
+        if (transform.parent != container && !transform.IsChildOf(container))
+        {
+          vm.PiecesController.TrySetPieceToParent(gameObject, true);
+        }
+      }
+
+      InitializeControls(nv, vm);
+      if (vm.PiecesController != null && nv != null && !vm.PiecesController.m_pieces.Contains(nv))
+      {
+        vm.PiecesController.AddPiece(nv);
       }
       return ControllersInstance != null && ControllersInstance.Manager != null;
     }

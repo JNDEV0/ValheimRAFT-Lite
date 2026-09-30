@@ -202,6 +202,12 @@
 
       if (PatchSharedData.PlayerLastRayPiece == null)
       {
+        if (CheckDisallowedOffBoatBuilding(gameObject, piece))
+        {
+          PatchSharedData.PlayerLastRayPiece = null;
+          return gameObject;
+        }
+
         // should always run FixPieceOverlap
         TryFixPieceOverlap(gameObject);
         return gameObject;
@@ -214,6 +220,11 @@
         var dist = Vector3.Distance(gameObject.transform.position, PatchSharedData.PlayerLastRayPiece.transform.position);
         if (dist > 12f)
         {
+          if (CheckDisallowedOffBoatBuilding(gameObject, piece))
+          {
+            PatchSharedData.PlayerLastRayPiece = null;
+            return gameObject;
+          }
           PatchSharedData.PlayerLastRayPiece = null;
           TryFixPieceOverlap(gameObject);
           return gameObject;
@@ -224,13 +235,25 @@
         bool isShipFixture = gameObject.GetComponent<RudderComponent>() != null ||
                              gameObject.GetComponent<RopeLadderComponent>() != null ||
                              gameObject.GetComponent<VehicleAnchorMechanismController>() != null;
-        if (!isShipFixture && Physics.Raycast(gameObject.transform.position + Vector3.up * 0.5f, Vector3.down, out var groundHit, 2f, LayerHelpers.GroundLayers))
+        if (!isShipFixture)
         {
-          if (groundHit.collider.GetComponent<Heightmap>() != null && groundHit.collider.GetComponentInParent<IPieceController>() == null)
+          var hits = Physics.RaycastAll(gameObject.transform.position + Vector3.up * 0.2f, Vector3.down, 3f, LayerHelpers.GroundLayers | LayerHelpers.PieceLayerMask | LayerHelpers.PhysicalLayerMask);
+          System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+          if (hits.Length > 0 && hits[0].collider != null && hits[0].collider.GetComponent<Heightmap>() != null && hits[0].collider.GetComponentInParent<IPieceController>() == null)
           {
-            PatchSharedData.PlayerLastRayPiece = null;
-            TryFixPieceOverlap(gameObject);
-            return gameObject;
+            var vpc = pieceController as VehiclePiecesController ?? (pieceController as MonoBehaviour)?.GetComponentInParent<VehiclePiecesController>();
+            bool insideHull = vpc != null && vpc.OnboardCollider != null && vpc.OnboardCollider.bounds.Contains(gameObject.transform.position);
+            if (!insideHull)
+            {
+              if (CheckDisallowedOffBoatBuilding(gameObject, piece))
+              {
+                PatchSharedData.PlayerLastRayPiece = null;
+                return gameObject;
+              }
+              PatchSharedData.PlayerLastRayPiece = null;
+              TryFixPieceOverlap(gameObject);
+              return gameObject;
+            }
           }
         }
 
@@ -238,33 +261,6 @@
         {
           pieceController.AddCustomPiece(gameObject);
           PatchSharedData.PlayerLastRayPiece = null;
-          return gameObject;
-        }
-
-        // Portals on boats are not supported - refund and notify player
-        if (gameObject.GetComponent<TeleportWorld>() != null || gameObject.name.ToLowerInvariant().Contains("portal"))
-        {
-          PatchSharedData.PlayerLastRayPiece = null;
-          var wnt = gameObject.GetComponent<WearNTear>();
-          if (wnt != null)
-          {
-            wnt.Destroy();
-          }
-          else
-          {
-            Object.Destroy(gameObject);
-          }
-          if (Player.m_localPlayer != null)
-          {
-            var msg = Localization.instance != null
-              ? Localization.instance.Localize("$valheim_vehicles_portal_not_supported")
-              : "Portals on boats are not supported. Use the Horn of Loki to teleport to/from the boat.";
-            if (string.IsNullOrEmpty(msg) || msg == "$valheim_vehicles_portal_not_supported")
-            {
-              msg = "Portals on boats are not supported. Use the Horn of Loki to teleport to/from the boat.";
-            }
-            Player.m_localPlayer.Message(MessageHud.MessageType.Center, msg);
-          }
           return gameObject;
         }
 
@@ -282,11 +278,75 @@
         PatchSharedData.PlayerLastRayPiece = null;
         return gameObject;
       }
+      else
+      {
+        if (CheckDisallowedOffBoatBuilding(gameObject, piece))
+        {
+          PatchSharedData.PlayerLastRayPiece = null;
+          return gameObject;
+        }
+      }
 
       PatchSharedData.PlayerLastRayPiece = null;
       TryFixPieceOverlap(gameObject);
 
       return gameObject;
+    }
+
+    private static bool CheckDisallowedOffBoatBuilding(GameObject gameObject, Piece piece)
+    {
+      if (piece == null || piece.m_craftingStation == null) return false;
+
+      var pos = gameObject.transform.position;
+      bool hasLandStation = false;
+
+      if (CraftingStation.m_allStations != null)
+      {
+        foreach (var station in CraftingStation.m_allStations)
+        {
+          if (station == null) continue;
+          if (station.m_name != piece.m_craftingStation.m_name) continue;
+          if (Vector3.Distance(station.transform.position, pos) <= station.m_rangeBuild)
+          {
+            bool isBoatStation = station.GetComponentInParent<VehiclePiecesController>() != null ||
+                                 (station.m_nview != null && station.m_nview.GetZDO() != null && VehiclePiecesController.GetParentID(station.m_nview.GetZDO()) != 0);
+            if (!isBoatStation)
+            {
+              hasLandStation = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!hasLandStation)
+      {
+        piece.DropResources();
+        var wnt = gameObject.GetComponent<WearNTear>();
+        if (wnt != null)
+        {
+          wnt.Destroy();
+        }
+        else
+        {
+          Object.Destroy(gameObject);
+        }
+
+        if (Player.m_localPlayer != null)
+        {
+          var msg = Localization.instance != null
+            ? Localization.instance.Localize("$valheim_vehicles_workbench_boat_only")
+            : "Make a workbench on land to build off the boat";
+          if (string.IsNullOrEmpty(msg) || msg == "$valheim_vehicles_workbench_boat_only")
+          {
+            msg = "Make a workbench on land to build off the boat";
+          }
+          Player.m_localPlayer.Message(MessageHud.MessageType.Center, msg);
+        }
+        return true;
+      }
+
+      return false;
     }
 
 #if DEBUG

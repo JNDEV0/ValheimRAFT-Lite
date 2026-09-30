@@ -904,7 +904,7 @@
     public static CannonballVariant AmmoVariantDefault = CannonballVariant.Solid;
 
 
-    public void AddPieceDataForComponents(ZNetView netView)
+    public void AddPieceDataForComponents(ZNetView netView, bool isNew = false)
     {
       var components = netView.GetComponents<Component>();
       if (components == null) return;
@@ -1108,7 +1108,10 @@
           case RopeAnchorComponent ropeAnchor:
             if (ropeAnchor.IsDockAnchor())
             {
-              OnAddUniquePieceDestroyPrevious(m_dockAnchor);
+              if (isNew && m_dockAnchor != null && m_dockAnchor != ropeAnchor)
+              {
+                OnAddUniquePieceDestroyPrevious(m_dockAnchor);
+              }
               m_dockAnchor = ropeAnchor;
             }
             break;
@@ -1149,34 +1152,26 @@
               break;
             }
 
-            OnAddUniquePieceDestroyPrevious(_steeringWheelPiece);
+            if (isNew && _steeringWheelPiece != null && _steeringWheelPiece != wheel)
+            {
+              OnAddUniquePieceDestroyPrevious(_steeringWheelPiece);
+            }
             _steeringWheelPiece = wheel;
             RotateVehicleForwardPosition();
+
+            if (wheel.transform.parent == null || !wheel.transform.IsChildOf(transform))
+            {
+              TrySetPieceToParent(wheel.gameObject, true);
+            }
 
             wheel.InitializeControls(netView, Manager);
             break;
           }
           case TeleportWorld portal:
           {
-            var wnt = netView.GetComponent<WearNTear>();
-            if (wnt != null)
+            if (!m_portals.Contains(netView))
             {
-              wnt.Destroy();
-            }
-            else if (netView.gameObject)
-            {
-              ZNetScene.instance.Destroy(netView.gameObject);
-            }
-            if (Player.m_localPlayer != null)
-            {
-              var msg = Localization.instance != null
-                ? Localization.instance.Localize("$valheim_vehicles_portal_not_supported")
-                : "Portals on boats are not supported. Use the Horn of Loki to teleport to/from the boat.";
-              if (string.IsNullOrEmpty(msg) || msg == "$valheim_vehicles_portal_not_supported")
-              {
-                msg = "Portals on boats are not supported. Use the Horn of Loki to teleport to/from the boat.";
-              }
-              Player.m_localPlayer.Message(MessageHud.MessageType.Center, msg);
+              m_portals.Add(netView);
             }
             break;
           }
@@ -1326,6 +1321,10 @@
         LoggerProvider.LogError("netView does not exist");
         return;
       }
+      if (m_pieces.Contains(netView))
+      {
+        return;
+      }
 
       // incrementRevision
       IncrementPieceRevision();
@@ -1339,7 +1338,7 @@
       m_pieces.Add(netView);
       UpdatePieceCount();
 
-      AddPieceDataForComponents(netView);
+      AddPieceDataForComponents(netView, isNew);
 
 
       if (RamPrefabRegistry.IsRam(netView.name))
@@ -4041,6 +4040,7 @@
     public void ActivatePiece(ZNetView netView)
     {
       if (netView == null) return;
+      if (m_pieces.Contains(netView)) return;
       var zdo = netView.GetZDO();
       if (zdo == null) return;
 
@@ -4541,9 +4541,11 @@
       bool isShipFixture = netView.GetComponent<RudderComponent>() != null ||
                            netView.GetComponent<RopeLadderComponent>() != null ||
                            netView.GetComponent<VehicleAnchorMechanismController>() != null;
-      if (!isShipFixture && Physics.Raycast(pieceWorldPos + Vector3.up * 0.5f, Vector3.down, out var groundHit, 3f, LayerHelpers.GroundLayers))
+      if (!isShipFixture)
       {
-        if (groundHit.collider != null && groundHit.collider.GetComponent<Heightmap>() != null && groundHit.collider.GetComponentInParent<IPieceController>() == null)
+        var hits = Physics.RaycastAll(pieceWorldPos + Vector3.up * 0.2f, Vector3.down, 3f, LayerHelpers.GroundLayers | LayerHelpers.PieceLayerMask | LayerHelpers.PhysicalLayerMask);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        if (hits.Length > 0 && hits[0].collider != null && hits[0].collider.GetComponent<Heightmap>() != null && hits[0].collider.GetComponentInParent<IPieceController>() == null)
         {
           bool insideHull = OnboardCollider != null && OnboardCollider.bounds.Contains(pieceWorldPos);
           if (!insideHull)
@@ -4629,12 +4631,27 @@
     {
       if (component == null) return;
       var netView = component.GetComponent<ZNetView>();
-      if (netView == null) return;
+      if (netView == null || !netView.IsValid()) return;
 
       var wnt = netView.GetComponent<WearNTear>();
-      if (wnt != null)
+      if (wnt != null && wnt.isActiveAndEnabled)
       {
-        wnt.Destroy();
+        try
+        {
+          wnt.Destroy();
+        }
+        catch (Exception ex)
+        {
+          LoggerProvider.LogWarning($"Failed to destroy previous unique piece cleanly: {ex.Message}");
+          if (netView.gameObject != null)
+          {
+            ZNetScene.instance?.Destroy(netView.gameObject);
+          }
+        }
+      }
+      else if (netView.gameObject != null)
+      {
+        ZNetScene.instance?.Destroy(netView.gameObject);
       }
     }
 

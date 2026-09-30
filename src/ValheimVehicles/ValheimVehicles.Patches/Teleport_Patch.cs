@@ -212,10 +212,6 @@ public class Teleport_Patch
 
     var targetZdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(targetZdoid) : null;
     var parentId = targetZdo != null ? targetZdo.GetInt(VehicleZdoVars.MBParentId, 0) : 0;
-    if (parentId == 0 && targetZdo != null)
-    {
-      parentId = targetZdo.GetInt(ZdoVarController.PersistentUidHash, 0);
-    }
     if (parentId == 0)
     {
       return true;
@@ -318,10 +314,10 @@ public class Teleport_Patch
 
     int loadedPieceCount = piecesController != null ? piecesController.m_pieces.Count : 0;
     int targetPieceCount = targetPieces.Count;
-    bool piecesReady = (targetPieceCount == 0) || (loadedPieceCount >= targetPieceCount) || (__instance.m_teleportTimer > 20f);
+    bool piecesReady = (targetPieceCount == 0) || (loadedPieceCount >= targetPieceCount) || (__instance.m_teleportTimer > 6f);
 
-    // Do not abort prematurely. Wait for area, vehicle/portal, and pieces, with 20s fallback timeout.
-    var canComplete = (isAreaReady && (isVehicleReady || isPortalReady) && piecesReady) || __instance.m_teleportTimer > 20f;
+    // Do not abort prematurely. Wait for area, vehicle/portal, and pieces, with 6s fallback timeout.
+    var canComplete = (isAreaReady && (isVehicleReady || isPortalReady) && piecesReady) || __instance.m_teleportTimer > 6f;
     if (!canComplete)
     {
       return false;

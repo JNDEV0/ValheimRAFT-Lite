@@ -31,7 +31,11 @@
       if (__instance.m_zdo == null || __instance.m_ghost) return;
 
       // Automatically attempts to attach/register to its parent vehicle if MBParentId is set
-      VehiclePiecesController.TryInitPieceFromNetView(__instance);
+      if (VehiclePiecesController.TryInitPieceFromNetView(__instance))
+      {
+        CultivatableComponent.InitPiece(__instance);
+        return;
+      }
 
       // for any vehicle like components
       BasePieceActivatorComponent.InitPiece(__instance);

@@ -20,6 +20,7 @@ namespace ValheimVehicles.SharedScripts
     public List<Collider> HullColliders;
     public bool IsSwivelChild;
     public bool IsBed;
+    public bool IsPortal;
     public PrefabColliderPointData? ColliderPointData;
 
     public PrefabPieceData(GameObject prefab, Allocator allocator)
@@ -64,7 +65,13 @@ namespace ValheimVehicles.SharedScripts
     /// <param name="prefab"></param>
     private void InitComponentProperties(GameObject prefab)
     {
+#if VALHEIM
+      IsBed = prefab.GetComponent<Bed>() != null;
+      IsPortal = prefab.GetComponent<TeleportWorld>() != null;
+#else
       IsBed = false;
+      IsPortal = false;
+#endif
       var swivelComponentParent = prefab.GetComponentInParent<SwivelComponent>();
       IsSwivelChild = swivelComponentParent != null;
     }
