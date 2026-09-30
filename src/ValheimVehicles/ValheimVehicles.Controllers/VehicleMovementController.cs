@@ -6496,10 +6496,20 @@
 
 
 
+    // Match the initial full-size custom-sail proxy, including creative vehicles
+    // which synchronize their pieces without calling UpdateSailSize.
+    private float _vanillaSailPosition = 1f;
+
     public void UpdateSailSize(float dt)
     {
       var num = 0f;
       var speed = VehicleSpeed;
+      var vanillaTarget = (!isAnchored && speed == Ship.Speed.Full)
+        ? 1f
+        : (!isAnchored && speed == Ship.Speed.Half)
+          ? 0.5f
+          : 0f;
+      _vanillaSailPosition = Mathf.MoveTowards(_vanillaSailPosition, vanillaTarget, dt);
 
       if (!isAnchored)
       {
@@ -6735,202 +6745,40 @@
 
 
 
-    private static System.Reflection.PropertyInfo? s_magicaSerializeDataProp;
-    private static System.Reflection.FieldInfo? s_magicaBlendWeightField;
-    private static System.Reflection.MethodInfo? s_magicaSetParamMethod;
-    private static bool s_magicaReflectionInitialized = false;
-
-    private static void UpdateMagicaCloth(MastComponent mast, bool isRetracted, float blendWeight = 1f)
-    {
-      if (mast == null) return;
-
-      var behaviours = (mast.m_magicaClothBehaviours != null && mast.m_magicaClothBehaviours.Count > 0)
-        ? mast.m_magicaClothBehaviours
-        : mast.GetComponentsInChildren<Behaviour>(true).Where(b => b != null && b.GetType().Name == "MagicaCloth").ToList();
-
-      foreach (var behaviour in behaviours)
-      {
-        if (behaviour == null) continue;
-
-        behaviour.enabled = !isRetracted && !mast.m_disableCloth;
-
-        try
-        {
-          if (!s_magicaReflectionInitialized)
-          {
-            var bType = behaviour.GetType();
-            s_magicaSerializeDataProp = bType.GetProperty("SerializeData");
-            s_magicaSetParamMethod = bType.GetMethod("SetParameterChange", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            if (s_magicaSerializeDataProp != null)
-            {
-              var sType = s_magicaSerializeDataProp.PropertyType;
-              s_magicaBlendWeightField = sType.GetField("blendWeight", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            }
-            s_magicaReflectionInitialized = true;
-          }
-
-          if (s_magicaSerializeDataProp != null)
-          {
-            var serializeData = s_magicaSerializeDataProp.GetValue(behaviour);
-            if (serializeData != null && s_magicaBlendWeightField != null)
-            {
-              var currentWeight = (float)s_magicaBlendWeightField.GetValue(serializeData);
-              var targetWeight = isRetracted ? 0f : blendWeight;
-              if (Mathf.Abs(currentWeight - targetWeight) > 0.01f)
-              {
-                s_magicaBlendWeightField.SetValue(serializeData, targetWeight);
-                s_magicaSetParamMethod?.Invoke(behaviour, null);
-              }
-            }
-          }
-        }
-        catch
-        {
-          // Ignore reflection errors gracefully
-        }
-      }
-    }
-
     /**
      * In theory, we can just make the sailComponent and mastComponent parents of the masts/sails of the ship. This will make any mutations to those parents in sync with the sail changes
      */
     private void SyncVehicleRotationDependentItems()
-
     {
-
       if (!isActiveAndEnabled) return;
 
-
-
       if (PiecesController == null) return;
-
       foreach (var mast in PiecesController.m_mastPieces
-
                  .ToList())
-
       {
-
         if (!(bool)mast)
-
         {
-
           PiecesController.m_mastPieces.Remove(mast);
-
           continue;
-
         }
-
-
 
         if (mast.m_allowSailRotation &&
-
             PropulsionConfig.AllowBaseGameSailRotation.Value)
-
         {
-
           var isWindSync = !isAnchored && (vehicleSpeed == Ship.Speed.Full || vehicleSpeed == Ship.Speed.Half);
-
           var newRotation = m_mastObject.transform.localRotation;
-
           if (mast.m_rotationTransform != null)
-
           {
-
             mast.m_rotationTransform.localRotation = isWindSync ? newRotation : Quaternion.Lerp(mast.m_rotationTransform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
-
           }
-
           else
-
           {
-
             mast.transform.localRotation = isWindSync ? newRotation : Quaternion.Lerp(mast.transform.localRotation, Quaternion.identity, Time.fixedDeltaTime);
-
-          }
-
-        }
-
-
-
-        if (mast.m_sailObject != null || mast.m_hasSailPositions)
-        {
-          var sailScaleY = m_sailObject != null ? m_sailObject.transform.localScale.y : 0f;
-          var isRetracted = sailScaleY <= 0.05f;
-
-          mast.InitSailPositions();
-
-          if (mast.m_hasSailPositions)
-          {
-            // Rigged sails (Longship, Drakkar): Keep renderers enabled in default stable state
-            foreach (var r in mast.m_sailRenderers)
-            {
-              if (r != null) r.enabled = true;
-            }
-            foreach (var lr in mast.m_ropeRenderers)
-            {
-              if (lr != null) lr.enabled = true;
-            }
-          }
-          else if (mast.m_allowSailShrinking && mast.m_sailObject != null)
-          {
-            // Standard mesh-scaled sail (Raft mast, Karve mast)
-            var widthScale = mast.GetSailWidthScale();
-            var targetScale = new Vector3(widthScale, Mathf.Max(0.01f, sailScaleY), 1f);
-            mast.m_sailObject.transform.localScale = targetScale;
-
-            // Compensate position so the top edge stays attached to the crossbeam/yardarm
-            var verticalOffset = (mast.m_sailObject != mast.gameObject) ? mast.GetVerticalOffset() : 0f;
-            var newPos = mast.m_initialSailLocalPos;
-            newPos.y += (1f - targetScale.y) * mast.m_sailTopLocalY + verticalOffset;
-            mast.m_sailObject.transform.localPosition = newPos;
-
-            bool isSailActive = !isRetracted && sailScaleY > 0.02f;
-
-            // Toggle visibility of sail meshes and attached ropes
-            foreach (var r in mast.m_sailRenderers)
-            {
-              if (r != null) r.enabled = isSailActive;
-            }
-            foreach (var lr in mast.m_ropeRenderers)
-            {
-              if (lr != null) lr.enabled = isSailActive;
-            }
-
-            // Wind cloth physics: only active at full speed (speed 3)
-            bool clothPhysicsActive = sailScaleY > 0.75f && isSailActive && !mast.m_disableCloth;
-            if (mast.m_sailCloth != null)
-            {
-              mast.m_sailCloth.enabled = clothPhysicsActive;
-              if (clothPhysicsActive && EnvMan.instance != null)
-              {
-                mast.m_sailCloth.externalAcceleration = EnvMan.instance.GetWindForce();
-              }
-            }
-
-            UpdateMagicaCloth(mast, isRetracted: !clothPhysicsActive, blendWeight: clothPhysicsActive ? 1f : 0f);
-          }
-          else if (mast.m_sailObject != null)
-          {
-            var widthScale = mast.GetSailWidthScale();
-            mast.m_sailObject.transform.localScale = new Vector3(widthScale, 1f, 1f);
-            if (mast.m_hasInitializedSailPositions)
-            {
-              var verticalOffset = (mast.m_sailObject != mast.gameObject) ? mast.GetVerticalOffset() : 0f;
-              var newPos = mast.m_initialSailLocalPos;
-              newPos.y += verticalOffset;
-              mast.m_sailObject.transform.localPosition = newPos;
-            }
-
-            if (mast.m_sailCloth != null)
-            {
-              mast.m_sailCloth.enabled = !mast.m_disableCloth;
-              if (EnvMan.instance != null)
-                mast.m_sailCloth.externalAcceleration = EnvMan.instance.GetWindForce();
-            }
-
-            UpdateMagicaCloth(mast, false);
           }
         }
+
+        mast.UpdateSail(_vanillaSailPosition,
+          m_sailObject ? m_sailObject.transform.localScale : Vector3.one);
       }
 
 

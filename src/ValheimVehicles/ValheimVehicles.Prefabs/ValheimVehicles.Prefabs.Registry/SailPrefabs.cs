@@ -1,10 +1,8 @@
-using System.Linq;
 using Jotunn;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
-using UnityEngine.Rendering;
 using ValheimVehicles.Components;
 using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.SharedScripts;
@@ -20,14 +18,16 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 {
   public override void OnRegister()
   {
-    RegisterRaftMast();
-    RegisterKarveMast();
-    RegisterVikingMast();
-    RegisterDrakkalMast();
-    RegisterCustomSail();
-    RegisterCustomSailCreator(3);
-    RegisterCustomSailCreator(4);
+    TryRegister(RegisterRaftMast);
+    TryRegister(RegisterKarveMast);
+    TryRegister(RegisterVikingMast);
+    TryRegister(RegisterDrakkalMast);
+    TryRegister(RegisterCustomSail);
+    TryRegister(() => RegisterCustomSailCreator(3));
+    TryRegister(() => RegisterCustomSailCreator(4));
   }
+
+  public const string ValheimSailName = "Karve_Sail";
 
   public static bool IsSail(string objName)
   {
@@ -41,9 +41,8 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
   private void RegisterVikingMast()
   {
-    var vikingShipMast = LoadValheimAssets.vikingShipPrefab.transform
-      .Find("ship/visual/Mast")
-      .gameObject;
+    var vikingShip = LoadValheimAssets.vikingShipPrefab.GetComponent<Ship>();
+    var vikingShipMast = vikingShip.m_mastObject;
     var vikingShipMastPrefab =
       PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Tier3RaftMastName,
         vikingShipMast);
@@ -61,32 +60,14 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
     var vikingShipMastComponent =
       vikingShipMastPrefab.AddComponent<MastComponent>();
-    SetupMastSail(vikingShipMastPrefab, vikingShipMastComponent);
+    vikingShipMastComponent.m_sailObject =
+      vikingShipMastPrefab.transform.Find(ValheimSailName).gameObject;
+
+    vikingShipMastComponent.m_sailCloth =
+      vikingShipMastComponent.m_sailObject.GetComponentInChildren<MagicaCloth2.MagicaCloth>();
+    vikingShipMastComponent.ConfigureVanillaSail(vikingShip);
     vikingShipMastComponent.m_allowSailRotation = true;
     vikingShipMastComponent.m_allowSailShrinking = true;
-
-    var sourceVikingShip = LoadValheimAssets.vikingShipPrefab != null ? LoadValheimAssets.vikingShipPrefab.GetComponent<Ship>() : null;
-    if (sourceVikingShip != null && sourceVikingShip.m_sailFurledPosition != null && sourceVikingShip.m_sailMidfurledPosition != null && sourceVikingShip.m_sailUnfurledPosition != null)
-    {
-      var mastRoot = sourceVikingShip.m_mastObject != null ? sourceVikingShip.m_mastObject.transform : vikingShipMast.transform;
-      vikingShipMastComponent.m_sailFurledLocalPos = mastRoot.InverseTransformPoint(sourceVikingShip.m_sailFurledPosition.position);
-      vikingShipMastComponent.m_sailMidfurledLocalPos = mastRoot.InverseTransformPoint(sourceVikingShip.m_sailMidfurledPosition.position);
-      vikingShipMastComponent.m_sailUnfurledLocalPos = mastRoot.InverseTransformPoint(sourceVikingShip.m_sailUnfurledPosition.position);
-      vikingShipMastComponent.m_sailBlendWeightCurve = sourceVikingShip.m_sailBlendWeightCurve;
-      vikingShipMastComponent.m_hasSailPositions = true;
-
-      if (sourceVikingShip.m_sailBottomTransform != null)
-      {
-        var relPath = GetRelativeChildPath(mastRoot, sourceVikingShip.m_sailBottomTransform);
-        vikingShipMastComponent.m_sailBottomRelativePath = relPath;
-        vikingShipMastComponent.m_sailBottomTransform = !string.IsNullOrEmpty(relPath) ? vikingShipMastPrefab.transform.Find(relPath) : null;
-        if (vikingShipMastComponent.m_sailBottomTransform == null)
-        {
-          vikingShipMastComponent.m_sailBottomTransform = vikingShipMastPrefab.GetComponentsInChildren<Transform>(true)
-            .FirstOrDefault(t => t.name == sourceVikingShip.m_sailBottomTransform.name);
-        }
-      }
-    }
 
     // shipCollider
     PrefabRegistryHelpers.AddSnapPoint("$hud_snappoint_bottom",
@@ -98,16 +79,42 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     PrefabRegistryHelpers.FixRopes(vikingShipMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(vikingShipMastPrefab);
 
-    // Kept registered in PrefabManager so existing built vessels load without issues,
-    // but hidden from the hammer build menu per user request.
-    PrefabManager.Instance.AddPrefab(vikingShipMastPrefab);
+    PrefabRegistryController.AddPiece(new CustomPiece(vikingShipMastPrefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .VikingMast),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
+        Enabled = true,
+        Requirements =
+        [
+          new RequirementConfig
+          {
+            Amount = 10,
+            Item = "FineWood",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 2,
+            Item = "RoundLog",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 6,
+            Item = "WolfPelt",
+            Recover = true
+          }
+        ]
+      }));
   }
 
   private void RegisterDrakkalMast()
   {
-    var drakkalMast = LoadValheimAssets.drakkarPrefab.transform
-      .Find("ship/visual/Mast")
-      .gameObject;
+    var drakkar = LoadValheimAssets.drakkarPrefab.GetComponent<Ship>();
+    var drakkalMast = drakkar.m_mastObject;
 
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Tier4RaftMastName,
@@ -122,32 +129,9 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
 
     var mastComponent = prefab.AddComponent<MastComponent>();
-    SetupMastSail(prefab, mastComponent);
+    mastComponent.ConfigureVanillaSail(drakkar);
     mastComponent.m_allowSailRotation = true;
     mastComponent.m_allowSailShrinking = true;
-
-    var sourceDrakkar = LoadValheimAssets.drakkarPrefab != null ? LoadValheimAssets.drakkarPrefab.GetComponent<Ship>() : null;
-    if (sourceDrakkar != null && sourceDrakkar.m_sailFurledPosition != null && sourceDrakkar.m_sailMidfurledPosition != null && sourceDrakkar.m_sailUnfurledPosition != null)
-    {
-      var mastRoot = sourceDrakkar.m_mastObject != null ? sourceDrakkar.m_mastObject.transform : drakkalMast.transform;
-      mastComponent.m_sailFurledLocalPos = mastRoot.InverseTransformPoint(sourceDrakkar.m_sailFurledPosition.position);
-      mastComponent.m_sailMidfurledLocalPos = mastRoot.InverseTransformPoint(sourceDrakkar.m_sailMidfurledPosition.position);
-      mastComponent.m_sailUnfurledLocalPos = mastRoot.InverseTransformPoint(sourceDrakkar.m_sailUnfurledPosition.position);
-      mastComponent.m_sailBlendWeightCurve = sourceDrakkar.m_sailBlendWeightCurve;
-      mastComponent.m_hasSailPositions = true;
-
-      if (sourceDrakkar.m_sailBottomTransform != null)
-      {
-        var relPath = GetRelativeChildPath(mastRoot, sourceDrakkar.m_sailBottomTransform);
-        mastComponent.m_sailBottomRelativePath = relPath;
-        mastComponent.m_sailBottomTransform = !string.IsNullOrEmpty(relPath) ? prefab.transform.Find(relPath) : null;
-        if (mastComponent.m_sailBottomTransform == null)
-        {
-          mastComponent.m_sailBottomTransform = prefab.GetComponentsInChildren<Transform>(true)
-            .FirstOrDefault(t => t.name == sourceDrakkar.m_sailBottomTransform.name);
-        }
-      }
-    }
 
     // shipCollider
     PrefabRegistryHelpers.AddSnapPoint("$hud_snappoint_bottom", prefab);
@@ -158,42 +142,87 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     PrefabRegistryHelpers.FixRopes(prefab);
     PrefabRegistryHelpers.FixCollisionLayers(prefab);
 
-    // Kept registered in PrefabManager so existing built vessels load without issues,
-    // but hidden from the hammer build menu per user request.
-    PrefabManager.Instance.AddPrefab(prefab);
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    {
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+        .VikingMast),
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
+      Enabled = true,
+      Requirements =
+      [
+        new RequirementConfig
+        {
+          Amount = 20,
+          Item = "YggdrasilWood",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 20,
+          Item = "LinenThread",
+          Recover = true
+        }
+      ]
+    }));
   }
 
 
   private void RegisterCustomSail()
   {
-    var prefab = PrefabManager.Instance.CreateClonedPrefab(
-      PrefabNames.Tier1CustomSailName,
-      LoadValheimVehicleAssets.CustomSail);
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        PrefabNames.Tier1CustomSailName,
+        LoadValheimVehicleAssets.CustomSail);
 
-    var mbSailPrefabPiece = prefab.AddComponent<Piece>();
-    mbSailPrefabPiece.m_name = "$mb_sail";
-    mbSailPrefabPiece.m_description = "$mb_sail_desc";
+    var mbSailPrefabPiece =
+      prefab.AddComponent<Piece>();
+
+    mbSailPrefabPiece.m_name =
+      "$mb_sail";
+
+    mbSailPrefabPiece.m_description =
+      "$mb_sail_desc";
+
     mbSailPrefabPiece.m_placeEffect =
       LoadValheimAssets.woodFloorPiece.m_placeEffect;
 
-    PrefabRegistryHelpers.AddNetViewWithPersistence(prefab);
+    PrefabRegistryHelpers.AddNetViewWithPersistence(
+      prefab);
 
-    var sail = prefab.AddComponent<SailComponent>();
+    /*
+     * Mast first because SailComponent.Awake() needs it.
+     */
+    var mast =
+      prefab.GetOrAddComponent<MastComponent>();
 
-    // this is a tier 1 sail
-    PrefabRegistryHelpers.SetWearNTear(prefab, 1);
-    PrefabRegistryHelpers.FixSnapPoints(prefab);
-
-    // mast should allowSailShrinking
-    var mast = prefab.AddComponent<MastComponent>();
     mast.m_sailObject = prefab;
-    mast.m_sailCloth = sail.m_sailCloth;
     mast.m_allowSailRotation = false;
     mast.m_allowSailShrinking = true;
 
-    PrefabManager.Instance.AddPrefab(prefab);
+    /*
+     * SailComponent.Awake() can now safely initialize both MagicaCloth
+     * and MastComponent linkage.
+     */
+    var sail =
+      prefab.GetOrAddComponent<SailComponent>();
+
+    mast.m_sailCloth =
+      sail.m_sailCloth;
+
+    PrefabRegistryHelpers.SetWearNTear(
+      prefab,
+      1);
+
+    PrefabRegistryHelpers.FixSnapPoints(
+      prefab);
+
+    PrefabManager.Instance.AddPrefab(
+      prefab);
+
     SailCreatorComponent.sailPrefab =
-      PrefabManager.Instance.GetPrefab(PrefabNames.Tier1CustomSailName);
+      PrefabManager.Instance.GetPrefab(
+        PrefabNames.Tier1CustomSailName);
   }
 
   /**
@@ -217,7 +246,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     piece.m_name = pieceName;
     piece.m_description = $"$mb_sail_{sailCount}_desc";
     piece.m_placeEffect = LoadValheimAssets.woodFloorPiece.m_placeEffect;
-
+    piece.m_canRotate = false; // rotating causes weird behaviors for the points.
 
     var sailCreatorComponent = prefab.AddComponent<SailCreatorComponent>();
     sailCreatorComponent.m_sailSize = sailCount;
@@ -234,9 +263,18 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
       mesh.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
     }
 
-    // Disable custom square and triangle sails from the hammer build menu
-    piece.m_enabled = false;
-    PrefabManager.Instance.AddPrefab(prefab);
+    var sailIcon = sailCount == 3
+      ? LoadValheimVehicleAssets.VehicleSprites.GetSprite("customsail_tri")
+      : LoadValheimVehicleAssets.VehicleSprites.GetSprite("customsail");
+
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
+    {
+      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      Description = $"$mb_sail_{sailCount}_desc",
+      Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
+      Enabled = true,
+      Icon = sailIcon
+    }));
   }
 
   public static string GetTieredSailAreaText(int tier)
@@ -274,7 +312,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     var mastComponent = mbRaftMastPrefab.AddComponent<MastComponent>();
     mastComponent.m_allowSailRotation = true;
     mastComponent.m_allowSailShrinking = true;
-    SetupMastSail(mbRaftMastPrefab, mastComponent);
+    mastComponent.ConfigureVanillaSail(LoadValheimAssets.vanillaRaftPrefab.GetComponent<Ship>());
 
     PrefabRegistryHelpers.SetWearNTear(mbRaftMastPrefab);
 
@@ -296,26 +334,14 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
         [
           new RequirementConfig
           {
-            Amount = 12,
+            Amount = 10,
             Item = "Wood",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 4,
-            Item = "RoundLog",
             Recover = true
           },
           new RequirementConfig
           {
             Amount = 6,
             Item = "DeerHide",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 6,
-            Item = "LeatherScraps",
             Recover = true
           }
         ]
@@ -325,7 +351,8 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
   public void RegisterKarveMast()
   {
     var karve = PrefabManager.Instance.GetPrefab("Karve");
-    var karveMast = karve.transform.Find("ship/mast").gameObject;
+    var karveShip = karve.GetComponent<Ship>();
+    var karveMast = karveShip.m_mastObject;
     var mbKarveMastPrefab =
       PrefabManager.Instance.CreateClonedPrefab(PrefabNames.Tier2RaftMastName,
         karveMast);
@@ -341,8 +368,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
     // tweak the mast
     var mast = mbKarveMastPrefab.AddComponent<MastComponent>();
-    SetupMastSail(mbKarveMastPrefab, mast);
-    mast.m_sailWidthScale = 2.0f;
+    mast.ConfigureVanillaSail(karveShip);
     mast.m_allowSailShrinking = true;
     mast.m_allowSailRotation = true;
 
@@ -355,53 +381,35 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
     PrefabRegistryHelpers.FixRopes(mbKarveMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(mbKarveMastPrefab);
 
-    // Kept registered in PrefabManager so existing built vessels load without issues,
-    // but hidden from the hammer build menu.
-    PrefabManager.Instance.AddPrefab(mbKarveMastPrefab);
-  }
-
-  private static void SetupMastSail(GameObject prefab, MastComponent mastComponent)
-  {
-    var cloth = prefab.GetComponentInChildren<Cloth>(true);
-    if (cloth != null)
-    {
-      mastComponent.m_sailCloth = cloth;
-      mastComponent.m_sailObject = (cloth.transform.parent != null && cloth.transform.parent != prefab.transform)
-        ? cloth.transform.parent.gameObject
-        : cloth.gameObject;
-    }
-    else
-    {
-      var sailTransform = prefab.transform.Find("Sail") ??
-                          prefab.transform.Find("sail") ??
-                          prefab.GetComponentsInChildren<Transform>(true)
-                            .FirstOrDefault(t => t.name.IndexOf("sail", System.StringComparison.OrdinalIgnoreCase) >= 0 && t != prefab.transform);
-      if (sailTransform != null)
+    PrefabRegistryController.AddPiece(new CustomPiece(mbKarveMastPrefab, true,
+      new PieceConfig
       {
-        mastComponent.m_sailObject = sailTransform.gameObject;
-        mastComponent.m_sailCloth = sailTransform.GetComponentInChildren<Cloth>(true);
-      }
-      else
-      {
-        mastComponent.m_sailObject = prefab;
-      }
-    }
-
-    mastComponent.m_sailWidthScale = 1.65f;
-  }
-
-  private static string GetRelativeChildPath(Transform root, Transform target)
-  {
-    if (target == null || root == null || target == root) return "";
-    var segments = new System.Collections.Generic.List<string>();
-    var curr = target;
-    while (curr != null && curr != root)
-    {
-      segments.Add(curr.name);
-      curr = curr.parent;
-    }
-    if (curr != root) return target.name;
-    segments.Reverse();
-    return string.Join("/", segments);
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Description = GetTieredSailAreaText(2),
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("karvemast"),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
+        Enabled = true,
+        Requirements = new RequirementConfig[3]
+        {
+          new()
+          {
+            Amount = 10,
+            Item = "FineWood",
+            Recover = true
+          },
+          new()
+          {
+            Amount = 2,
+            Item = "RoundLog",
+            Recover = true
+          },
+          new()
+          {
+            Amount = 6,
+            Item = "TrollHide",
+            Recover = true
+          }
+        }
+      }));
   }
 }

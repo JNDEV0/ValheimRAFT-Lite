@@ -39,12 +39,22 @@ public class CustomVehicleMastRegistry : RegisterPrefab<CustomVehicleMastRegistr
     mastComponent.m_allowSailShrinking = false;
     mastComponent.m_rotationTransform = prefab.transform.Find("rotational_yard");
 
-    // Disable custom masts level 1, 2, 3 from hammer build menu
-    if (prefab.TryGetComponent<Piece>(out var piece))
-    {
-      piece.m_enabled = false;
-    }
-    PrefabManager.Instance.AddPrefab(prefab);
+    PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
+      new PieceConfig
+      {
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
+        Enabled = true,
+        Requirements =
+        [
+          new RequirementConfig
+          {
+            Amount = 20,
+            Item = "RoundLog",
+            Recover = true
+          }
+        ]
+      }));
   }
 
   public override void OnRegister()

@@ -53,6 +53,10 @@
     <!-- Add valheim_data references -->
     <ItemGroup Label="Valheim_Data">
         <Publicize Include="assembly_valheim"/>
+        <Reference Include="MagicaClothV2">
+            <HintPath>$(ManagedDataPath)\MagicaClothV2.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
         <Reference Include="assembly_valheim">
             <SpecificVersion>False</SpecificVersion>
             <HintPath>$(ManagedDataPath)\assembly_valheim.dll</HintPath>
