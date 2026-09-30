@@ -300,6 +300,14 @@
     // ship rudders
     internal List<RudderComponent> m_rudderPieces = [];
 
+    // rowing seats
+    internal List<GreydwarfRowingSeatComponent> m_greydwarfRowingSeats = [];
+    public List<GreydwarfRowingSeatComponent> GreydwarfRowingSeats => m_greydwarfRowingSeats;
+    public List<RopeLadderComponent> RopeLadders => m_ladders;
+    internal List<RaftGreydwarfSailorComponent> m_activeSailors = [];
+    public List<RaftGreydwarfSailorComponent> ActiveSailors => m_activeSailors;
+    public List<ZNetView> Pieces => m_pieces;
+
     internal List<SailComponent> m_sailPieces = [];
 
 /* end sail calcs  */
@@ -1050,6 +1058,51 @@
 
             m_rudderPieces.Add(rudder);
             SetShipWakeBounds();
+            break;
+          }
+          case GreydwarfRowingSeatComponent rowingSeat:
+          {
+            // Enforce that rowing seat faces forward relative to vehicle
+            var forwardDot = Vector3.Dot(rowingSeat.transform.forward, transform.forward);
+            var isSeatInvalid = forwardDot < 0.2f;
+            string errorKey = "$valheim_vehicles_seat_must_face_forward";
+
+            // If rudder(s) already exist, enforce that rowing seat faces same direction as rudder
+            m_rudderPieces.RemoveAll(r => r == null || !r);
+            if (!isSeatInvalid && m_rudderPieces.Count > 0 && m_rudderPieces[0] != null)
+            {
+              var rudderDot = Vector3.Dot(rowingSeat.transform.forward, m_rudderPieces[0].transform.forward);
+              if (rudderDot < 0.2f)
+              {
+                isSeatInvalid = true;
+                errorKey = "$valheim_vehicles_seat_orientation_invalid";
+              }
+            }
+
+            if (isSeatInvalid)
+            {
+              var wnt = netView.GetComponent<WearNTear>();
+              if (wnt != null)
+              {
+                wnt.Destroy();
+              }
+              else if (netView.gameObject)
+              {
+                ZNetScene.instance.Destroy(netView.gameObject);
+              }
+              if (Player.m_localPlayer != null)
+              {
+                Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize(errorKey));
+              }
+              break;
+            }
+
+            m_greydwarfRowingSeats.RemoveAll(s => s == null || !s);
+            if (!m_greydwarfRowingSeats.Contains(rowingSeat))
+            {
+              m_greydwarfRowingSeats.Add(rowingSeat);
+            }
+            rowingSeat.CacheVehicle();
             break;
           }
           case RopeAnchorComponent ropeAnchor:
@@ -2896,6 +2949,7 @@
           IsInitialPieceActivationComplete = true;
           // as a safety measure calling this will prevent collisions if any piece was delayed in activation.
           ForceRebuildBounds();
+          CheckAndRestoreRemoteCrew();
         }
         else
         {
@@ -3444,13 +3498,122 @@
 
     public float GetRowingSpeed()
     {
-      if (m_rudderPieces.Count == 0) return 0f;
+      m_rudderPieces.RemoveAll(r => r == null || !r);
+      m_greydwarfRowingSeats.RemoveAll(s => s == null || !s);
+
       var speed = 0f;
       foreach (var rudder in m_rudderPieces)
       {
         if (rudder != null) speed += rudder.RowSpeed;
       }
+      foreach (var seat in m_greydwarfRowingSeats)
+      {
+        if (seat != null) speed += seat.GetRowingSpeedBonus();
+      }
       return speed;
+    }
+
+    public void RegisterSailor(RaftGreydwarfSailorComponent sailor)
+    {
+      if (sailor == null || m_activeSailors.Contains(sailor)) return;
+      m_activeSailors.Add(sailor);
+      SaveCrewToZDO();
+    }
+
+    public void UnregisterSailor(RaftGreydwarfSailorComponent sailor)
+    {
+      if (sailor == null) return;
+      m_activeSailors.Remove(sailor);
+      SaveCrewToZDO();
+    }
+
+    public Vector3 GetPlanterOrSafeDeckPosition()
+    {
+      foreach (var p in m_pieces)
+      {
+        if (p == null || p.gameObject == null) continue;
+        if (p.gameObject.name.StartsWith("MBDirtFloor", StringComparison.OrdinalIgnoreCase) || p.GetComponent<CultivatableComponent>() != null)
+        {
+          return p.transform.position + Vector3.up * 0.5f;
+        }
+      }
+      if (m_pieces.Count > 0 && m_pieces[0] != null)
+      {
+        return m_pieces[0].transform.position + Vector3.up * 1.0f;
+      }
+      return transform.position + Vector3.up * 1.5f;
+    }
+
+    private void SaveCrewToZDO()
+    {
+      if (m_nview == null || !m_nview.IsValid()) return;
+      int regular = 0, shaman = 0, brute = 0;
+      foreach (var s in m_activeSailors)
+      {
+        if (s == null) continue;
+        switch (s.DwarfType)
+        {
+          case GreydwarfSailorType.Regular: regular++; break;
+          case GreydwarfSailorType.Shaman: shaman++; break;
+          case GreydwarfSailorType.Brute: brute++; break;
+        }
+      }
+      string crewData = $"{regular}:{shaman}:{brute}";
+      m_nview.GetZDO().Set("RaftAssignedCrew", crewData);
+    }
+
+    public void CheckAndRestoreRemoteCrew()
+    {
+      if (m_nview == null || !m_nview.IsValid()) return;
+      if (ZNetScene.instance == null) return;
+      string crewData = m_nview.GetZDO().GetString("RaftAssignedCrew", "");
+      if (string.IsNullOrEmpty(crewData)) return;
+
+      var parts = crewData.Split(':');
+      if (parts.Length != 3) return;
+
+      if (!int.TryParse(parts[0], out int targetReg) ||
+          !int.TryParse(parts[1], out int targetSham) ||
+          !int.TryParse(parts[2], out int targetBrute)) return;
+
+      int currentReg = 0, currentSham = 0, currentBrute = 0;
+      m_activeSailors.RemoveAll(s => s == null);
+      foreach (var s in m_activeSailors)
+      {
+        if (s == null) continue;
+        switch (s.DwarfType)
+        {
+          case GreydwarfSailorType.Regular: currentReg++; break;
+          case GreydwarfSailorType.Shaman: currentSham++; break;
+          case GreydwarfSailorType.Brute: currentBrute++; break;
+        }
+      }
+
+      Vector3 spawnPos = GetPlanterOrSafeDeckPosition();
+
+      SpawnMissingCrew("Greydwarf", targetReg - currentReg, spawnPos);
+      SpawnMissingCrew("Greydwarf_Shaman", targetSham - currentSham, spawnPos);
+      SpawnMissingCrew("Greydwarf_Elite", targetBrute - currentBrute, spawnPos);
+    }
+
+    private void SpawnMissingCrew(string prefabName, int needed, Vector3 spawnPos)
+    {
+      if (needed <= 0) return;
+      var prefab = ZNetScene.instance?.GetPrefab(prefabName);
+      if (prefab == null) return;
+
+      for (int i = 0; i < needed; i++)
+      {
+        var go = UnityEngine.Object.Instantiate(prefab, spawnPos + UnityEngine.Random.insideUnitSphere * 0.5f, transform.rotation);
+        var ch = go.GetComponent<Character>();
+        if (ch != null)
+        {
+          ch.SetTamed(true);
+        }
+        var sailor = go.GetComponent<RaftGreydwarfSailorComponent>() ?? go.AddComponent<RaftGreydwarfSailorComponent>();
+        sailor.SetAssignedShip(this);
+        RegisterSailor(sailor);
+      }
     }
 
     public float GetMinPropulsion()

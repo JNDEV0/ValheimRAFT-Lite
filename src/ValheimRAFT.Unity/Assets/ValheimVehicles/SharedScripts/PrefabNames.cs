@@ -256,6 +256,9 @@
       public static readonly string ShipSteeringWheel =
         $"{ValheimVehiclesPrefix}_ShipSteeringWheel";
 
+      public static readonly string GreydwarfRowingSeat =
+        $"{ValheimVehiclesPrefix}_Greydwarf_Rowing_Seat";
+
       public static readonly string ShipKeel = $"{ValheimVehiclesPrefix}_ShipKeel";
 
       public static readonly string WaterVehiclePreviewHull =

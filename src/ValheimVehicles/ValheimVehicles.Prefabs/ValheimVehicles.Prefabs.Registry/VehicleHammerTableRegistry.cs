@@ -238,7 +238,10 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Left_Iron", // Iron-Reinforced Deck Stern Planking - Left
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Right_Iron", // Iron-Reinforced Deck Stern Planking - Right
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Left_Iron", // Iron-Reinforced Deck Stern Planking - Left 2x8
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron" // Iron-Reinforced Deck Stern Planking - Right 2x8
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", // Iron-Reinforced Deck Stern Planking - Right 2x8
+
+      // Greydwarf Rowing Seat (appended to end of build menu per user request)
+      "ValheimVehicles_Greydwarf_Rowing_Seat"
     };
 
     private static readonly HashSet<string> RedundantPieces = new(StringComparer.OrdinalIgnoreCase)
@@ -404,7 +407,8 @@ namespace ValheimVehicles.Prefabs.Registry
       { "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Left_Iron", new[] { "hull_rib_corner_floor_iron_2x4_left", "valheim_vehicles_hull_rib_corner_floor_iron_left_2x4" } },
       { "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Right_Iron", new[] { "hull_rib_corner_floor_iron_2x4_right", "valheim_vehicles_hull_rib_corner_floor_iron_right_2x4" } },
       { "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Left_Iron", new[] { "hull_rib_corner_floor_iron_2x8_left", "valheim_vehicles_hull_rib_corner_floor_iron_left_2x8" } },
-      { "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", new[] { "hull_rib_corner_floor_iron_2x8_right", "valheim_vehicles_hull_rib_corner_floor_iron_right_2x8" } }
+      { "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", new[] { "hull_rib_corner_floor_iron_2x8_right", "valheim_vehicles_hull_rib_corner_floor_iron_right_2x8" } },
+      { "ValheimVehicles_Greydwarf_Rowing_Seat", new[] { "greydwarf_rowing_seat", "valheimvehicles_greydwarf_rowing_seat", "rowingseat" } }
     };
 
     private static bool MatchesPieceName(string actualName, string desiredName)

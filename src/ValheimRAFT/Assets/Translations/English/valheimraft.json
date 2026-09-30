@@ -121,6 +121,10 @@
   "valheim_vehicles_rudder_orientation_invalid": "Rudder must face the same direction as the steering wheel.",
   "valheim_vehicles_wheel_orientation_invalid": "Steering wheel must face the same direction as the rudder.",
   "valheim_vehicles_wheel_must_face_forward": "Steering wheel must face forward.",
+  "valheim_vehicles_seat_orientation_invalid": "Rowing seat must face the same direction as the rudder.",
+  "valheim_vehicles_seat_must_face_forward": "Rowing seat must face forward.",
+  "valheim_vehicles_greydwarf_rowing_seat": "Greydwarf Rowing Seat",
+  "valheim_vehicles_greydwarf_rowing_seat_desc": "A sturdy wooden rowing bench for tamed Greydwarf sailors to man the oars. Players may sit to rest, but only Greydwarves will row. <color=yellow>Put those mossy rascals to work or listen to them grumble all day.</color>",
   "valheim_vehicles_ram_stake": "Ram Stake",
   "valheim_vehicles_ram_stake_desc": "Used to puncture hulls, enemies, and terrain. Less area damage, but can smash rocks harder within a small area. Cannot damage trees.",
   "valheim_vehicles_ram_blade": "Ram Blade",
@@ -553,5 +557,15 @@
   "valheim_vehicles_hull_rib_corner_floor_iron_left_2x8": "Iron-Reinforced Deck Stern Planking - Left 2x8",
   "valheim_vehicles_hull_rib_corner_floor_iron_left_2x8_desc": "Will seal off the ship's rib corner gap. A massive 2x8 iron-reinforced port-side deck seal tailored to cover deep eight-meter corner framing. <color=yellow>Eight meters of iron-reinforced timber sealing the deepest hull corners.</color>",
   "valheim_vehicles_hull_rib_corner_floor_iron_right_2x8": "Iron-Reinforced Deck Stern Planking - Right 2x8",
-  "valheim_vehicles_hull_rib_corner_floor_iron_right_2x8_desc": "Will seal off the ship's rib corner gap. A massive 2x8 iron-reinforced starboard-side deck seal tailored to cover deep eight-meter corner framing. <color=yellow>Eight meters of iron-reinforced timber sealing the deepest hull corners.</color>"
+  "valheim_vehicles_hull_rib_corner_floor_iron_right_2x8_desc": "Will seal off the ship's rib corner gap. A massive 2x8 iron-reinforced starboard-side deck seal tailored to cover deep eight-meter corner framing. <color=yellow>Eight meters of iron-reinforced timber sealing the deepest hull corners.</color>",
+  "valheim_vehicles_greydwarf_rowing_seat": "Greydwarf Rowing Seat",
+  "valheim_vehicles_greydwarf_rowing_seat_desc": "A rowing bench configured for a sailor Greydwarf. Can be placed freely clipping into hull geometry. Facing direction must align forward with the ship. Seated Greydwarves dynamically deploy an oar and propel the ship forward at flat speeds (Regular +1.0, Shaman +1.5, Brute +2.0). Players can also sit to rest.",
+  "valheim_vehicles_seat_orientation_invalid": "The rowing seat must face forward in the same direction as the ship's rudders and steering wheel!",
+  "valheim_vehicles_sailor_greydwarf": "Sailor Greydwarf",
+  "valheim_vehicles_tame_prompt": "Offer Wages / Hire Sailor (10 Coins 100%, 5 Coins 50%, 5 Dandelions 50%)",
+  "valheim_vehicles_tame_insufficient": "Requires 10 Coins (or 5 Coins / 5 Dandelions) to hire.",
+  "valheim_vehicles_tame_success": "Greydwarf hired as Ship Sailor!",
+  "valheim_vehicles_tame_failed": "The Greydwarf accepted the offering but refused your contract!",
+  "valheim_vehicles_sailor_unfed_warning": "A Sailor Greydwarf is unfed! Resin needed in ship chests.",
+  "valheim_vehicles_sailor_mutinied": "An unfed Greydwarf has mutinied and abandoned ship!"
 }
