@@ -27,7 +27,8 @@ public static class ValheimRAFT_API
     $"{Author}-{ModName}", $"zolantris-{ModName}", $"Zolantris-{ModName}",
     ModName, $"{Author}-{ModNameBeta}", $"zolantris-{ModNameBeta}",
     $"Zolantris-{ModNameBeta}",
-    ModNameBeta
+    ModNameBeta,
+    "ValheimRAFT_Lite", "ValheimRAFT Lite", "JNDEV-ValheimRAFT_Lite", "JNDEV0-ValheimRAFT_Lite"
   ];
 
   public static void RegisterHost(object host)

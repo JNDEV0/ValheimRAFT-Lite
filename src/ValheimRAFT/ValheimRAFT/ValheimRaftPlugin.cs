@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BepInEx;
 using BepInEx.Configuration;
 using Jotunn.Managers;
@@ -41,8 +41,8 @@ public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
   public const string Author = "zolantris";
-  public const string ModName = "ValheimRAFT";
-  public const string ModGuid = $"{Author}.{ModName}";
+  public const string ModName = "ValheimRAFT Lite";
+  public const string ModGuid = $"{Author}.ValheimRAFT";
   public static string Version => BuildInfo.Version;
   public static string HarmonyGuid => ModGuid;
   public const string ModDescription =
@@ -118,6 +118,7 @@ public class ValheimRaftPlugin : BaseUnityPlugin
     // critical for valheim api matching which must be called after config init.
     // must be done before any other services that require LoggerProvider otherwise it will not work.
     ProviderInitializers.InitProviders(Logger, gameObject);
+    Logger.LogInfo($"[{ModName} {Version}] Initializing...");
     ValheimVehicles.Compat.ValheimRAFT_API.RegisterHost(Instance);
     PrefabRegistryController.InitValheimVehiclesAssetBundle();
     ValheimVehiclesPlugin.CreateConfigFromValheimRAFTPluginConfig(ModConfigSync, Config);
