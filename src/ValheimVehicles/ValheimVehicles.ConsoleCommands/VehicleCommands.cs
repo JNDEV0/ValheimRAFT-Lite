@@ -22,7 +22,6 @@ using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Interfaces;
-using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.UI;
 using Zolantris.Shared;
 using Zolantris.Shared.Debug;
@@ -71,6 +70,10 @@ public class VehicleCommands : ConsoleCommand
     public const string mats = "mats";
     public const string mats1 = "mats1";
     public const string mats2 = "mats2";
+    public const string hornoftheseas = "hornoftheseas";
+    public const string horn = "horn";
+    public const string greydwarfsailors = "greydwarfsailors";
+    public const string sailors = "sailors";
   }
 
   private struct CommandInfo
@@ -214,6 +217,22 @@ public class VehicleCommands : ConsoleCommand
         "Shortcut for give-materials 2."),
 
       new CommandInfo(
+        VehicleCommandArgs.hornoftheseas,
+        "Gives the Horn of the Seas (Horn of Loki) to the player's inventory. Alias: 'vehicle horn'."),
+
+      new CommandInfo(
+        VehicleCommandArgs.horn,
+        "Shortcut for 'vehicle hornoftheseas'."),
+
+      new CommandInfo(
+        VehicleCommandArgs.greydwarfsailors,
+        "Gives a starter kit to hire and maintain Greydwarf Sailors (stack of Coins, Dandelions, and Resin). Alias: 'vehicle sailors'."),
+
+      new CommandInfo(
+        VehicleCommandArgs.sailors,
+        "Shortcut for 'vehicle greydwarfsailors'."),
+
+      new CommandInfo(
         VehicleCommandArgs.help,
         "Shows this help message")
     });
@@ -257,7 +276,7 @@ public class VehicleCommands : ConsoleCommand
       return;
     }
 
-    var commandInfo = VehicleCommandDefinitions.FirstOrDefault(x => x.CommandName == firstArg);
+    var commandInfo = VehicleCommandDefinitions.FirstOrDefault(x => string.Equals(x.CommandName, firstArg, StringComparison.OrdinalIgnoreCase));
     if (string.IsNullOrEmpty(commandInfo.CommandName))
     {
       Logger.LogMessage($"Unknown vehicle command '{firstArg}'. Run 'vehicle {VehicleCommandArgs.help}' for options.");
@@ -268,7 +287,7 @@ public class VehicleCommands : ConsoleCommand
 
     var nextArgs = args.Skip(1).ToArray();
 
-    switch (firstArg)
+    switch (commandInfo.CommandName)
     {
       case VehicleCommandArgs.move:
         VehicleMove(nextArgs);
@@ -346,6 +365,14 @@ public class VehicleCommands : ConsoleCommand
       case VehicleCommandArgs.giveMaterials2:
       case VehicleCommandArgs.mats2:
         GiveAllBuildingMaterials(["2"]);
+        break;
+      case VehicleCommandArgs.hornoftheseas:
+      case VehicleCommandArgs.horn:
+        GiveHornOfTheSeas();
+        break;
+      case VehicleCommandArgs.greydwarfsailors:
+      case VehicleCommandArgs.sailors:
+        GiveGreydwarfSailorKit();
         break;
     }
   }
@@ -486,6 +513,122 @@ public class VehicleCommands : ConsoleCommand
     {
       Logger.LogMessage($"[Vehicle] Successfully gave {addedToInv} materials to inventory! All recipes unlocked!");
     }
+  }
+
+  private void GiveHornOfTheSeas()
+  {
+    var player = Player.m_localPlayer;
+    if (player == null)
+    {
+      Logger.LogMessage("No local player found. Must be in-game to give Horn of the Seas.");
+      return;
+    }
+
+    if (ObjectDB.instance == null)
+    {
+      Logger.LogMessage("ObjectDB not loaded.");
+      return;
+    }
+
+    var prefab = ObjectDB.instance.GetItemPrefab(PrefabNames.VesselHorn);
+    if (prefab == null)
+    {
+      var customItem = ItemManager.Instance != null ? ItemManager.Instance.GetItem(PrefabNames.VesselHorn) : null;
+      if (customItem != null)
+      {
+        prefab = customItem.ItemPrefab;
+      }
+    }
+
+    if (prefab == null)
+    {
+      Logger.LogWarning($"Horn of the Seas prefab '{PrefabNames.VesselHorn}' not found.");
+      return;
+    }
+
+    var itemDrop = prefab.GetComponent<ItemDrop>();
+    if (itemDrop == null || itemDrop.m_itemData == null)
+    {
+      Logger.LogWarning($"Prefab '{PrefabNames.VesselHorn}' has no ItemDrop component.");
+      return;
+    }
+
+    var inventory = player.GetInventory();
+    if (inventory != null)
+    {
+      var itemData = itemDrop.m_itemData.Clone();
+      itemData.m_stack = 1;
+      if (inventory.AddItem(itemData))
+      {
+        Logger.LogMessage("Added Horn of the Seas to inventory.");
+        player.Message(MessageHud.MessageType.Center, "Added Horn of the Seas to inventory");
+      }
+      else
+      {
+        ItemDrop.DropItem(itemData, 1, player.transform.position + Vector3.up * 0.5f, player.transform.rotation);
+        Logger.LogMessage("Inventory full. Dropped Horn of the Seas at feet.");
+        player.Message(MessageHud.MessageType.Center, "Inventory full. Dropped Horn of the Seas at feet");
+      }
+      player.AddKnownItem(itemDrop.m_itemData);
+      player.UpdateKnownRecipesList();
+    }
+  }
+
+  private void GiveGreydwarfSailorKit()
+  {
+    var player = Player.m_localPlayer;
+    if (player == null)
+    {
+      Logger.LogMessage("No local player found. Must be in-game to give sailor kit.");
+      return;
+    }
+
+    if (ObjectDB.instance == null)
+    {
+      Logger.LogMessage("ObjectDB not loaded.");
+      return;
+    }
+
+    string[] items = ["Coins", "Dandelion", "Resin"];
+    var inventory = player.GetInventory();
+    if (inventory == null) return;
+
+    foreach (var itemName in items)
+    {
+      var prefab = ObjectDB.instance.GetItemPrefab(itemName);
+      if (prefab == null)
+      {
+        Logger.LogWarning($"Item prefab '{itemName}' not found in ObjectDB.");
+        continue;
+      }
+
+      var itemDrop = prefab.GetComponent<ItemDrop>();
+      if (itemDrop == null || itemDrop.m_itemData == null)
+      {
+        Logger.LogWarning($"Item '{itemName}' has no ItemDrop component.");
+        continue;
+      }
+
+      var itemData = itemDrop.m_itemData.Clone();
+      int stackSize = itemData.m_shared != null ? itemData.m_shared.m_maxStackSize : 50;
+      if (stackSize <= 0) stackSize = 50;
+      itemData.m_stack = stackSize;
+
+      if (inventory.AddItem(itemData))
+      {
+        Logger.LogMessage($"Added stack of {itemName} ({stackSize}) to inventory.");
+      }
+      else
+      {
+        ItemDrop.DropItem(itemData, stackSize, player.transform.position + Vector3.up * 0.5f, player.transform.rotation);
+        Logger.LogMessage($"Inventory full. Dropped stack of {itemName} ({stackSize}) at feet.");
+      }
+
+      player.AddKnownItem(itemDrop.m_itemData);
+    }
+
+    player.Message(MessageHud.MessageType.Center, "Added Greydwarf Sailor Kit (Coins, Dandelions, Resin)");
+    player.UpdateKnownRecipesList();
   }
 
   public void VehicleOwnerReset()
