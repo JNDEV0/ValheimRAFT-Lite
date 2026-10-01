@@ -96,7 +96,8 @@ public static class LoopTracker
       {
         if (timeSinceReport < 0.001f) timeSinceReport = 2f;
         var avgMs = stats.TotalElapsedMs / Math.Max(1, stats.CallCount);
-        var msg = $"[LoopPerf] {loopId}: {stats.CallCount} runs in {timeSinceReport:F1}s | items: {stats.ItemCount} | avg: {avgMs:F2}ms (max: {stats.MaxElapsedMs:F2}ms, total: {stats.TotalElapsedMs:F1}ms)";
+        var avgItems = stats.ItemCount / Math.Max(1, stats.CallCount);
+        var msg = $"[LoopPerf] {loopId}: {stats.CallCount} runs in {timeSinceReport:F1}s | items: {avgItems} | avg: {avgMs:F2}ms (max: {stats.MaxElapsedMs:F2}ms, total: {stats.TotalElapsedMs:F1}ms)";
         
         Jotunn.Logger.LogInfo(msg);
 

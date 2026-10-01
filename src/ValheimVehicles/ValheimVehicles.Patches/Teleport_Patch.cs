@@ -284,29 +284,63 @@ public class Teleport_Patch
       VehicleManager.VehicleInstances.TryGetValue(parentId, out vm);
     }
 
+    VehiclePiecesController? piecesController = null;
+    if (VehiclePiecesController.ActiveInstances.TryGetValue(parentId, out var apc) && apc != null)
+    {
+      piecesController = apc;
+    }
+    else if (vm != null && vm.Instance != null)
+    {
+      piecesController = vm.Instance.PiecesController;
+    }
+
     var isAreaReady = ZNetScene.instance != null && ZNetScene.instance.IsAreaReady(targetPos);
-    var piecesController = vm != null && vm.Instance != null ? vm.Instance.PiecesController : null;
     var isVehicleReady = piecesController != null && piecesController.isActiveAndEnabled;
     var isPortalReady = nv != null;
 
     var targetPieces = VehiclePiecesController.EnsurePiecesForVehicle(parentId);
+    if (__instance.m_teleportTimer <= 2.1f)
+    {
+      var targetDetails = string.Join(", ", targetPieces.Select(id => {
+        var z = ZDOMan.instance?.GetZDO(id);
+        var name = z != null && ZNetScene.instance != null ? ZNetScene.instance.GetPrefab(z.GetPrefab())?.name ?? "unknown" : "unresolved";
+        return $"{name} [{id}]";
+      }));
+      Jotunn.Logger.LogInfo($"[BoatPortal] Destination Vehicle #{parentId} expected pieces ({targetPieces.Count}): [{targetDetails}]");
+    }
     if (ZNetScene.instance != null)
     {
       foreach (var pZdoId in targetPieces)
       {
         var pZdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(pZdoId) : null;
-        if (pZdo != null && pZdo.IsValid() && ZNetScene.instance.FindInstance(pZdo) == null)
+        if (pZdo != null && pZdo.IsValid())
         {
-          var pHash = pZdo.GetPrefab();
-          if (pHash <= 0 || ZNetScene.instance.GetPrefab(pHash) == null) continue;
+          var existingNv = ZNetScene.instance.FindInstance(pZdo);
+          if (existingNv == null)
+          {
+            var pHash = pZdo.GetPrefab();
+            if (pHash == 0 || ZNetScene.instance.GetPrefab(pHash) == null) continue;
 
-          try
-          {
-            ZNetScene.instance.CreateObject(pZdo);
+            try
+            {
+              var createdGo = ZNetScene.instance.CreateObject(pZdo);
+              if (createdGo != null)
+              {
+                var pNv = createdGo.GetComponent<ZNetView>();
+                if (pNv != null && piecesController != null && !piecesController.m_pieces.Contains(pNv))
+                {
+                  piecesController.ActivatePiece(pNv);
+                }
+              }
+            }
+            catch (System.Exception ex)
+            {
+              Jotunn.Logger.LogWarning($"[BoatPortal] Failed to create object for piece {pZdoId}: {ex.Message}");
+            }
           }
-          catch (System.Exception ex)
+          else if (piecesController != null && !piecesController.m_pieces.Contains(existingNv))
           {
-            Jotunn.Logger.LogWarning($"[BoatPortal] Failed to create object for piece {pZdoId}: {ex.Message}");
+            piecesController.ActivatePiece(existingNv);
           }
         }
       }

@@ -107,14 +107,19 @@
       var parentVehicleId = zdo.GetInt(VehicleZdoVars.MBParentId, 0);
       if (parentVehicleId == 0) return false;
 
-      // Find live vehicle manager matching parentVehicleId
-      var vehicleManager = VehicleManager.GetVehicle(parentVehicleId);
-      if (vehicleManager != null && vehicleManager.PiecesController != null)
+      // 1. Direct active instance lookup - if pieces controller is already active in memory, activate piece immediately
+      if (ActiveInstances.TryGetValue(parentVehicleId, out var activeController) && activeController != null && activeController.isActiveAndEnabled && !activeController.IsInvalid())
       {
-        // 1. Register the piece's ZDOID as active
         VehiclePieceRegistry.RegisterPiece(parentVehicleId, zdo.m_uid);
+        activeController.ActivatePiece(netView);
+        return true;
+      }
 
-        // 2. Perform live activation
+      // 2. Direct vehicle manager lookup
+      var vehicleManager = VehicleManager.GetVehicle(parentVehicleId);
+      if (vehicleManager != null && vehicleManager.PiecesController != null && vehicleManager.PiecesController.isActiveAndEnabled && !vehicleManager.PiecesController.IsInvalid())
+      {
+        VehiclePieceRegistry.RegisterPiece(parentVehicleId, zdo.m_uid);
         vehicleManager.PiecesController.ActivatePiece(netView);
         return true;
       }
@@ -446,7 +451,7 @@
       var activeSyncWatch = Stopwatch.StartNew();
       int syncedPieceCount = 0;
 
-      foreach (var kvp in m_allPieces)
+      foreach (var kvp in m_allPieces.ToArray())
       {
         // Segmented frame budget: yield if we spend >= 2ms in this frame to guarantee 60+ FPS without micro-stutter
         if (stopWatchRuntime.ElapsedMilliseconds >= 2)
@@ -500,7 +505,7 @@
       }
 
       var invalidZdoIds = new List<ZDOID>();
-      foreach (var zdoId in zdoPieces)
+      foreach (var zdoId in zdoPieces.ToArray())
       {
         // Segmented 2ms frame slice budget to completely eliminate FPS micro-stutters
         if (stopWatchRuntime.ElapsedMilliseconds >= 2)
@@ -621,24 +626,16 @@
     /// <param name="zdoPieces"></param>
     public static HashSet<ZDOID> EnsurePiecesForVehicle(int vehiclePersistentId)
     {
-      if (ActiveInstances.TryGetValue(vehiclePersistentId, out var activeVpc) && activeVpc != null && activeVpc.m_pieces != null && activeVpc.m_pieces.Count > 0)
-      {
-        var activeSet = activeVpc.m_pieces
-          .Where(p => p != null && p.IsValid())
-          .Select(p => p.GetZDO())
-          .Where(z => z != null && z.IsValid())
-          .Select(z => z.m_uid)
-          .ToHashSet();
-        m_allPieces[vehiclePersistentId] = activeSet;
-        return activeSet;
-      }
-
-      if (!m_allPieces.TryGetValue(vehiclePersistentId, out var pieceSet) || pieceSet == null || pieceSet.Count == 0)
+      if (!m_allPieces.TryGetValue(vehiclePersistentId, out var pieceSet) || pieceSet == null)
       {
         pieceSet = new HashSet<ZDOID>();
         m_allPieces[vehiclePersistentId] = pieceSet;
+      }
 
-        if (ZDOMan.instance != null && ZDOMan.instance.m_objectsByID != null)
+      if (ZDOMan.instance != null && ZDOMan.instance.m_objectsByID != null)
+      {
+        // Scan ZDOMan if pieceSet has never been populated from world ZDOs
+        if (pieceSet.Count == 0)
         {
           foreach (var kvp in ZDOMan.instance.m_objectsByID)
           {
@@ -651,6 +648,18 @@
           }
         }
       }
+
+      if (ActiveInstances.TryGetValue(vehiclePersistentId, out var activeVpc) && activeVpc != null && activeVpc.m_pieces != null)
+      {
+        foreach (var p in activeVpc.m_pieces)
+        {
+          if (p != null && p.IsValid() && p.m_zdo != null && p.m_zdo.IsValid())
+          {
+            pieceSet.Add(p.m_zdo.m_uid);
+          }
+        }
+      }
+
       return pieceSet;
     }
 
@@ -881,6 +890,10 @@
 
       IncrementPieceRevision();
       UpdateMass(netView, true);
+      RemovePieceDataForComponents(netView);
+      UpdatePieceCount();
+
+      LoggerProvider.LogInfo($"[VPC:UnloadPiece] Vehicle #{PersistentZdoId}: Unloaded '{netView.name}' (ZDO: {netView.GetZDO()?.m_uid}). Remaining: {m_pieces.Count}");
 
       if (m_prefabPieceDataItems.TryGetValue(netView.gameObject, out var pieceData))
       {
@@ -899,6 +912,63 @@
 
       var isRam = RamPrefabRegistry.IsRam(netView.name);
       if (isRam) m_ramPieces.Remove(netView);
+    }
+
+    private void BreakInvalidPiece(ZNetView netView, string errorKey)
+    {
+      if (netView == null) return;
+
+      if (Player.m_localPlayer != null && !string.IsNullOrEmpty(errorKey))
+      {
+        var msg = Localization.instance != null ? Localization.instance.Localize(errorKey) : errorKey;
+        Player.m_localPlayer.Message(MessageHud.MessageType.Center, msg);
+      }
+
+      var piece = netView.GetComponent<Piece>();
+      if (piece != null)
+      {
+        try { piece.DropResources(); } catch { }
+      }
+
+      var zdo = netView.GetZDO();
+      if (zdo != null)
+      {
+        RemoveVehicleDataFromZdo(zdo);
+        VehicleParentIdCache.Remove(zdo.m_uid);
+        if (PersistentZdoId != null && m_allPieces.TryGetValue(PersistentZdoId, out var pieceSet))
+        {
+          pieceSet.Remove(zdo.m_uid);
+        }
+      }
+
+      m_pieces.Remove(netView);
+      UpdatePieceCount();
+
+      var wnt = netView.GetComponent<WearNTear>();
+      if (wnt != null && wnt.isActiveAndEnabled)
+      {
+        try
+        {
+          wnt.Destroy();
+          return;
+        }
+        catch (Exception ex)
+        {
+          LoggerProvider.LogWarning($"[BreakInvalidPiece] wnt.Destroy failed, falling back to ZNetScene: {ex.Message}");
+        }
+      }
+
+      if (netView.gameObject != null)
+      {
+        if (ZNetScene.instance != null)
+        {
+          ZNetScene.instance.Destroy(netView.gameObject);
+        }
+        else
+        {
+          Destroy(netView.gameObject);
+        }
+      }
     }
 
     public static CannonballVariant AmmoVariantDefault = CannonballVariant.Solid;
@@ -982,19 +1052,7 @@
             // Enforce max 2 rudders
             if (m_rudderPieces.Count >= 2)
             {
-              var wnt = netView.GetComponent<WearNTear>();
-              if (wnt != null)
-              {
-                wnt.Destroy();
-              }
-              else if (netView.gameObject)
-              {
-                ZNetScene.instance.Destroy(netView.gameObject);
-              }
-              if (Player.m_localPlayer != null)
-              {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$valheim_vehicles_rudder_max_reached"));
-              }
+              BreakInvalidPiece(netView, "$valheim_vehicles_rudder_max_reached");
               break;
             }
 
@@ -1013,19 +1071,7 @@
 
             if (isInvalid)
             {
-              var wnt = netView.GetComponent<WearNTear>();
-              if (wnt != null)
-              {
-                wnt.Destroy();
-              }
-              else if (netView.gameObject)
-              {
-                ZNetScene.instance.Destroy(netView.gameObject);
-              }
-              if (Player.m_localPlayer != null)
-              {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$valheim_vehicles_rudder_orientation_invalid"));
-              }
+              BreakInvalidPiece(netView, "$valheim_vehicles_rudder_orientation_invalid");
               break;
             }
 
@@ -1038,19 +1084,7 @@
                 var existingDot = Vector3.Dot(rudder.transform.forward, existingRudder.transform.forward);
                 if (existingDot < 0.8f)
                 {
-                  var wnt = netView.GetComponent<WearNTear>();
-                  if (wnt != null)
-                  {
-                    wnt.Destroy();
-                  }
-                  else if (netView.gameObject)
-                  {
-                    ZNetScene.instance.Destroy(netView.gameObject);
-                  }
-                  if (Player.m_localPlayer != null)
-                  {
-                    Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$valheim_vehicles_rudder_orientation_invalid"));
-                  }
+                  BreakInvalidPiece(netView, "$valheim_vehicles_rudder_orientation_invalid");
                   break;
                 }
               }
@@ -1081,19 +1115,7 @@
 
             if (isSeatInvalid)
             {
-              var wnt = netView.GetComponent<WearNTear>();
-              if (wnt != null)
-              {
-                wnt.Destroy();
-              }
-              else if (netView.gameObject)
-              {
-                ZNetScene.instance.Destroy(netView.gameObject);
-              }
-              if (Player.m_localPlayer != null)
-              {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize(errorKey));
-              }
+              BreakInvalidPiece(netView, errorKey);
               break;
             }
 
@@ -1136,19 +1158,7 @@
 
             if (isWheelInvalid)
             {
-              var wnt = netView.GetComponent<WearNTear>();
-              if (wnt != null)
-              {
-                wnt.Destroy();
-              }
-              else if (netView.gameObject)
-              {
-                ZNetScene.instance.Destroy(netView.gameObject);
-              }
-              if (Player.m_localPlayer != null)
-              {
-                Player.m_localPlayer.Message(MessageHud.MessageType.Center, Localization.instance.Localize(errorKey));
-              }
+              BreakInvalidPiece(netView, errorKey);
               break;
             }
 
@@ -1946,6 +1956,7 @@
     /// All clients must run this or their zdos get stale (even though other peers are also setting these values the positional values never get synced properly).
     /// </summary>
     private float _lastAllClientsSyncTime;
+    private float _lastPieceSyncLogTime;
 
     public void AllClientsSync()
     {
@@ -1953,6 +1964,19 @@
       if (IsDedicatedServerInstance()) return;
       if (Time.time - _lastAllClientsSyncTime < 2.0f) return;
       _lastAllClientsSyncTime = Time.time;
+
+      m_pieces.RemoveAll(nv => !nv || !nv.gameObject);
+
+      var shouldLogSync = LoopTracker.Enabled || (Time.time - _lastPieceSyncLogTime >= 5.0f);
+      if (shouldLogSync)
+      {
+        _lastPieceSyncLogTime = Time.time;
+        var pieceDetails = m_pieces.Count > 0
+          ? string.Join(", ", m_pieces.Select(p => $"{p.name} [{p.GetZDO()?.m_uid}]"))
+          : "none";
+        LoggerProvider.LogInfo($"[VPC:ClientSync] Vehicle #{PersistentZdoId} ({m_pieces.Count} pieces): {pieceDetails}");
+      }
+
       using (LoopTracker.Scope("VPC.AllClientsSync", () => m_pieces?.Count ?? 0))
       {
         Client_UpdateAllPieces();
@@ -2137,14 +2161,7 @@
         targetPos = vehiclePosition;
       }
 
-      var isPortal = Game.instance != null && Game.instance.PortalPrefabHash.Contains(zdo.GetPrefab());
-      if (isPortal)
-      {
-        MigratePortalSectorInZdoMan(zdo, targetPos);
-        return;
-      }
-
-      zdo.SetPosition(targetPos);
+      MigratePortalSectorInZdoMan(zdo, targetPos);
     }
 
     /// <summary>
@@ -4129,6 +4146,7 @@
       if ((bool)wnt) wnt.enabled = true;
 
       AddPiece(netView);
+      LoggerProvider.LogInfo($"[VPC:LoadPiece] Vehicle #{PersistentZdoId}: Activated '{netView.name}' (ZDO: {zdo.m_uid}). Total loaded: {m_pieces.Count}");
     }
 
 
@@ -4537,25 +4555,6 @@
         return;
       }
 
-      // Safeguard 4: Ground contact check - if resting on terrain outside hull, reject (exempt rudders, rope ladders, anchors)
-      bool isShipFixture = netView.GetComponent<RudderComponent>() != null ||
-                           netView.GetComponent<RopeLadderComponent>() != null ||
-                           netView.GetComponent<VehicleAnchorMechanismController>() != null;
-      if (!isShipFixture)
-      {
-        var hits = Physics.RaycastAll(pieceWorldPos + Vector3.up * 0.2f, Vector3.down, 3f, LayerHelpers.GroundLayers | LayerHelpers.PieceLayerMask | LayerHelpers.PhysicalLayerMask);
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-        if (hits.Length > 0 && hits[0].collider != null && hits[0].collider.GetComponent<Heightmap>() != null && hits[0].collider.GetComponentInParent<IPieceController>() == null)
-        {
-          bool insideHull = OnboardCollider != null && OnboardCollider.bounds.Contains(pieceWorldPos);
-          if (!insideHull)
-          {
-            LoggerProvider.LogWarning($"[AddNewPiece] Rejected NetView <{prefabName}> resting on world terrain outside hull");
-            return;
-          }
-        }
-      }
-
       var previousCount = GetPieceCount();
 
       if (m_pieces.Contains(netView))
@@ -4623,6 +4622,7 @@
 
       InitZdo(zdo);
       AddPiece(netView, true);
+      LoggerProvider.LogInfo($"[VPC:AddPiece] Vehicle #{PersistentZdoId}: Added '{netView.name}' (ZDO: {netView.m_zdo?.m_uid}). Total: {GetPieceCount()}");
 
       if (previousCount == 0 && GetPieceCount() == 1) SetInitComplete();
     }

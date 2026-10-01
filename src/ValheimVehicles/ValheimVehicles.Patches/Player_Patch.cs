@@ -183,80 +183,39 @@
 
       if ((bool)rb && !rb.isKinematic)
       {
+        PatchSharedData.PlayerLastRayPiece = null;
         return gameObject;
       }
 
-      // can run fix piece even if no last piece raycast.
-      if (!PatchSharedData.PlayerLastRayPiece)
+      IPieceController? pieceController = null;
+      if (PatchSharedData.PlayerLastRayPiece != null)
       {
-        TryFixPieceOverlap(gameObject);
-        return gameObject;
-      }
-
-      if (netView != null)
-      {
-        var cul = PatchSharedData.PlayerLastRayPiece?
-          .GetComponent<CultivatableComponent>();
-        if (cul != null) cul.AddNewChild(netView);
-      }
-
-      if (PatchSharedData.PlayerLastRayPiece == null)
-      {
-        if (CheckDisallowedOffBoatBuilding(gameObject, piece))
+        pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<IPieceController>();
+        if (netView != null)
         {
-          PatchSharedData.PlayerLastRayPiece = null;
-          return gameObject;
+          var cul = PatchSharedData.PlayerLastRayPiece.GetComponent<CultivatableComponent>();
+          if (cul != null) cul.AddNewChild(netView);
         }
-
-        // should always run FixPieceOverlap
-        TryFixPieceOverlap(gameObject);
-        return gameObject;
       }
 
-      var pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<IPieceController>();
+      // If raycast didn't hit a vehicle piece directly (e.g. snapped to snap point or aimed at deck), check what is underneath
+      if (pieceController == null)
+      {
+        var hits = Physics.RaycastAll(gameObject.transform.position + Vector3.up * 0.2f, Vector3.down, 1.5f, LayerHelpers.PieceLayerMask);
+        foreach (var hit in hits)
+        {
+          if (hit.collider == null) continue;
+          var pc = hit.collider.GetComponentInParent<IPieceController>();
+          if (pc != null)
+          {
+            pieceController = pc;
+            break;
+          }
+        }
+      }
+
       if (pieceController != null)
       {
-        // Safety check 1: ensure placed piece is within reasonable placement distance of the raycast piece (< 12m).
-        var dist = Vector3.Distance(gameObject.transform.position, PatchSharedData.PlayerLastRayPiece.transform.position);
-        if (dist > 12f)
-        {
-          if (CheckDisallowedOffBoatBuilding(gameObject, piece))
-          {
-            PatchSharedData.PlayerLastRayPiece = null;
-            return gameObject;
-          }
-          PatchSharedData.PlayerLastRayPiece = null;
-          TryFixPieceOverlap(gameObject);
-          return gameObject;
-        }
-
-        // Safety check 2: if placed directly on world terrain/ground outside vehicle, do not parent to vehicle.
-        // Exempt rudders, rope ladders, and anchors whose models/ropes extend downwards into shallow water
-        bool isShipFixture = gameObject.GetComponent<RudderComponent>() != null ||
-                             gameObject.GetComponent<RopeLadderComponent>() != null ||
-                             gameObject.GetComponent<VehicleAnchorMechanismController>() != null;
-        if (!isShipFixture)
-        {
-          var hits = Physics.RaycastAll(gameObject.transform.position + Vector3.up * 0.2f, Vector3.down, 3f, LayerHelpers.GroundLayers | LayerHelpers.PieceLayerMask | LayerHelpers.PhysicalLayerMask);
-          System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
-          if (hits.Length > 0 && hits[0].collider != null && hits[0].collider.GetComponent<Heightmap>() != null && hits[0].collider.GetComponentInParent<IPieceController>() == null)
-          {
-            var vpc = pieceController as VehiclePiecesController ?? (pieceController as MonoBehaviour)?.GetComponentInParent<VehiclePiecesController>();
-            bool insideHull = vpc != null && vpc.OnboardCollider != null && vpc.OnboardCollider.bounds.Contains(gameObject.transform.position);
-            if (!insideHull)
-            {
-              if (CheckDisallowedOffBoatBuilding(gameObject, piece))
-              {
-                PatchSharedData.PlayerLastRayPiece = null;
-                return gameObject;
-              }
-              PatchSharedData.PlayerLastRayPiece = null;
-              TryFixPieceOverlap(gameObject);
-              return gameObject;
-            }
-          }
-        }
-
         if (gameObject.name.StartsWith(PrefabNames.CustomWaterFloatation))
         {
           pieceController.AddCustomPiece(gameObject);
@@ -278,75 +237,11 @@
         PatchSharedData.PlayerLastRayPiece = null;
         return gameObject;
       }
-      else
-      {
-        if (CheckDisallowedOffBoatBuilding(gameObject, piece))
-        {
-          PatchSharedData.PlayerLastRayPiece = null;
-          return gameObject;
-        }
-      }
 
       PatchSharedData.PlayerLastRayPiece = null;
       TryFixPieceOverlap(gameObject);
 
       return gameObject;
-    }
-
-    private static bool CheckDisallowedOffBoatBuilding(GameObject gameObject, Piece piece)
-    {
-      if (piece == null || piece.m_craftingStation == null) return false;
-
-      var pos = gameObject.transform.position;
-      bool hasLandStation = false;
-
-      if (CraftingStation.m_allStations != null)
-      {
-        foreach (var station in CraftingStation.m_allStations)
-        {
-          if (station == null) continue;
-          if (station.m_name != piece.m_craftingStation.m_name) continue;
-          if (Vector3.Distance(station.transform.position, pos) <= station.m_rangeBuild)
-          {
-            bool isBoatStation = station.GetComponentInParent<VehiclePiecesController>() != null ||
-                                 (station.m_nview != null && station.m_nview.GetZDO() != null && VehiclePiecesController.GetParentID(station.m_nview.GetZDO()) != 0);
-            if (!isBoatStation)
-            {
-              hasLandStation = true;
-              break;
-            }
-          }
-        }
-      }
-
-      if (!hasLandStation)
-      {
-        piece.DropResources();
-        var wnt = gameObject.GetComponent<WearNTear>();
-        if (wnt != null)
-        {
-          wnt.Destroy();
-        }
-        else
-        {
-          Object.Destroy(gameObject);
-        }
-
-        if (Player.m_localPlayer != null)
-        {
-          var msg = Localization.instance != null
-            ? Localization.instance.Localize("$valheim_vehicles_workbench_boat_only")
-            : "Make a workbench on land to build off the boat";
-          if (string.IsNullOrEmpty(msg) || msg == "$valheim_vehicles_workbench_boat_only")
-          {
-            msg = "Make a workbench on land to build off the boat";
-          }
-          Player.m_localPlayer.Message(MessageHud.MessageType.Center, msg);
-        }
-        return true;
-      }
-
-      return false;
     }
 
 #if DEBUG
