@@ -225,27 +225,32 @@ public abstract class PrefabRegistryHelpers
       foreach (var materialVariant in materialVariants)
       {
         var materialName = materialVariant.ToLower();
+        var isWood2x2 = materialVariant == HullMaterial.Wood && sizeVariant == PrefabNames.PrefabSizeVariant.TwoByTwo;
         var isWood4x4 = materialVariant == HullMaterial.Wood && sizeVariant == PrefabNames.PrefabSizeVariant.FourByFour;
         var isIron = materialVariant == HullMaterial.Iron;
-        var nameKey = isWood4x4
-          ? "$valheim_vehicles_hull_slab_wood_4x4"
-          : isIron
-            ? $"$valheim_vehicles_hull_slab_iron_{sizeName}"
-            : $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}";
-        var descKey = isWood4x4
-          ? "$valheim_vehicles_hull_slab_wood_4x4_desc"
-          : isIron
-            ? $"$valheim_vehicles_hull_slab_iron_{sizeName}_desc"
-            : pieceDescription;
-        PieceDataDictionary.Add(
+        var nameKey = isWood2x2
+          ? "$valheim_vehicles_hull_slab_wood_2x2"
+          : isWood4x4
+            ? "$valheim_vehicles_hull_slab_wood_4x4"
+            : isIron
+              ? $"$valheim_vehicles_hull_slab_iron_{sizeName}"
+              : $"{pieceName} $valheim_vehicles_material_{materialName} {sizeName}";
+        var descKey = isWood2x2
+          ? "$valheim_vehicles_hull_slab_wood_2x2_desc"
+          : isWood4x4
+            ? "$valheim_vehicles_hull_slab_wood_4x4_desc"
+            : isIron
+              ? $"$valheim_vehicles_hull_slab_iron_{sizeName}_desc"
+              : pieceDescription;
+        PieceDataDictionary[
           PrefabNames.GetHullSlabName(materialVariant,
-            sizeVariant), new PieceData
+            sizeVariant)] = new PieceData
           {
             Name = nameKey,
             Description = descKey,
             Icon = spriteAtlas.GetSprite(
               $"{iconBaseName}_{materialName}_{sizeName}")
-          });
+          };
       }
     }
   }
@@ -590,70 +595,62 @@ public abstract class PrefabRegistryHelpers
           .HullCenterIron)
       });
 
-    PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPlatedPrefabName,
+    PieceDataDictionary[PrefabNames.ShipHullCenterIronPlatedPrefabName] =
       new PieceData
       {
         Name = "$valheim_vehicles_hull_center_iron_plated",
         Description = "$valheim_vehicles_hull_center_iron_plated_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
           .HullCenterIron)
-      });
+      };
 
-    PieceDataDictionary.Add("ValheimVehicles_Hull_Slab_Wood_2x2",
-      new PieceData
-      {
-        Name = "$valheim_vehicles_hull_slab_wood_2x2",
-        Description = "$valheim_vehicles_hull_slab_wood_2x2_desc",
-        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullSlabWood)
-      });
-
-    PieceDataDictionary.Add("ValheimVehicles_hull_floor_2x2_wood",
+    PieceDataDictionary["ValheimVehicles_hull_floor_2x2_wood"] =
       new PieceData
       {
         Name = "$valheim_vehicles_hull_floor_2x2_wood",
         Description = "$valheim_vehicles_hull_floor_2x2_wood_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("hull_floor_4x4_wood")
-      });
+      };
 
-    PieceDataDictionary.Add("ValheimVehicles_hull_floor_2x2_iron",
+    PieceDataDictionary["ValheimVehicles_hull_floor_2x2_iron"] =
       new PieceData
       {
         Name = "$valheim_vehicles_hull_floor_2x2_iron",
         Description = "$valheim_vehicles_hull_floor_2x2_iron_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("hull_floor_4x4_iron")
-      });
+      };
 
-    PieceDataDictionary.Add(PrefabNames.WindowWallPortholeWood2x2Prefab,
+    PieceDataDictionary[PrefabNames.WindowWallPortholeWood2x2Prefab] =
       new PieceData
       {
         Name = "$valheim_vehicles_window_wall_porthole_wood_2x2",
         Description = "$valheim_vehicles_window_wall_porthole_wood_2x2_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WindowWallPorthole2x2)
-      });
+      };
 
-    PieceDataDictionary.Add(PrefabNames.WindowWallPortholeWood4x4Prefab,
+    PieceDataDictionary[PrefabNames.WindowWallPortholeWood4x4Prefab] =
       new PieceData
       {
         Name = "$valheim_vehicles_window_wall_porthole_wood_4x4",
         Description = "$valheim_vehicles_window_wall_porthole_wood_4x4_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WindowWallPorthole4x4)
-      });
+      };
 
-    PieceDataDictionary.Add(PrefabNames.WindowWallPortholeWood8x4Prefab,
+    PieceDataDictionary[PrefabNames.WindowWallPortholeWood8x4Prefab] =
       new PieceData
       {
         Name = "$valheim_vehicles_window_wall_porthole_wood_8x4",
         Description = "$valheim_vehicles_window_wall_porthole_wood_8x4_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WindowWallPorthole8x4)
-      });
+      };
 
-    PieceDataDictionary.Add(PrefabNames.WindowFloorPortholeWood4x4Prefab,
+    PieceDataDictionary[PrefabNames.WindowFloorPortholeWood4x4Prefab] =
       new PieceData
       {
         Name = "$valheim_vehicles_window_floor_porthole_wood_4x4",
         Description = "$valheim_vehicles_window_floor_porthole_wood_4x4_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WindowFloorPorthole4x4Prefab)
-      });
+      };
 
     var ironReinforcedPieces = new[]
     {
@@ -669,12 +666,12 @@ public abstract class PrefabRegistryHelpers
     };
     foreach (var (pName, iconName) in ironReinforcedPieces)
     {
-      PieceDataDictionary.Add(pName, new PieceData
+      PieceDataDictionary[pName] = new PieceData
       {
         Name = $"${pName.Replace("ValheimVehicles_", "valheim_vehicles_")}",
         Description = $"${pName.Replace("ValheimVehicles_", "valheim_vehicles_")}_desc",
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(iconName)
-      });
+      };
     }
 
 
