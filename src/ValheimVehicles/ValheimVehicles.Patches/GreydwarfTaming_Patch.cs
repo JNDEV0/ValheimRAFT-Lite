@@ -52,7 +52,7 @@ public class GreydwarfTaming_Patch
 
   [HarmonyPatch(typeof(Player), nameof(Player.Interact))]
   [HarmonyPrefix]
-  public static bool Player_Interact_Prefix(Player __instance, GameObject go, bool hold, bool alt, ref bool __result)
+  public static bool Player_Interact_Prefix(Player __instance, GameObject go, bool hold, bool alt)
   {
     if (hold) return true;
     if (__instance == null || !__instance.IsPlayer()) return true;
@@ -64,28 +64,29 @@ public class GreydwarfTaming_Patch
       var ch = target.GetComponentInParent<Character>();
       if (taming != null && ch != null && !ch.IsTamed())
       {
-        __result = taming.Interact(__instance, hold, alt);
+        taming.Interact(__instance, hold, alt);
         return false;
       }
     }
     return true;
   }
 
-  [HarmonyPatch(typeof(Player), nameof(Player.UseItem))]
+  [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.UseItem))]
   [HarmonyPrefix]
-  public static bool Player_UseItem_Prefix(Player __instance, Inventory inventory, ItemDrop.ItemData item, bool fromInventory, ref bool __result)
+  public static bool Humanoid_UseItem_Prefix(Humanoid __instance, Inventory inventory, ItemDrop.ItemData item, bool fromInventoryGui)
   {
     if (__instance == null || item == null) return true;
+    var player = __instance as Player;
+    if (player == null) return true;
 
-    var target = __instance.GetHoverCreature() != null ? __instance.GetHoverCreature().gameObject : __instance.GetHoverObject();
+    var target = player.GetHoverCreature() != null ? player.GetHoverCreature().gameObject : player.GetHoverObject();
     if (target != null)
     {
       var taming = target.GetComponentInParent<RaftGreydwarfTaming>();
       if (taming != null)
       {
-        if (taming.UseItem(__instance, item))
+        if (taming.UseItem(player, item))
         {
-          __result = true;
           return false;
         }
       }
