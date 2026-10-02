@@ -94,12 +94,6 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
             new RequirementConfig
             {
               Amount = 10,
-              Item = "FineWood",
-              Recover = true
-            },
-            new RequirementConfig
-            {
-              Amount = 2,
               Item = "RoundLog",
               Recover = true
             },
@@ -157,8 +151,8 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
         [
           new RequirementConfig
           {
-            Amount = 20,
-            Item = "YggdrasilWood",
+            Amount = 10,
+            Item = "ElderBark",
             Recover = true
           },
           new RequirementConfig

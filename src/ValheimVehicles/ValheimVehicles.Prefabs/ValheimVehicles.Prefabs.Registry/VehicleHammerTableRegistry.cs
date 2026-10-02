@@ -194,7 +194,6 @@ namespace ValheimVehicles.Prefabs.Registry
       // Nailed Portholes
       "ValheimVehicles_ShipWindow_Wall_Porthole_Wood_2x2", // Nailed Porthole Frame - 2x2
       "ValheimVehicles_ShipWindow_Wall_Porthole_Wood_4x4", // Nailed Porthole Frame - 4x4
-      "ValheimVehicles_ShipWindow_Wall_Porthole_Wood_8x4", // Nailed Porthole Frame - Large
       "ValheimVehicles_ShipWindow_Floor_Porthole_Wood_4x4", // Nailed Floor Hatch Porthole - 4x4
 
       // Iron-Plated Hulls, Ribs, Decks, and Guard Rails
@@ -225,7 +224,6 @@ namespace ValheimVehicles.Prefabs.Registry
       // Iron-Plated Portholes
       "ValheimVehicles_ShipWindow_Wall_Porthole_2x2", // Iron-Plated Porthole Frame - Small
       "ValheimVehicles_ShipWindow_Wall_Porthole_4x4", // Iron-Plated Porthole Frame
-      "ValheimVehicles_ShipWindow_Wall_Porthole_8x4", // Iron-Plated Porthole Frame - Large
       "ValheimVehicles_ShipWindow_Floor_Porthole_4x4" // Iron-Plated Porthole Floor
     };
 
@@ -262,6 +260,9 @@ namespace ValheimVehicles.Prefabs.Registry
     private static readonly HashSet<string> RedundantPieces = new(StringComparer.OrdinalIgnoreCase)
     {
       // User requested removals:
+      // Disabled large porthole frames per user request:
+      "ValheimVehicles_ShipWindow_Wall_Porthole_Wood_8x4",
+      "ValheimVehicles_ShipWindow_Wall_Porthole_8x4",
       // Iron-reinforced hull parts & deck prow planking (disabled per user request)
       "ValheimVehicles_hull_bow_center_iron_reinforced",
       "ValheimVehicles_hull_rib_iron_reinforced",

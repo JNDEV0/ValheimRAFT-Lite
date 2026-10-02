@@ -745,7 +745,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     FixPorthole8x4IronMaterials(prefab);
 
     SetupHullPrefab(prefab, PrefabNames.WindowWallPorthole8x4Prefab,
-      HullMaterial.Iron, 8, null, null, VehicleHammerTableCategories.Structure);
+      HullMaterial.Iron, 8, null, null, VehicleHammerTableCategories.Structure, addToPieceTable: false);
   }
 
   private static void FixPorthole8x4IronMaterials(GameObject prefab)
@@ -1150,7 +1150,7 @@ private static void FixKeelIronPlatedMaterials(GameObject prefab)
     FixPortholeWoodMaterials(prefab);
 
     SetupHullPrefab(prefab, PrefabNames.WindowWallPortholeWood8x4Prefab,
-      HullMaterial.Wood, 8, null, null, VehicleHammerTableCategories.Nailed);
+      HullMaterial.Wood, 8, null, null, VehicleHammerTableCategories.Nailed, addToPieceTable: false);
   }
 
   public static void RegisterWindowFloorPorthole4x4Wood()
