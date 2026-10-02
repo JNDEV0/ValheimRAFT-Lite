@@ -126,6 +126,8 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_ShipRudderAdvanced_Wood", // 51/52. Sternpost Rudder
       "MBRopeLadder", // 117. Jacob's Ladder
       "MBRaftMast", // 113. Square Rigged Sail / Raft Mast
+      "MBKarveMast", // Karve Sail / Mast (between square rigged sail and rigging cleat)
+      "ValheimVehicles_Greydwarf_Rowing_Seat", // Greydwarf Rowing Seat (next to the sails)
       "MBRopeAnchor", // 116. Rigging Cleat
       "ValheimVehicles_ShipAnchor_Wood", // 118. Ship Anchor
       "MBBoardingRamp", // 119. Boarding Ramp
@@ -197,14 +199,13 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_hull_rib_aft_center_iron", // Iron-Plated Hull Rear Counter Stern - center
       "ValheimVehicles_hull_rib_aft_left_iron", // Iron-Plated Hull Rear Counter Stern - Left
       "ValheimVehicles_hull_rib_aft_right_iron", // Iron-Plated Hull Rear Counter Stern - Right
+      "ValheimVehicles_hull_floor_4x4_iron", // Iron-Plated Deck Planking (moved before iron guard-rails)
       "ValheimVehicles_hull_seal_corner_left_iron", // Iron-Plated Deck Counter Stern Planking - Left
       "ValheimVehicles_hull_seal_corner_right_iron", // Iron-Plated Deck Counter Stern Planking - Right
       "ValheimVehicles_hull_seal_bow_left_iron", // Iron-Plated Deck Stern Planking - Left
       "ValheimVehicles_hull_seal_bow_right_iron", // Iron-Plated Deck Stern Planking - Right
       "ValheimVehicles_hull_seal_tri_bow_left_iron", // Iron-Plated Deck Prow Planking - Left
       "ValheimVehicles_hull_seal_tri_bow_right_iron", // Iron-Plated Deck Prow Planking - Right
-      "ValheimVehicles_Hull_Slab_Iron_2x2", // Iron-Plated Deck Planking - Small
-      "ValheimVehicles_hull_floor_4x4_iron", // Iron-Plated Deck Planking
       "ValheimVehicles_hull_rail_connector_iron", // Iron Guard-Rail - single
       "ValheimVehicles_hull_rail_straight_iron", // Iron Guard-Rail - triple
       "ValheimVehicles_hull_rail_25deg_iron", // Iron Guard-Rail - 25 deg
@@ -213,9 +214,7 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_hull_rail_prow_corner_left_iron", // Iron Prow Guard-Rail - Left
       "ValheimVehicles_hull_rail_prow_corner_right_iron", // Iron Prow Guard-Rail - Right
 
-      // Iron-Plated Frame Walls & Portholes
-      "ValheimVehicles_Hull_Wall_Iron_2x2", // Iron-Plated Frame Wall - Small
-      "ValheimVehicles_Hull_Wall_Iron_4x4", // Iron-Plated Frame Wall
+      // Iron-Plated Portholes
       "ValheimVehicles_ShipWindow_Wall_Porthole_2x2", // Iron-Plated Porthole Frame - Small
       "ValheimVehicles_ShipWindow_Wall_Porthole_4x4", // Iron-Plated Porthole Frame
       "ValheimVehicles_ShipWindow_Wall_Porthole_8x4", // Iron-Plated Porthole Frame - Large
@@ -237,8 +236,14 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_Right_Iron", // Iron-Reinforced Deck Stern Planking - Small - Right
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Left_Iron", // Iron-Reinforced Deck Stern Planking - Left
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Right_Iron", // Iron-Reinforced Deck Stern Planking - Right
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Left_Iron", // Iron-Reinforced Deck Stern Planking - Left 2x8
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", // Iron-Reinforced Deck Stern Planking - Right 2x8
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Left_Iron", // Iron-Reinforced Deck Stern Planking - Long - Left
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", // Iron-Reinforced Deck Stern Planking - Long - Right
+
+      // Iron-Reinforced Deck Planking & Frame Walls (moved to end next to iron-reinforced parts per user request)
+      "ValheimVehicles_Hull_Slab_Iron_2x2", // Iron-Reinforced Deck Planking - Small
+      "ValheimVehicles_Hull_Slab_Iron_4x4", // Iron-Reinforced Deck Planking
+      "ValheimVehicles_Hull_Wall_Iron_2x2", // Iron-Reinforced Frame Wall - Small
+      "ValheimVehicles_Hull_Wall_Iron_4x4", // Iron-Reinforced Frame Wall
 
       // Greydwarf Rowing Seat (appended to end of build menu per user request)
       "ValheimVehicles_Greydwarf_Rowing_Seat"
@@ -367,6 +372,7 @@ namespace ValheimVehicles.Prefabs.Registry
       { "ValheimVehicles_ShipRudderAdvanced_Wood", new[] { "valheim_vehicles_rudder_advanced", "shiprudderadvancedwood", "shiprudderadvancedsinglewood" } },
       { "MBRopeLadder", new[] { "mb_rope_ladder", "ropeladder" } },
       { "MBRaftMast", new[] { "mb_raft_mast", "raftmast" } },
+      { "MBKarveMast", new[] { "mb_karve_mast", "karvemast", "karve_mast", "karve_sail", "valheimvehicles_karvesail", "karvesail" } },
       { "MBVikingShipMast", new[] { "mb_vikingship_mast", "mb_viking_mast", "vikingshipmast" } },
       { "ValheimVehicles_DrakkalMast", new[] { "valheim_vehicles_drakkalship_mast", "valheim_vehicles_drakkal_mast", "drakkalmast", "drakkar_mast" } },
       { "MBRopeAnchor", new[] { "mb_rope_anchor", "ropeanchor" } },
@@ -388,7 +394,8 @@ namespace ValheimVehicles.Prefabs.Registry
       { "ValheimVehicles_Power_Pylon", new[] { "valheim_vehicles_mechanism_power_pylon", "powerpylon" } },
       { "ValheimVehicles_hull_bow_center_iron", new[] { "hull_bow_center_iron", "valheimvehicles_hull_bow_center_iron", "valheim_vehicles_hull_bow_center_iron" } },
       { "ValheimVehicles_Hull_Slab_Iron_2x2", new[] { "hull_slab_iron_2x2", "valheimvehicles_hull_slab_iron_2x2", "valheim_vehicles_hull_slab_iron_2x2" } },
-      { "ValheimVehicles_hull_floor_4x4_iron", new[] { "hull_floor_4x4_iron", "valheimvehicles_hull_floor_4x4_iron", "valheim_vehicles_hull_floor_4x4_iron", "hull_slab_iron_4x4", "valheimvehicles_hull_slab_iron_4x4", "valheim_vehicles_hull_slab_iron_4x4", "ValheimVehicles_Hull_Slab_Iron_4x4" } },
+      { "ValheimVehicles_Hull_Slab_Iron_4x4", new[] { "hull_slab_iron_4x4", "valheimvehicles_hull_slab_iron_4x4", "valheim_vehicles_hull_slab_iron_4x4", "ValheimVehicles_Hull_Slab_Iron_4x4" } },
+      { "ValheimVehicles_hull_floor_4x4_iron", new[] { "hull_floor_4x4_iron", "valheimvehicles_hull_floor_4x4_iron", "valheim_vehicles_hull_floor_4x4_iron" } },
       { "ValheimVehicles_Hull_Wall_Iron_2x2", new[] { "hull_wall_iron_2x2", "valheimvehicles_hull_wall_iron_2x2", "valheim_vehicles_hull_wall_iron_2x2" } },
       { "ValheimVehicles_Hull_Wall_Iron_4x4", new[] { "hull_wall_iron_4x4", "valheimvehicles_hull_wall_iron_4x4", "valheim_vehicles_hull_wall_iron_4x4" } },
       { "ValheimVehicles_ShipWindow_Wall_Porthole_2x2", new[] { "shipwindow_wall_porthole_2x2", "valheimvehicles_shipwindow_wall_porthole_2x2", "windowwallporthole2x2", "hull_wall_window_porthole_iron_2x2" } },

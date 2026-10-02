@@ -44,6 +44,7 @@
     private LineRenderer m_ghostAttachPoint;
 
     private float m_lastHitWaterDistance;
+    private WaterVolume? m_previousWaterVolume;
 
     private static readonly int INVALID_STEP = int.MaxValue;
 
@@ -98,6 +99,11 @@
       return false;
     }
 
+    private void OnEnable()
+    {
+      UpdateSteps();
+    }
+
     private void Awake()
     {
       m_stepObject = transform.Find("step").gameObject;
@@ -113,7 +119,7 @@
       m_collider = GetComponentInChildren<BoxCollider>();
       m_ghostObject = ZNetView.m_forceDisableInit;
       m_attachPoint = transform.Find("attachpoint");
-      InvokeRepeating(nameof(UpdateSteps), 0.1f, m_ghostObject ? 0.1f : 3f);
+      InvokeRepeating(nameof(UpdateSteps), 0.1f, m_ghostObject ? 0.1f : 1.5f);
     }
 
     public static float LadderExitOffsetMult = 0.75f;
@@ -187,7 +193,7 @@
       return false;
     }
 
-    private void UpdateSteps()
+    public void UpdateSteps()
     {
       if (!m_stepObject) return;
 
@@ -218,15 +224,24 @@
       var hits = Physics.RaycastAll(
         new Ray(raystart, -m_attachPoint.transform.up),
         m_ladderHeight, rayMask);
+      bool hasGroundHit = false;
       for (var i = 0; i < hits.Length; i++)
       {
         var hit = hits[i];
-        if (!(hit.collider == m_collider) &&
-            !hit.collider.GetComponentInParent<Character>() &&
-            hit.distance < m_ladderHeight)
+        if (hit.collider == m_collider) continue;
+        if (hit.collider.transform.IsChildOf(transform)) continue;
+        if (hit.collider.GetComponentInParent<Character>() != null) continue;
+        if (hit.collider.GetComponentInParent<VehiclePiecesController>() != null ||
+            hit.collider.GetComponentInParent<VehicleManager>() != null)
+        {
+          continue; // Ignore pieces belonging to the vehicle
+        }
+
+        if (hit.distance < m_ladderHeight)
         {
           m_ladderHeight = hit.distance;
           hitpoint = hit.point;
+          hasGroundHit = true;
         }
       }
 
@@ -241,25 +256,48 @@
       else
       {
         // Ladder extends down to water or ground
-        if (ZoneSystem.instance != null)
+        float waterLvl = ZoneSystem.instance ? ZoneSystem.instance.m_waterLevel : 30f;
+        try
         {
-          var waterLvl = ZoneSystem.instance.m_waterLevel;
-          if (raystart.y > waterLvl)
+          var dynWater = Floating.GetWaterLevel(raystart, ref m_previousWaterVolume);
+          if (dynWater > -1000f && !float.IsNaN(dynWater))
           {
-            var waterdist = (raystart.y - waterLvl) + 2f;
-            if (hitpoint.y < waterLvl || m_ladderHeight >= 500f)
-            {
-              m_ladderHeight = waterdist;
-            }
+            waterLvl = dynWater;
+          }
+        }
+        catch { }
+
+        if (raystart.y > waterLvl)
+        {
+          // Extend down past the waterline (1.8m into water for swimming players to reach)
+          var waterdist = (raystart.y - waterLvl) + 1.8f;
+          if (hasGroundHit && hitpoint.y > (waterLvl - 1.8f))
+          {
+            m_ladderHeight = Mathf.Min(waterdist, (raystart - hitpoint).magnitude);
           }
           else
           {
-            if (WaterConfig.UnderwaterAccessMode.Value ==
-                WaterConfig.UnderwaterAccessModeType.Disabled)
-            {
-              var waterdist = Mathf.Abs(raystart.y - waterLvl) + 2f;
-              m_ladderHeight = Mathf.Min(m_ladderHeight, waterdist);
-            }
+            m_ladderHeight = waterdist;
+          }
+        }
+        else
+        {
+          if (WaterConfig.UnderwaterAccessMode.Value ==
+              WaterConfig.UnderwaterAccessModeType.Disabled)
+          {
+            var waterdist = Mathf.Abs(raystart.y - waterLvl) + 1.8f;
+            if (hasGroundHit)
+              m_ladderHeight = Mathf.Min(waterdist, (raystart - hitpoint).magnitude);
+            else
+              m_ladderHeight = waterdist;
+          }
+          else if (hasGroundHit)
+          {
+            m_ladderHeight = (raystart - hitpoint).magnitude;
+          }
+          else
+          {
+            m_ladderHeight = 1.8f;
           }
         }
       }

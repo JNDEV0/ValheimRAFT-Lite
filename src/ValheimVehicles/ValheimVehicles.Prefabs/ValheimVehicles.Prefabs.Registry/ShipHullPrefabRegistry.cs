@@ -732,8 +732,69 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
         PrefabNames.WindowWallPorthole8x4Prefab,
         LoadValheimVehicleAssets.ShipWindowPortholeWall8x4);
 
+    FixPorthole8x4IronMaterials(prefab);
+
     SetupHullPrefab(prefab, PrefabNames.WindowWallPorthole8x4Prefab,
       HullMaterial.Iron, 8, null, null, VehicleHammerTableCategories.Structure);
+  }
+
+  private static void FixPorthole8x4IronMaterials(GameObject prefab)
+  {
+    if (!prefab) return;
+    try
+    {
+      Material ironMat = null;
+      if (LoadValheimVehicleAssets.ShipHullWall4X4IronAsset != null)
+      {
+        foreach (var r in LoadValheimVehicleAssets.ShipHullWall4X4IronAsset.GetComponentsInChildren<MeshRenderer>(true))
+        {
+          if (r.sharedMaterial != null && r.sharedMaterial.name.IndexOf("iron", StringComparison.OrdinalIgnoreCase) >= 0)
+          {
+            ironMat = r.sharedMaterial;
+            break;
+          }
+        }
+      }
+
+      if (ironMat == null && LoadValheimVehicleAssets.ShipWindowPortholeWall4x4 != null)
+      {
+        foreach (var r in LoadValheimVehicleAssets.ShipWindowPortholeWall4x4.GetComponentsInChildren<MeshRenderer>(true))
+        {
+          if (r.sharedMaterial != null && r.sharedMaterial.name.IndexOf("iron", StringComparison.OrdinalIgnoreCase) >= 0)
+          {
+            ironMat = r.sharedMaterial;
+            break;
+          }
+        }
+      }
+
+      if (ironMat == null)
+      {
+        foreach (var r in prefab.GetComponentsInChildren<MeshRenderer>(true))
+        {
+          if (r.sharedMaterial != null && r.sharedMaterial.name.IndexOf("iron", StringComparison.OrdinalIgnoreCase) >= 0)
+          {
+            ironMat = r.sharedMaterial;
+            break;
+          }
+        }
+      }
+
+      if (ironMat != null)
+      {
+        foreach (var r in prefab.GetComponentsInChildren<MeshRenderer>(true))
+        {
+          if (r.sharedMaterial != null && (r.sharedMaterial.name.IndexOf("wood", StringComparison.OrdinalIgnoreCase) >= 0 || r.gameObject.name.IndexOf("sheet", StringComparison.OrdinalIgnoreCase) >= 0))
+          {
+            r.sharedMaterial = ironMat;
+          }
+        }
+      }
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogWarning($"[ValheimRAFT] Could not adjust porthole 8x4 iron material: {e.Message}");
+    }
   }
 
   public static void RegisterWindowFloorPorthole4x4Iron()

@@ -38,7 +38,11 @@
       public void Awake()
       {
         UpdateTextCoroutine ??= new CoroutineHandle(this);
-        textMeshPro = gameObject.AddComponent<TextMeshPro>();
+        textMeshPro = GetComponent<TextMeshPro>();
+        if (textMeshPro == null)
+        {
+          textMeshPro = gameObject.AddComponent<TextMeshPro>();
+        }
         gameObject.layer = LayerMask.NameToLayer("UI");
 
         if (fontAsset == null)

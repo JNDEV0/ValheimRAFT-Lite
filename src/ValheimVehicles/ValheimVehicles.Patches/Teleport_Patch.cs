@@ -164,6 +164,70 @@ public class Teleport_Patch
     TeleportToObject(player, pos, rotation, zDO.m_uid);
   }
 
+  private static float m_lastMovingPortalMessageTime = 0f;
+
+  [HarmonyPatch(typeof(TeleportWorld), nameof(TeleportWorld.Teleport))]
+  [HarmonyPrefix]
+  public static bool TeleportWorld_Teleport_Prefix(TeleportWorld __instance, Player player)
+  {
+    if (__instance == null || player == null) return true;
+
+    // Check if the portal being stepped through is on a vehicle
+    var zdo = __instance.m_nview != null && __instance.m_nview.IsValid() ? __instance.m_nview.GetZDO() : null;
+    var parentId = zdo != null ? zdo.GetInt(VehicleZdoVars.MBParentId, 0) : 0;
+    VehicleManager? vm = null;
+    if (parentId != 0)
+    {
+      if (VehicleManager.VehicleInstances != null)
+      {
+        VehicleManager.VehicleInstances.TryGetValue(parentId, out vm);
+      }
+    }
+    if (vm == null)
+    {
+      vm = __instance.GetComponentInParent<VehicleManager>();
+    }
+
+    if (vm != null)
+    {
+      var vmc = vm.MovementController ?? vm.Instance?.MovementController;
+      bool isAnchored = vmc != null && vmc.isAnchored;
+      if (!isAnchored)
+      {
+        bool isMoving = false;
+        if (vmc != null && vmc.GetSpeedSetting() != Ship.Speed.Stop)
+        {
+          isMoving = true;
+        }
+        else
+        {
+          var rb = vm.GetComponent<Rigidbody>() ?? vmc?.m_body;
+          if (rb != null)
+          {
+            var forward = vm.transform.forward;
+            var forwardSpeed = Vector3.Dot(rb.linearVelocity, forward);
+            if (Mathf.Abs(forwardSpeed) > 0.2f)
+            {
+              isMoving = true;
+            }
+          }
+        }
+
+        if (isMoving)
+        {
+          if (Time.time - m_lastMovingPortalMessageTime > 2f)
+          {
+            m_lastMovingPortalMessageTime = Time.time;
+            player.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$valheim_vehicles_portal_boat_must_stop"));
+          }
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   [HarmonyPatch(typeof(TeleportWorld), nameof(TeleportWorld.Teleport))]
   [HarmonyTranspiler]
   public static IEnumerable<CodeInstruction> TeleportWorld_Teleport(
@@ -191,6 +255,34 @@ public class Teleport_Patch
     Quaternion rot,
     bool distantTeleport, TeleportWorld __instance)
   {
+    var zdo = __instance != null && __instance.m_nview != null && __instance.m_nview.IsValid() ? __instance.m_nview.GetZDO() : null;
+    var parentId = zdo != null ? zdo.GetInt(VehicleZdoVars.MBParentId, 0) : 0;
+    if (parentId != 0)
+    {
+      VehicleManager? vm = null;
+      if (VehicleManager.VehicleInstances != null)
+      {
+        VehicleManager.VehicleInstances.TryGetValue(parentId, out vm);
+      }
+      vm ??= __instance.GetComponentInParent<VehicleManager>();
+      var vmc = vm != null ? (vm.MovementController ?? vm.Instance?.MovementController) : null;
+      if (vm != null && (vmc == null || !vmc.isAnchored))
+      {
+        var rb = vm.GetComponent<Rigidbody>() ?? vmc?.m_body;
+        var forward = vm.transform.forward;
+        var fwdSpeed = rb != null ? Mathf.Abs(Vector3.Dot(rb.linearVelocity, forward)) : 0f;
+        if ((vmc != null && vmc.GetSpeedSetting() != Ship.Speed.Stop) || fwdSpeed > 0.2f)
+        {
+          if (Time.time - m_lastMovingPortalMessageTime > 2f)
+          {
+            m_lastMovingPortalMessageTime = Time.time;
+            player.Message(MessageHud.MessageType.Center, Localization.instance.Localize("$valheim_vehicles_portal_boat_must_stop"));
+          }
+          return false;
+        }
+      }
+    }
+
     TeleportToActivePosition(__instance,
       ((Character)player).m_nview.m_zdo.m_uid);
     return true;
@@ -563,6 +655,21 @@ public class Teleport_Patch
       else if (VehicleManager.VehicleInstances != null && VehicleManager.VehicleInstances.TryGetValue(parentId, out var vm) && vm.Instance != null && vm.Instance.OnboardController != null)
       {
         vm.Instance.OnboardController.TryAddPlayerIfMissing(__instance);
+      }
+
+      if (controller != null && controller.RopeLadders != null)
+      {
+        foreach (var ladder in controller.RopeLadders)
+        {
+          if (ladder != null) ladder.UpdateSteps();
+        }
+      }
+      else if (VehicleManager.VehicleInstances != null && VehicleManager.VehicleInstances.TryGetValue(parentId, out var targetVm) && targetVm.Instance != null && targetVm.Instance.PiecesController != null && targetVm.Instance.PiecesController.RopeLadders != null)
+      {
+        foreach (var ladder in targetVm.Instance.PiecesController.RopeLadders)
+        {
+          if (ladder != null) ladder.UpdateSteps();
+        }
       }
     }
 

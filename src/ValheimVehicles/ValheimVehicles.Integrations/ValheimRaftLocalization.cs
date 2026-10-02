@@ -292,13 +292,13 @@ public static class ValheimRaftLocalization
 
   private static string FindTranslationFileOnDisk(string language)
   {
-    var candidates = new List<string>();
+    // Tier 1: Check structured language paths first (Assets/Translations/{language}/valheimraft.json)
+    var structuredCandidates = new List<string>();
 
     var root = FindTranslationsRootDirectory();
     if (!string.IsNullOrEmpty(root))
     {
-      candidates.Add(Path.Combine(root, language, "valheimraft.json"));
-      candidates.Add(Path.Combine(root, "valheimraft.json"));
+      structuredCandidates.Add(Path.Combine(root, language, "valheimraft.json"));
     }
 
     try
@@ -306,29 +306,68 @@ public static class ValheimRaftLocalization
       var asmDir = Path.GetDirectoryName(typeof(ValheimRaftLocalization).Assembly.Location);
       if (!string.IsNullOrEmpty(asmDir))
       {
-        candidates.Add(Path.Combine(asmDir, "Assets", "Translations", language, "valheimraft.json"));
-        candidates.Add(Path.Combine(asmDir, "valheimraft.json"));
-        candidates.Add(Path.Combine(asmDir, "..", "Assets", "Translations", language, "valheimraft.json"));
+        structuredCandidates.Add(Path.Combine(asmDir, "Assets", "Translations", language, "valheimraft.json"));
+        structuredCandidates.Add(Path.Combine(asmDir, "..", "Assets", "Translations", language, "valheimraft.json"));
       }
     }
     catch { }
 
-    candidates.Add(Path.Combine(Paths.PluginPath, "ValheimRAFT", "valheimraft.json"));
-    candidates.Add(Path.Combine(Paths.PluginPath, "ValheimRAFT", "Assets", "Translations", language, "valheimraft.json"));
+    structuredCandidates.Add(Path.Combine(Paths.PluginPath, "ValheimRAFT", "Assets", "Translations", language, "valheimraft.json"));
 
     string bestCandidate = null;
-    long bestSize = -1;
+    DateTime newestTime = DateTime.MinValue;
 
-    foreach (var path in candidates)
+    foreach (var path in structuredCandidates)
     {
       try
       {
         if (File.Exists(path))
         {
           var info = new FileInfo(path);
-          if (info.Length > bestSize)
+          if (info.LastWriteTimeUtc >= newestTime)
           {
-            bestSize = info.Length;
+            newestTime = info.LastWriteTimeUtc;
+            bestCandidate = path;
+          }
+        }
+      }
+      catch { }
+    }
+
+    if (bestCandidate != null)
+    {
+      return bestCandidate;
+    }
+
+    // Tier 2: Fallback to loose root valheimraft.json candidates
+    var fallbackCandidates = new List<string>();
+    if (!string.IsNullOrEmpty(root))
+    {
+      fallbackCandidates.Add(Path.Combine(root, "valheimraft.json"));
+    }
+
+    try
+    {
+      var asmDir = Path.GetDirectoryName(typeof(ValheimRaftLocalization).Assembly.Location);
+      if (!string.IsNullOrEmpty(asmDir))
+      {
+        fallbackCandidates.Add(Path.Combine(asmDir, "valheimraft.json"));
+      }
+    }
+    catch { }
+
+    fallbackCandidates.Add(Path.Combine(Paths.PluginPath, "ValheimRAFT", "valheimraft.json"));
+
+    foreach (var path in fallbackCandidates)
+    {
+      try
+      {
+        if (File.Exists(path))
+        {
+          var info = new FileInfo(path);
+          if (info.LastWriteTimeUtc >= newestTime)
+          {
+            newestTime = info.LastWriteTimeUtc;
             bestCandidate = path;
           }
         }

@@ -83,6 +83,9 @@ public partial class ModTranslations
     AnchorPrefab_loweringText =
       SafeLocalize("$valheim_vehicles_anchor_state_lowering");
 
+    PortalBoatMustStop =
+      SafeLocalize("$valheim_vehicles_portal_boat_must_stop");
+
     Anchor_WheelUse_EnableAnchor = SafeLocalize("$valheim_vehicles_wheel_use_anchor_enable_detail");
 
     Anchor_WheelUse_DisableAnchor = SafeLocalize("$valheim_vehicles_wheel_use_anchor_disable_detail");

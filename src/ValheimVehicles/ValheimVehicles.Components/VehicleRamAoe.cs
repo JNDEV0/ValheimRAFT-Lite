@@ -655,9 +655,64 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
   /// </summary>
   /// <param name="collider"></param>
   /// <returns></returns>
+  public static bool IsRockOrTree(Collider collider)
+  {
+    if (collider == null) return false;
+
+    if (collider.GetComponentInParent<MineRock5>() != null ||
+        collider.GetComponentInParent<MineRock>() != null ||
+        collider.GetComponentInParent<TreeBase>() != null ||
+        collider.GetComponentInParent<TreeLog>() != null)
+    {
+      return true;
+    }
+
+    var destructible = collider.GetComponentInParent<IDestructible>();
+    if (destructible != null && destructible.GetDestructibleType() == DestructibleType.Tree)
+    {
+      return true;
+    }
+
+    var d = collider.GetComponentInParent<Destructible>();
+    if (d != null)
+    {
+      var dName = d.gameObject.name;
+      if (dName.StartsWith("rock", StringComparison.OrdinalIgnoreCase) ||
+          dName.StartsWith("cliff", StringComparison.OrdinalIgnoreCase) ||
+          dName.StartsWith("MineRock", StringComparison.OrdinalIgnoreCase) ||
+          dName.StartsWith("Tree", StringComparison.OrdinalIgnoreCase) ||
+          dName.StartsWith("stubbe", StringComparison.OrdinalIgnoreCase))
+      {
+        return true;
+      }
+    }
+
+    var colName = collider.gameObject.name;
+    var rootName = collider.transform.root.gameObject.name;
+    if (colName.StartsWith("MineRock", StringComparison.OrdinalIgnoreCase) ||
+        colName.StartsWith("cliff_", StringComparison.OrdinalIgnoreCase) ||
+        colName.StartsWith("rock4_", StringComparison.OrdinalIgnoreCase) ||
+        rootName.StartsWith("MineRock", StringComparison.OrdinalIgnoreCase) ||
+        rootName.StartsWith("cliff_", StringComparison.OrdinalIgnoreCase) ||
+        rootName.StartsWith("rock4_", StringComparison.OrdinalIgnoreCase) ||
+        rootName.StartsWith("TreeBase", StringComparison.OrdinalIgnoreCase) ||
+        rootName.StartsWith("TreeLog", StringComparison.OrdinalIgnoreCase))
+    {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// <summary>
+  /// Ignores anything within the current vehicle and other vehicle movement/float/onboard colliders 
+  /// </summary>
+  /// <param name="collider"></param>
+  /// <returns></returns>
   private bool ShouldIgnore(Collider collider)
   {
     if (!collider) return true;
+    if (IsRockOrTree(collider)) return true;
 
     VehiclePiecesController? vehiclePiecesController = null;
 
@@ -827,6 +882,7 @@ public class VehicleRamAoe : ValheimAoe, IDeferredTrigger
 
   public override bool OnHit(Collider collider, Vector3 hitPoint)
   {
+    if (IsRockOrTree(collider)) return false;
     var hasHit = base.OnHit(collider, hitPoint);
     if (!hasHit) return false;
     if (!IsVehicleRamType) return true;

@@ -20,7 +20,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
   public static ConfigEntry<float> HullMaterialYggdrasilWoodRatio = null!;
   public static ConfigEntry<float> HullMaterialNailsRatio = null!;
 
-  public static readonly Dictionary<string, RequirementConfig[]> DefaultRequirements = new()
+  public static readonly Dictionary<string, RequirementConfig[]> DefaultRequirements = new(System.StringComparer.OrdinalIgnoreCase)
   {
     {
       PrefabNames.CannonballExplosive, new[]
@@ -165,6 +165,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       PrefabNames.GetHullSlabName(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwo), [
         new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
@@ -264,33 +265,62 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       ]
     },
     {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_Left_Wood", [
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_left_Wood", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "Dandelion", Amount = 2, Recover = true }
       ]
     },
     {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_Right_Wood", [
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_right_Wood", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "Dandelion", Amount = 2, Recover = true }
       ]
     },
     {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Left_Wood", [
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_left_Wood", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "Dandelion", Amount = 2, Recover = true }
       ]
     },
     {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Right_Wood", [
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_right_Wood", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "Dandelion", Amount = 2, Recover = true }
       ]
     },
+    {
+      "hull_rib_corner_floor_wood_left_2x2", [
+        new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Dandelion", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_corner_floor_wood_right_2x2", [
+        new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Dandelion", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_corner_floor_wood_left_2x4", [
+        new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Dandelion", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_corner_floor_wood_right_2x4", [
+        new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Dandelion", Amount = 2, Recover = true }
+      ]
+    },
+
     // Nailed Hulls & Rails (v4)
     {
       "hull_bow_center_wood", [
@@ -365,44 +395,57 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
     },
     {
       "hull_floor_4x4_wood", [
-        new RequirementConfig { Item = "Wood", Amount = 24, Recover = true },
+        new RequirementConfig { Item = "Wood", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "BronzeNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_hull_floor_4x4_wood", [
+        new RequirementConfig { Item = "Wood", Amount = 12, Recover = true },
         new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
         new RequirementConfig { Item = "BronzeNails", Amount = 4, Recover = true }
       ]
     },
     {
       "hull_seal_corner_left_wood", [
-        new RequirementConfig { Item = "Wood", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Wood", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
         new RequirementConfig { Item = "BronzeNails", Amount = 4, Recover = true }
       ]
     },
     {
       "hull_seal_corner_right_wood", [
-        new RequirementConfig { Item = "Wood", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Wood", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
         new RequirementConfig { Item = "BronzeNails", Amount = 4, Recover = true }
       ]
     },
     {
       "hull_seal_bow_left_wood", [
-        new RequirementConfig { Item = "Wood", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Wood", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
         new RequirementConfig { Item = "BronzeNails", Amount = 4, Recover = true }
       ]
     },
     {
       "hull_seal_bow_right_wood", [
-        new RequirementConfig { Item = "Wood", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Wood", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
         new RequirementConfig { Item = "BronzeNails", Amount = 4, Recover = true }
       ]
     },
     {
       "hull_seal_tri_bow_left_wood", [
-        new RequirementConfig { Item = "Wood", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Wood", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
         new RequirementConfig { Item = "BronzeNails", Amount = 4, Recover = true }
       ]
     },
     {
       "hull_seal_tri_bow_right_wood", [
-        new RequirementConfig { Item = "Wood", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Wood", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
         new RequirementConfig { Item = "BronzeNails", Amount = 4, Recover = true }
       ]
     },
@@ -663,47 +706,138 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
       ]
     },
+    // Iron-Plated Small Deck Planking
+    {
+      "hull_slab_iron_2x2", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
+      ]
+    },
     // Iron-Reinforced Corner Floors
     {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_Left_Iron", [
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_left_Iron", [
         new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
     {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_Right_Iron", [
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_right_Iron", [
         new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
     {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Left_Iron", [
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_left_Iron", [
         new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
       ]
     },
     {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Right_Iron", [
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_right_Iron", [
         new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
       ]
     },
     {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Left_Iron", [
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_left_Iron", [
         new RequirementConfig { Item = "RoundLog", Amount = 12, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
       ]
     },
     {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", [
+      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_right_Iron", [
         new RequirementConfig { Item = "RoundLog", Amount = 12, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_corner_floor_iron_left_2x2", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_corner_floor_iron_right_2x2", [
+        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_corner_floor_iron_left_2x4", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_corner_floor_iron_right_2x4", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_corner_floor_iron_left_2x8", [
+        new RequirementConfig { Item = "RoundLog", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+    {
+      "hull_rib_corner_floor_iron_right_2x8", [
+        new RequirementConfig { Item = "RoundLog", Amount = 12, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+      ]
+    },
+
+    // Sails
+    {
+      "MBRaftMast", [
+        new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
+        new RequirementConfig { Item = "DeerHide", Amount = 6, Recover = true }
+      ]
+    },
+    {
+      "mb_raft_mast", [
+        new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
+        new RequirementConfig { Item = "DeerHide", Amount = 6, Recover = true }
+      ]
+    },
+    {
+      "MBKarveMast", [
+        new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
+        new RequirementConfig { Item = "RoundLog", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "TrollHide", Amount = 6, Recover = true }
+      ]
+    },
+    {
+      "mb_karve_mast", [
+        new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
+        new RequirementConfig { Item = "RoundLog", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "TrollHide", Amount = 6, Recover = true }
       ]
     },
     // hull materials
@@ -718,15 +852,15 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         new RequirementConfig
         {
           Amount = 1,
-          Item = "Bronze",
+          Item = "Resin",
           Recover = true
         },
         new RequirementConfig
         {
-          Amount = 2, Item = "BronzeNails", Recover = true
+          Amount = 2, Item = "IronNails", Recover = true
         },
         new RequirementConfig
-          { Amount = 1, Item = "Wood", Recover = true }
+          { Amount = 1, Item = "RoundLog", Recover = true }
       ]
     },
     {
@@ -775,7 +909,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
   }
 
   // Map: prefabName => config entry
-  public static Dictionary<string, ConfigEntry<string>> RecipeRequirementConfigs { get; } = new();
+  public static Dictionary<string, ConfigEntry<string>> RecipeRequirementConfigs { get; } = new(System.StringComparer.OrdinalIgnoreCase);
   private const string ratioDescription = "For configuring hull size ratio. EG materialValue 2x2=4 but ratio 1/4 would get 1 of <itemName>. (rounds to lowets 0 or nearest int). This is meant for the default recipe. Customize the base recipe if you want to override things.";
   private const string ratioDescriptionShort = "For configuring hull size ratio";
 

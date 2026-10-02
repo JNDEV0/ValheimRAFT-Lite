@@ -85,7 +85,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     var anchoredStatus =
       isAnchored
         ? $"[<color=red><b>{ModTranslations.AnchorPrefab_anchoredText}</b></color>]\n"
-        : "";
+        : $"[<color=green><b>{ModTranslations.AnchorPrefab_RecoveredAnchorText}</b></color>]\n";
     var anchorText = "Toggle Anchor";
 
     return
@@ -348,7 +348,14 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     wheelLocalOffset = wheelTransform.position - transform.position;
     PrefabRegistryHelpers.IgnoreCameraCollisions(gameObject);
     steeringWheelHoverTransform = transform.Find("wheel_state_hover_message");
-    steeringWheelHoverText = steeringWheelHoverTransform.gameObject.AddComponent<HoverFadeText>();
+    if (steeringWheelHoverTransform != null)
+    {
+      steeringWheelHoverText = steeringWheelHoverTransform.GetComponent<HoverFadeText>();
+      if (steeringWheelHoverText == null)
+      {
+        steeringWheelHoverText = steeringWheelHoverTransform.gameObject.AddComponent<HoverFadeText>();
+      }
+    }
   }
 
   private void OnDestroy()
@@ -549,20 +556,63 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   private AnchorState lastAnchorState = AnchorState.Idle;
 
-  public void UpdateSteeringHoverMessage(string message)
+  private void EnsureHoverTextComponent()
   {
-    if (steeringWheelHoverText == null)
+    if (steeringWheelHoverText != null) return;
+
+    if (steeringWheelHoverTransform == null)
     {
-      if (steeringWheelHoverTransform != null)
+      steeringWheelHoverTransform = transform.Find("wheel_state_hover_message");
+    }
+
+    if (steeringWheelHoverTransform != null)
+    {
+      steeringWheelHoverText = steeringWheelHoverTransform.GetComponent<HoverFadeText>();
+      if (steeringWheelHoverText == null)
       {
         steeringWheelHoverText = steeringWheelHoverTransform.gameObject.AddComponent<HoverFadeText>();
       }
-      else
+
+      // Cleanup any duplicate HoverFadeText / TextMeshPro components if previously added
+      var hfts = steeringWheelHoverTransform.GetComponents<HoverFadeText>();
+      for (int i = 1; i < hfts.Length; i++)
+      {
+        Destroy(hfts[i]);
+      }
+      var tmps = steeringWheelHoverTransform.GetComponents<TMPro.TextMeshPro>();
+      for (int i = 1; i < tmps.Length; i++)
+      {
+        Destroy(tmps[i]);
+      }
+    }
+    else
+    {
+      steeringWheelHoverText = GetComponentInChildren<HoverFadeText>();
+      if (steeringWheelHoverText == null)
       {
         steeringWheelHoverText = HoverFadeText.CreateHoverFadeText(transform);
       }
     }
-    steeringWheelHoverText.currentText = message;
+  }
+
+  private static string CleanHoverMessage(string message)
+  {
+    if (string.IsNullOrEmpty(message)) return "";
+    var msg = message.Replace("[", "").Replace("]", "");
+    msg = msg.Replace("<color=red>", "<color=yellow>").Replace("<color=green>", "<color=yellow>");
+    msg = msg.Replace("<COLOR=RED>", "<color=yellow>").Replace("<COLOR=GREEN>", "<color=yellow>");
+    return msg;
+  }
+
+  public void UpdateSteeringHoverMessage(string message)
+  {
+    EnsureHoverTextComponent();
+    if (steeringWheelHoverText == null) return;
+
+    var cleanMsg = CleanHoverMessage(message);
+    if (string.IsNullOrEmpty(cleanMsg)) return;
+
+    steeringWheelHoverText.currentText = cleanMsg;
     steeringWheelHoverText.Show();
   }
 
@@ -574,18 +624,14 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   {
     if (anchorState == lastAnchorState) return;
     lastAnchorState = anchorState;
-    if (steeringWheelHoverText == null)
-    {
-      if (steeringWheelHoverTransform != null)
-      {
-        steeringWheelHoverText = steeringWheelHoverTransform.gameObject.AddComponent<HoverFadeText>();
-      }
-      else
-      {
-        steeringWheelHoverText = HoverFadeText.CreateHoverFadeText(transform);
-      }
-    }
-    steeringWheelHoverText.currentText = message;
+
+    EnsureHoverTextComponent();
+    if (steeringWheelHoverText == null) return;
+
+    var cleanMsg = CleanHoverMessage(message);
+    if (string.IsNullOrEmpty(cleanMsg)) return;
+
+    steeringWheelHoverText.currentText = cleanMsg;
     steeringWheelHoverText.Show();
   }
 

@@ -435,6 +435,13 @@
         _vehicleAnchorState = value;
 
         isAnchored = IsAnchorDropped(_vehicleAnchorState);
+        if (isAnchored && PiecesController != null && PiecesController.RopeLadders != null)
+        {
+          foreach (var ladder in PiecesController.RopeLadders)
+          {
+            if (ladder != null) ladder.UpdateSteps();
+          }
+        }
 
       }
 
@@ -1065,7 +1072,10 @@
       if (LayerHelpers.IsContainedWithinLayerMask(collision.collider.gameObject.layer, LayerHelpers.PhysicalLayerMask))
       {
         HandleObstacleCollisionImpact(collision);
-        vehicleRam.OnCollisionEnterHandler(collision);
+        if (!VehicleRamAoe.IsRockOrTree(collision.collider))
+        {
+          vehicleRam.OnCollisionEnterHandler(collision);
+        }
       }
     }
 
@@ -1187,7 +1197,10 @@
 
       if (collider.gameObject.layer == LayerHelpers.TerrainLayer) return;
 
-      vehicleRam.OnTriggerEnterHandler(collider);
+      if (!VehicleRamAoe.IsRockOrTree(collider))
+      {
+        vehicleRam.OnTriggerEnterHandler(collider);
+      }
 
     }
 
@@ -5134,7 +5147,7 @@
 
     private bool UpdateAnchorVelocity()
     {
-      if (!isAnchored) return false;
+      if (!isAnchored && vehicleAnchorState != AnchorState.Reeling && vehicleAnchorState != AnchorState.Lowering) return false;
 
       if (m_body.isKinematic) return true;
 
@@ -6434,7 +6447,7 @@
 
 
 
-      if (isAnchored)
+      if (isAnchored || vehicleAnchorState == AnchorState.Reeling || vehicleAnchorState == AnchorState.Lowering)
 
       {
 
@@ -7686,7 +7699,7 @@
 
     {
 
-      if (isAnchored && vehicleSpeed != Ship.Speed.Stop)
+      if ((isAnchored || vehicleAnchorState == AnchorState.Reeling || vehicleAnchorState == AnchorState.Lowering) && vehicleSpeed != Ship.Speed.Stop)
 
       {
 
@@ -8918,6 +8931,10 @@
 
       {
 
+        if (vehicleAnchorState == AnchorState.Lowering || vehicleAnchorState == AnchorState.Reeling)
+        {
+          return;
+        }
         Logger.LogDebug("toggling vehicleShip anchor");
 
         ToggleAnchor();
@@ -8981,6 +8998,11 @@
     public void ToggleAnchor()
     {
       if (Manager == null) return;
+      if (vehicleAnchorState == AnchorState.Lowering || vehicleAnchorState == AnchorState.Reeling)
+      {
+        return;
+      }
+
       // Land vehicle does not animate anchor.
       if (Manager.IsLandVehicle)
       {
@@ -8991,19 +9013,19 @@
           LandMovementController.SetBrake(isAnchored);
         }
         ShowWheelHoverMessage(targetLandState == AnchorState.Anchored
-          ? $"[<color=red><b>{ModTranslations.AnchorPrefab_anchoredText}</b></color>]"
-          : $"[<color=green><b>{ModTranslations.AnchorPrefab_RecoveredAnchorText}</b></color>]");
+          ? $"<color=yellow><b>{ModTranslations.AnchorPrefab_anchoredText}</b></color>"
+          : $"<color=yellow><b>{ModTranslations.AnchorPrefab_RecoveredAnchorText}</b></color>");
         return;
       }
 
-      var newState = (isAnchored || vehicleAnchorState == AnchorState.Lowering || vehicleAnchorState == AnchorState.Anchored)
+      var newState = (isAnchored || vehicleAnchorState == AnchorState.Anchored)
         ? AnchorState.Reeling
         : AnchorState.Lowering;
 
       SendSetAnchor(newState);
       ShowWheelHoverMessage(newState == AnchorState.Lowering
-        ? $"[<color=yellow><b>{ModTranslations.AnchorPrefab_loweringText}</b></color>]"
-        : $"[<color=yellow><b>{ModTranslations.AnchorPrefab_reelingText}</b></color>]");
+        ? $"<color=yellow><b>{ModTranslations.AnchorPrefab_loweringText}</b></color>"
+        : $"<color=yellow><b>{ModTranslations.AnchorPrefab_reelingText}</b></color>");
     }
 
 
@@ -9610,8 +9632,8 @@
       {
         SendSetAnchor(targetState);
         ShowWheelHoverMessage(targetState == AnchorState.Anchored
-          ? $"[<color=red><b>{ModTranslations.AnchorPrefab_anchoredText}</b></color>]"
-          : $"[<color=green><b>{ModTranslations.AnchorPrefab_RecoveredAnchorText}</b></color>]");
+          ? $"<color=yellow><b>{ModTranslations.AnchorPrefab_anchoredText}</b></color>"
+          : $"<color=yellow><b>{ModTranslations.AnchorPrefab_RecoveredAnchorText}</b></color>");
       }
     }
 
@@ -10004,13 +10026,23 @@
         return;
       }
 
-      if (isAnchored || vehicleAnchorState == AnchorState.Lowering)
+      if (isAnchored || vehicleAnchorState == AnchorState.Lowering || vehicleAnchorState == AnchorState.Reeling)
 
       {
+
+        if (vehicleAnchorState == AnchorState.Reeling)
+        {
+          if (directionChange == DirectionChange.Forward || directionChange == DirectionChange.Backward)
+          {
+            ShowRaiseAnchorFirstMessage();
+          }
+          return;
+        }
 
         if (PropulsionConfig.ShouldLiftAnchorOnSpeedChange.Value)
         {
           SendSetAnchor(AnchorState.Reeling);
+          return;
         }
 
         else
@@ -10075,7 +10107,12 @@
 
         vehicleAnchorState = HandleSetAnchor(AnchorState.Reeling);
 
-
+      if ((isAnchored || vehicleAnchorState == AnchorState.Reeling || vehicleAnchorState == AnchorState.Lowering) && (Ship.Speed)speed != Ship.Speed.Stop)
+      {
+        vehicleSpeed = Ship.Speed.Stop;
+        UpdateLandVehicleStatsIfNecessary();
+        return;
+      }
 
       vehicleSpeed = (Ship.Speed)speed;
 
@@ -10103,7 +10140,10 @@
 
       var msg = rawMsg.ToUpperInvariant();
 
-
+      // Clean brackets and normalize red/green to yellow
+      msg = msg.Replace("[", "").Replace("]", "");
+      msg = msg.Replace("<COLOR=RED>", "<color=yellow>").Replace("<COLOR=GREEN>", "<color=yellow>");
+      msg = msg.Replace("<color=red>", "<color=yellow>").Replace("<color=green>", "<color=yellow>");
 
       var wheel = lastUsedWheelComponent ?? PiecesController?._steeringWheelPiece;
 
@@ -10214,7 +10254,7 @@
 
     {
 
-      if (isAnchored && !PropulsionConfig.ShouldLiftAnchorOnSpeedChange.Value)
+      if (isAnchored || vehicleAnchorState == AnchorState.Reeling || vehicleAnchorState == AnchorState.Lowering)
 
       {
 
@@ -10286,7 +10326,7 @@
 
     {
 
-      if (isAnchored && !PropulsionConfig.ShouldLiftAnchorOnSpeedChange.Value)
+      if (isAnchored || vehicleAnchorState == AnchorState.Reeling || vehicleAnchorState == AnchorState.Lowering)
 
       {
 

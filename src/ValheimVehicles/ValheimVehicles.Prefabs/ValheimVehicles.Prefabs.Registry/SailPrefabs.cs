@@ -330,21 +330,23 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("raftmast"),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
         Enabled = true,
-        Requirements =
-        [
-          new RequirementConfig
-          {
-            Amount = 10,
-            Item = "Wood",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 6,
-            Item = "DeerHide",
-            Recover = true
-          }
-        ]
+        Requirements = PrefabRecipeConfig.GetRequirements(PrefabNames.Tier1RaftMastName).Length > 0
+          ? PrefabRecipeConfig.GetRequirements(PrefabNames.Tier1RaftMastName)
+          :
+          [
+            new RequirementConfig
+            {
+              Amount = 20,
+              Item = "Wood",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 6,
+              Item = "DeerHide",
+              Recover = true
+            }
+          ]
       }));
   }
 
@@ -389,27 +391,29 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
         Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("karvemast"),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
         Enabled = true,
-        Requirements = new RequirementConfig[3]
-        {
-          new()
-          {
-            Amount = 10,
-            Item = "FineWood",
-            Recover = true
-          },
-          new()
-          {
-            Amount = 2,
-            Item = "RoundLog",
-            Recover = true
-          },
-          new()
-          {
-            Amount = 6,
-            Item = "TrollHide",
-            Recover = true
-          }
-        }
+        Requirements = PrefabRecipeConfig.GetRequirements(PrefabNames.Tier2RaftMastName).Length > 0
+          ? PrefabRecipeConfig.GetRequirements(PrefabNames.Tier2RaftMastName)
+          :
+          [
+            new RequirementConfig
+            {
+              Amount = 20,
+              Item = "Wood",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 4,
+              Item = "RoundLog",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 6,
+              Item = "TrollHide",
+              Recover = true
+            }
+          ]
       }));
   }
 }

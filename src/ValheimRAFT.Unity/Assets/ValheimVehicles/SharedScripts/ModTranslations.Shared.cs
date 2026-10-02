@@ -74,6 +74,7 @@ namespace ValheimVehicles.SharedScripts
     public static string AnchorPrefab_loweringText = null!;
     public static string AnchorPrefab_breakingText = null!;
     public static string AnchorPrefab_idleText = null!;
+    public static string PortalBoatMustStop = null!;
 
 
     public static string Swivel_Connected = null!;
