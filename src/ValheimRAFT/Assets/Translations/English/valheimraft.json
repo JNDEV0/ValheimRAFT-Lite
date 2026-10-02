@@ -599,5 +599,8 @@
   "valheim_vehicles_hull_seal_tri_bow_left_iron_reinforced": "Iron-Reinforced Deck Prow Planking - Left",
   "valheim_vehicles_hull_seal_tri_bow_left_iron_reinforced_desc": "An iron-reinforced triangular deck prow planking piece for the port side.",
   "valheim_vehicles_hull_seal_tri_bow_right_iron_reinforced": "Iron-Reinforced Deck Prow Planking - Right",
-  "valheim_vehicles_hull_seal_tri_bow_right_iron_reinforced_desc": "An iron-reinforced triangular deck prow planking piece for the starboard side."
+  "valheim_vehicles_hull_seal_tri_bow_right_iron_reinforced_desc": "An iron-reinforced triangular deck prow planking piece for the starboard side.",
+  "valheim_vehicles_tame_no_seats": "No Greydwarf Rowing Seats found on nearby ship! Build rowing seats first.",
+  "valheim_vehicles_tame_crew_full": "Ship crew is full! All Greydwarf Rowing Seats are occupied.",
+  "valheim_vehicles_tame_no_ship": "No ship nearby to assign this sailor to."
 }

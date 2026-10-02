@@ -3529,6 +3529,47 @@
       return speed;
     }
 
+    public int TotalRowingSeatsCount
+    {
+      get
+      {
+        m_greydwarfRowingSeats.RemoveAll(s => s == null || !s);
+        return m_greydwarfRowingSeats.Count;
+      }
+    }
+
+    public int ActiveSailorsCount
+    {
+      get
+      {
+        m_activeSailors.RemoveAll(s => s == null || !s || s.IsEnRouteToShip);
+        return m_activeSailors.Count;
+      }
+    }
+
+    public GreydwarfRowingSeatComponent? GetNextAvailableRowingSeat()
+    {
+      m_greydwarfRowingSeats.RemoveAll(s => s == null || !s);
+      foreach (var seat in m_greydwarfRowingSeats)
+      {
+        if (seat == null || !seat) continue;
+        if (!seat.IsOccupied && seat.OccupantCharacter == null)
+        {
+          bool alreadyAssigned = false;
+          foreach (var s in m_activeSailors)
+          {
+            if (s != null && s.CurrentSeat == seat)
+            {
+              alreadyAssigned = true;
+              break;
+            }
+          }
+          if (!alreadyAssigned) return seat;
+        }
+      }
+      return null;
+    }
+
     public void RegisterSailor(RaftGreydwarfSailorComponent sailor)
     {
       if (sailor == null || m_activeSailors.Contains(sailor)) return;
@@ -3545,10 +3586,19 @@
 
     public Vector3 GetPlanterOrSafeDeckPosition()
     {
+      m_greydwarfRowingSeats.RemoveAll(s => s == null || !s);
+      foreach (var seat in m_greydwarfRowingSeats)
+      {
+        if (seat != null)
+        {
+          return seat.GetSeatPosition();
+        }
+      }
       foreach (var p in m_pieces)
       {
         if (p == null || p.gameObject == null) continue;
-        if (p.gameObject.name.StartsWith("MBDirtFloor", StringComparison.OrdinalIgnoreCase) || p.GetComponent<CultivatableComponent>() != null)
+        if (p.gameObject.name.IndexOf("deck", StringComparison.OrdinalIgnoreCase) >= 0 ||
+            p.gameObject.name.IndexOf("floor", StringComparison.OrdinalIgnoreCase) >= 0)
         {
           return p.transform.position + Vector3.up * 0.5f;
         }
@@ -3593,7 +3643,7 @@
           !int.TryParse(parts[2], out int targetBrute)) return;
 
       int currentReg = 0, currentSham = 0, currentBrute = 0;
-      m_activeSailors.RemoveAll(s => s == null);
+      m_activeSailors.RemoveAll(s => s == null || !s || s.IsEnRouteToShip);
       foreach (var s in m_activeSailors)
       {
         if (s == null) continue;
@@ -3605,14 +3655,12 @@
         }
       }
 
-      Vector3 spawnPos = GetPlanterOrSafeDeckPosition();
-
-      SpawnMissingCrew("Greydwarf", targetReg - currentReg, spawnPos);
-      SpawnMissingCrew("Greydwarf_Shaman", targetSham - currentSham, spawnPos);
-      SpawnMissingCrew("Greydwarf_Elite", targetBrute - currentBrute, spawnPos);
+      SpawnMissingCrew("Greydwarf", targetReg - currentReg);
+      SpawnMissingCrew("Greydwarf_Shaman", targetSham - currentSham);
+      SpawnMissingCrew("Greydwarf_Elite", targetBrute - currentBrute);
     }
 
-    private void SpawnMissingCrew(string prefabName, int needed, Vector3 spawnPos)
+    private void SpawnMissingCrew(string prefabName, int needed)
     {
       if (needed <= 0) return;
       var prefab = ZNetScene.instance?.GetPrefab(prefabName);
@@ -3620,7 +3668,11 @@
 
       for (int i = 0; i < needed; i++)
       {
-        var go = UnityEngine.Object.Instantiate(prefab, spawnPos + UnityEngine.Random.insideUnitSphere * 0.5f, transform.rotation);
+        var seat = GetNextAvailableRowingSeat();
+        Vector3 spawnPos = seat != null ? seat.GetSeatPosition() : GetPlanterOrSafeDeckPosition();
+        Quaternion spawnRot = seat != null ? seat.transform.rotation : transform.rotation;
+
+        var go = UnityEngine.Object.Instantiate(prefab, spawnPos, spawnRot);
         var ch = go.GetComponent<Character>();
         if (ch != null)
         {
@@ -3630,6 +3682,11 @@
         sailor.SetAssignedShip(this);
         sailor.EnsureRandomSailorHat();
         RegisterSailor(sailor);
+
+        if (seat != null)
+        {
+          sailor.SeatAtStation(seat);
+        }
       }
     }
 

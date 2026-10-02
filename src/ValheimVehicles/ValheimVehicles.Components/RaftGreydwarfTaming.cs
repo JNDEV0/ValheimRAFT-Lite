@@ -35,8 +35,27 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       return Localization.instance.Localize($"$valheim_vehicles_sailor_greydwarf ({status})");
     }
 
+    var nearestShip = FindNearestShip(transform.position, 250f);
+    string capacityStatus;
+    if (nearestShip == null)
+    {
+      capacityStatus = "<color=red>(No ship nearby)</color>";
+    }
+    else if (nearestShip.TotalRowingSeatsCount == 0)
+    {
+      capacityStatus = "<color=orange>(Requires Greydwarf Rowing Seat on ship)</color>";
+    }
+    else if (nearestShip.ActiveSailorsCount >= nearestShip.TotalRowingSeatsCount)
+    {
+      capacityStatus = $"<color=red>(Ship Full: {nearestShip.ActiveSailorsCount}/{nearestShip.TotalRowingSeatsCount} Seats)</color>";
+    }
+    else
+    {
+      capacityStatus = $"<color=cyan>(Crew: {nearestShip.ActiveSailorsCount}/{nearestShip.TotalRowingSeatsCount} Seats)</color>";
+    }
+
     return Localization.instance.Localize(
-      "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_tame_prompt");
+      $"[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_tame_prompt\n{capacityStatus}");
   }
 
   public string GetHoverName()
@@ -49,6 +68,31 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     return 0f;
   }
 
+  private bool CanHireSailor(Player player, out string reason, out VehiclePiecesController? nearestShip)
+  {
+    nearestShip = FindNearestShip(transform.position, 250f);
+    if (nearestShip == null)
+    {
+      reason = Localization.instance.Localize("$valheim_vehicles_tame_no_ship");
+      return false;
+    }
+
+    if (nearestShip.TotalRowingSeatsCount == 0)
+    {
+      reason = Localization.instance.Localize("$valheim_vehicles_tame_no_seats");
+      return false;
+    }
+
+    if (nearestShip.ActiveSailorsCount >= nearestShip.TotalRowingSeatsCount)
+    {
+      reason = Localization.instance.Localize("$valheim_vehicles_tame_crew_full");
+      return false;
+    }
+
+    reason = "";
+    return true;
+  }
+
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
     if (hold) return false;
@@ -57,6 +101,12 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
 
     var player = user as Player;
     if (player == null) return false;
+
+    if (!CanHireSailor(player, out string reason, out var nearestShip))
+    {
+      player.Message(MessageHud.MessageType.Center, reason);
+      return false;
+    }
 
     var inv = player.GetInventory();
     if (inv == null) return false;
@@ -68,7 +118,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     if (coins >= 10)
     {
       RemoveItemCount(inv, "Coins", "$item_coins", 10);
-      ExecuteTaming(player, success: true);
+      ExecuteTaming(player, success: true, nearestShip: nearestShip);
       return true;
     }
 
@@ -77,7 +127,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     {
       RemoveItemCount(inv, "Coins", "$item_coins", 5);
       bool success = UnityEngine.Random.value <= 0.5f;
-      ExecuteTaming(player, success);
+      ExecuteTaming(player, success, nearestShip: nearestShip);
       return true;
     }
 
@@ -86,7 +136,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     {
       RemoveItemCount(inv, "Dandelion", "$item_dandelion", 5);
       bool success = UnityEngine.Random.value <= 0.5f;
-      ExecuteTaming(player, success);
+      ExecuteTaming(player, success, nearestShip: nearestShip);
       return true;
     }
 
@@ -131,20 +181,26 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       return false;
     }
 
+    if (!CanHireSailor(player, out string reason, out var nearestShip))
+    {
+      player.Message(MessageHud.MessageType.Center, reason);
+      return true; // handled, don't consume or equip item
+    }
+
     if (isCoins)
     {
       int coinCount = GetItemCount(inv, "Coins", "$item_coins");
       if (coinCount >= 10)
       {
         RemoveItemCount(inv, "Coins", "$item_coins", 10);
-        ExecuteTaming(player, success: true);
+        ExecuteTaming(player, success: true, nearestShip: nearestShip);
         return true;
       }
       if (coinCount >= 5)
       {
         RemoveItemCount(inv, "Coins", "$item_coins", 5);
         bool success = UnityEngine.Random.value <= 0.5f;
-        ExecuteTaming(player, success);
+        ExecuteTaming(player, success, nearestShip: nearestShip);
         return true;
       }
       player.Message(MessageHud.MessageType.Center,
@@ -159,7 +215,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       {
         RemoveItemCount(inv, "Dandelion", "$item_dandelion", 5);
         bool success = UnityEngine.Random.value <= 0.5f;
-        ExecuteTaming(player, success);
+        ExecuteTaming(player, success, nearestShip: nearestShip);
         return true;
       }
       player.Message(MessageHud.MessageType.Center,
@@ -170,15 +226,14 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     return false;
   }
 
-  private void ExecuteTaming(Player player, bool success)
+  private void ExecuteTaming(Player player, bool success, VehiclePiecesController? nearestShip)
   {
+    if (_character == null) return;
+
     if (success)
     {
-      if (_character != null)
-      {
-        _character.SetTamed(true);
-        _character.m_faction = Character.Faction.Players;
-      }
+      _character.SetTamed(true);
+      _character.m_faction = Character.Faction.Players;
 
       if (_monsterAI != null)
       {
@@ -190,23 +245,12 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       SpawnTameEffects();
       var sailor = EnsureSailorComponent();
 
-      // Find nearest ship to assign candidate (within 150m)
-      var nearestShip = FindNearestShip(transform.position, 150f);
       if (nearestShip != null && sailor != null)
       {
         sailor.SetAssignedShip(nearestShip);
-        nearestShip.RegisterSailor(sailor);
-
-        // Bring onboard ship safely
-        Vector3 deckPos = nearestShip.GetPlanterOrSafeDeckPosition();
-        transform.position = deckPos;
-        transform.rotation = nearestShip.transform.rotation;
-      }
-
-      // Ensure Hat Visual
-      if (sailor != null)
-      {
         sailor.EnsureRandomSailorHat();
+        nearestShip.RegisterSailor(sailor);
+        sailor.StartEmbarkSequence(nearestShip.transform.position);
       }
 
       player.Message(MessageHud.MessageType.Center,
@@ -214,8 +258,19 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     }
     else
     {
+      SpawnTameFailedEffects();
       player.Message(MessageHud.MessageType.Center,
         Localization.instance.Localize("$valheim_vehicles_tame_failed"));
+    }
+  }
+
+  private void SpawnTameFailedEffects()
+  {
+    if (ZNetScene.instance == null) return;
+    var vfx = ZNetScene.instance.GetPrefab("vfx_greydwarf_hit") ?? ZNetScene.instance.GetPrefab("vfx_damage_slash");
+    if (vfx != null)
+    {
+      Instantiate(vfx, transform.position + Vector3.up * 1f, Quaternion.identity);
     }
   }
 
@@ -239,7 +294,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     }
   }
 
-  private static VehiclePiecesController? FindNearestShip(Vector3 pos, float maxDistance = 150f)
+  private static VehiclePiecesController? FindNearestShip(Vector3 pos, float maxDistance = 250f)
   {
     VehiclePiecesController? nearest = null;
     float minDist = maxDistance * maxDistance;

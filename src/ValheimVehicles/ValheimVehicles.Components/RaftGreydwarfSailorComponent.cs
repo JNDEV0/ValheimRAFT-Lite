@@ -33,6 +33,8 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   public Character? Character => _character;
   public bool IsUnfed => _isUnfed;
   public bool IsSeated => _isSeated;
+  public GreydwarfRowingSeatComponent? CurrentSeat => _currentSeat;
+  public bool IsEnRouteToShip { get; private set; }
 
   private Character? _character;
   private Humanoid? _humanoid;
@@ -43,6 +45,10 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   private GreydwarfRowingSeatComponent? _currentSeat;
   private bool _isSeated;
   private float _manningTimer;
+
+  // En-route embarkation sequence
+  private float _embarkTimer;
+  private Vector3 _shipTargetPos;
 
   // Upkeep & Mutiny (15 minutes = 900s)
   private float _resinCheckTimer = 900f;
@@ -105,9 +111,58 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     PiecesController = ship;
   }
 
+  public void StartEmbarkSequence(Vector3 shipPosition)
+  {
+    IsEnRouteToShip = true;
+    _embarkTimer = 0f;
+    _shipTargetPos = shipPosition;
+
+    if (_animator != null)
+    {
+      _animator.SetTrigger("cheer");
+    }
+
+    if (_monsterAI != null)
+    {
+      _monsterAI.SetAlerted(false);
+      _monsterAI.MoveTo(Time.deltaTime, shipPosition, 1f, true);
+    }
+  }
+
   private void Update()
   {
     if (_character == null || !_character.IsTamed()) return;
+
+    if (IsEnRouteToShip)
+    {
+      _embarkTimer += Time.deltaTime;
+      if (_monsterAI != null)
+      {
+        _monsterAI.MoveTo(Time.deltaTime, _shipTargetPos, 1f, true);
+      }
+
+      if (_embarkTimer >= 3.5f || (_character != null && _character.InWater()) || Vector3.Distance(transform.position, _shipTargetPos) <= 5f)
+      {
+        if (ZNetScene.instance != null)
+        {
+          var vfx = ZNetScene.instance.GetPrefab("vfx_wood_destroyed") ??
+                    ZNetScene.instance.GetPrefab("vfx_tame");
+          if (vfx != null)
+          {
+            Instantiate(vfx, transform.position + Vector3.up * 0.8f, Quaternion.identity);
+          }
+        }
+
+        if (PiecesController != null)
+        {
+          PiecesController.CheckAndRestoreRemoteCrew();
+        }
+
+        Destroy(gameObject);
+        return;
+      }
+      return;
+    }
 
     if (PiecesController == null)
     {
@@ -261,8 +316,9 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     return closest;
   }
 
-  private void SeatAtStation(GreydwarfRowingSeatComponent seat)
+  public void SeatAtStation(GreydwarfRowingSeatComponent seat)
   {
+    if (seat == null) return;
     _currentSeat = seat;
     _currentSeat.OccupantCharacter = _character;
     _isSeated = true;
@@ -276,7 +332,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     }
   }
 
-  private void UnseatFromStation()
+  public void UnseatFromStation()
   {
     if (_currentSeat != null)
     {
@@ -311,13 +367,25 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       }
 
       _waterTimer += dt;
-      // 10-second overboard failsafe recovery to Planter
+      // 10-second overboard failsafe recovery to Rowing Seat or Safe Deck
       if (_waterTimer >= 10.0f)
       {
-        Vector3 safePos = PiecesController.GetPlanterOrSafeDeckPosition();
-        transform.position = safePos;
+        var seat = _currentSeat ?? PiecesController.GetNextAvailableRowingSeat();
+        if (seat != null)
+        {
+          SeatAtStation(seat);
+        }
+        else
+        {
+          Vector3 safePos = PiecesController.GetPlanterOrSafeDeckPosition();
+          transform.position = safePos;
+          if (_character != null && _character.m_body != null)
+          {
+            _character.m_body.linearVelocity = Vector3.zero;
+          }
+        }
         _waterTimer = 0f;
-        ZLog.Log("[ValheimRAFT] Sailor Greydwarf was overboard >10s; safely recovered to Ship Planter.");
+        ZLog.Log("[ValheimRAFT] Sailor Greydwarf was overboard >10s; safely recovered to Rowing Seat.");
       }
     }
     else
@@ -575,11 +643,15 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   private void OnDestroy()
   {
+    if (IsEnRouteToShip)
+    {
+      return;
+    }
     UnseatFromStation();
     PiecesController?.UnregisterSailor(this);
   }
 
-  private static VehiclePiecesController? FindNearestShip(Vector3 pos, float maxDistance = 150f)
+  private static VehiclePiecesController? FindNearestShip(Vector3 pos, float maxDistance = 250f)
   {
     VehiclePiecesController? nearest = null;
     float minDist = maxDistance * maxDistance;
