@@ -164,9 +164,9 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
     // Iron-Plated Deck Planking & Frame Walls
     {
       PrefabNames.GetHullSlabName(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwo), [
-        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
+        new RequirementConfig { Item = "RoundLog", Amount = 5, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 1, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
       ]
     },
     {
@@ -199,9 +199,9 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
     },
     {
       PrefabNames.GetHullSlabName(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.FourByFour), [
-        new RequirementConfig { Item = "RoundLog", Amount = 24, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
+        new RequirementConfig { Item = "RoundLog", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
       ]
     },
     {
@@ -214,8 +214,8 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
     {
       PrefabNames.GetHullWallName(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.FourByFour), [
         new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 8, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 8, Recover = true }
+        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
       ]
     },
     // Iron-Plated Portholes
@@ -994,51 +994,6 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "valheim_vehicles_drakkalship_mast", [
         new RequirementConfig { Item = "ElderBark", Amount = 10, Recover = true },
         new RequirementConfig { Item = "LinenThread", Amount = 20, Recover = true }
-      ]
-    },
-    // Iron-Reinforced Frame Wall 4x4
-    {
-      "ValheimVehicles_Hull_Wall_Iron_4x4", [
-        new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
-      ]
-    },
-    {
-      "hull_wall_iron_4x4", [
-        new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
-      ]
-    },
-    // Iron-Reinforced Deck Planking 2x2
-    {
-      "ValheimVehicles_Hull_Slab_Iron_2x2", [
-        new RequirementConfig { Item = "RoundLog", Amount = 5, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 1, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
-      ]
-    },
-    {
-      "hull_slab_iron_2x2", [
-        new RequirementConfig { Item = "RoundLog", Amount = 5, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 1, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
-      ]
-    },
-    // Iron-Reinforced Deck Planking 4x4
-    {
-      "ValheimVehicles_Hull_Slab_Iron_4x4", [
-        new RequirementConfig { Item = "RoundLog", Amount = 10, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
-      ]
-    },
-    {
-      "hull_slab_iron_4x4", [
-        new RequirementConfig { Item = "RoundLog", Amount = 10, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
       ]
     },
 
