@@ -21,7 +21,8 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
   {
     if (_character != null && _character.IsTamed())
     {
-      EnsureSailorComponent();
+      var sailor = EnsureSailorComponent();
+      sailor?.EnsureRandomSailorHat();
     }
   }
 
@@ -60,27 +61,30 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     var inv = player.GetInventory();
     if (inv == null) return false;
 
+    int coins = GetItemCount(inv, "Coins", "$item_coins");
+    int dandelions = GetItemCount(inv, "Dandelion", "$item_dandelion");
+
     // 10 Coins = 100% success
-    if (inv.CountItems("Coins") >= 10)
+    if (coins >= 10)
     {
-      inv.RemoveItem("Coins", 10);
+      RemoveItemCount(inv, "Coins", "$item_coins", 10);
       ExecuteTaming(player, success: true);
       return true;
     }
 
     // 5 Coins = 50% success
-    if (inv.CountItems("Coins") >= 5)
+    if (coins >= 5)
     {
-      inv.RemoveItem("Coins", 5);
+      RemoveItemCount(inv, "Coins", "$item_coins", 5);
       bool success = UnityEngine.Random.value <= 0.5f;
       ExecuteTaming(player, success);
       return true;
     }
 
     // 5 Dandelions = 50% success
-    if (inv.CountItems("Dandelion") >= 5)
+    if (dandelions >= 5)
     {
-      inv.RemoveItem("Dandelion", 5);
+      RemoveItemCount(inv, "Dandelion", "$item_dandelion", 5);
       bool success = UnityEngine.Random.value <= 0.5f;
       ExecuteTaming(player, success);
       return true;
@@ -94,6 +98,75 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
 
   public bool UseItem(Humanoid user, ItemDrop.ItemData item)
   {
+    if (user == null || !user.IsPlayer() || item == null) return false;
+    var player = user as Player;
+    if (player == null) return false;
+
+    // If already tamed, check if player is offering/changing a Sailor Hat!
+    if (_character != null && _character.IsTamed())
+    {
+      string prefabName = item.m_dropPrefab != null ? item.m_dropPrefab.name : "";
+      if (RaftGreydwarfSailorComponent.IsSailorHat(prefabName))
+      {
+        var sailorComp = EnsureSailorComponent();
+        if (sailorComp != null)
+        {
+          sailorComp.EquipSpecificHat(prefabName);
+          player.Message(MessageHud.MessageType.Center,
+            $"Equipped {item.m_shared.m_name} on Sailor Greydwarf!");
+          return true;
+        }
+      }
+      return false;
+    }
+
+    var inv = player.GetInventory();
+    if (inv == null) return false;
+
+    bool isCoins = IsItemMatch(item, "Coins", "$item_coins");
+    bool isDandelion = IsItemMatch(item, "Dandelion", "$item_dandelion");
+
+    if (!isCoins && !isDandelion)
+    {
+      return false;
+    }
+
+    if (isCoins)
+    {
+      int coinCount = GetItemCount(inv, "Coins", "$item_coins");
+      if (coinCount >= 10)
+      {
+        RemoveItemCount(inv, "Coins", "$item_coins", 10);
+        ExecuteTaming(player, success: true);
+        return true;
+      }
+      if (coinCount >= 5)
+      {
+        RemoveItemCount(inv, "Coins", "$item_coins", 5);
+        bool success = UnityEngine.Random.value <= 0.5f;
+        ExecuteTaming(player, success);
+        return true;
+      }
+      player.Message(MessageHud.MessageType.Center,
+        Localization.instance.Localize("$valheim_vehicles_tame_insufficient"));
+      return true;
+    }
+
+    if (isDandelion)
+    {
+      int dandelionCount = GetItemCount(inv, "Dandelion", "$item_dandelion");
+      if (dandelionCount >= 5)
+      {
+        RemoveItemCount(inv, "Dandelion", "$item_dandelion", 5);
+        bool success = UnityEngine.Random.value <= 0.5f;
+        ExecuteTaming(player, success);
+        return true;
+      }
+      player.Message(MessageHud.MessageType.Center,
+        Localization.instance.Localize("$valheim_vehicles_tame_insufficient"));
+      return true;
+    }
+
     return false;
   }
 
@@ -111,17 +184,29 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       {
         _monsterAI.SetAlerted(false);
         _monsterAI.SetTarget(null);
+        _monsterAI.m_targetCreature = null;
       }
 
       SpawnTameEffects();
       var sailor = EnsureSailorComponent();
 
-      // Find nearest ship to assign candidate
-      var nearestShip = FindNearestShip(transform.position);
+      // Find nearest ship to assign candidate (within 150m)
+      var nearestShip = FindNearestShip(transform.position, 150f);
       if (nearestShip != null && sailor != null)
       {
         sailor.SetAssignedShip(nearestShip);
         nearestShip.RegisterSailor(sailor);
+
+        // Bring onboard ship safely
+        Vector3 deckPos = nearestShip.GetPlanterOrSafeDeckPosition();
+        transform.position = deckPos;
+        transform.rotation = nearestShip.transform.rotation;
+      }
+
+      // Ensure Hat Visual
+      if (sailor != null)
+      {
+        sailor.EnsureRandomSailorHat();
       }
 
       player.Message(MessageHud.MessageType.Center,
@@ -169,5 +254,38 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       }
     }
     return nearest;
+  }
+
+  private static bool IsItemMatch(ItemDrop.ItemData item, string prefabName, string token)
+  {
+    if (item == null) return false;
+    if (item.m_dropPrefab != null && item.m_dropPrefab.name.Equals(prefabName, StringComparison.OrdinalIgnoreCase))
+      return true;
+    if (!string.IsNullOrEmpty(item.m_shared?.m_name) &&
+        (item.m_shared.m_name.Equals(token, StringComparison.OrdinalIgnoreCase) ||
+         item.m_shared.m_name.Equals(prefabName, StringComparison.OrdinalIgnoreCase)))
+      return true;
+    return false;
+  }
+
+  private static int GetItemCount(Inventory inv, string prefabName, string token)
+  {
+    if (inv == null) return 0;
+    int c1 = inv.CountItems(prefabName);
+    int c2 = inv.CountItems(token);
+    return Math.Max(c1, c2);
+  }
+
+  private static void RemoveItemCount(Inventory inv, string prefabName, string token, int amount)
+  {
+    if (inv == null || amount <= 0) return;
+    if (inv.CountItems(prefabName) >= amount)
+    {
+      inv.RemoveItem(prefabName, amount);
+    }
+    else
+    {
+      inv.RemoveItem(token, amount);
+    }
   }
 }

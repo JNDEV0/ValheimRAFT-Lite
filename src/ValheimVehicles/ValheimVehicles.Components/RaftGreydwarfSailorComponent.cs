@@ -6,6 +6,26 @@ namespace ValheimVehicles.Components;
 
 public class RaftGreydwarfSailorComponent : MonoBehaviour
 {
+  public static readonly string[] SailorHats =
+  [
+    "HelmetHat1",        // Blue Tied Headscarf
+    "HelmetHat2",        // Green Twisted Headscarf
+    "HelmetHat7",        // Red Twisted Headscarf
+    "HelmetHat6",        // Yellow Tied Headscarf
+    "HelmetStrawHat",    // Straw Hat
+    "HelmetFishingHat"   // Fishing Hat
+  ];
+
+  public static bool IsSailorHat(string prefabName)
+  {
+    if (string.IsNullOrEmpty(prefabName)) return false;
+    foreach (var hat in SailorHats)
+    {
+      if (hat.Equals(prefabName, StringComparison.OrdinalIgnoreCase)) return true;
+    }
+    return false;
+  }
+
   public GreydwarfSailorType DwarfType { get; private set; } =
     GreydwarfSailorType.Regular;
 
@@ -54,6 +74,11 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     {
       PiecesController = FindNearestShip(transform.position);
       PiecesController?.RegisterSailor(this);
+    }
+
+    if (_character != null && _character.IsTamed())
+    {
+      EnsureRandomSailorHat();
     }
   }
 
@@ -168,6 +193,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       if (_character.m_body != null) _character.m_body.isKinematic = false;
     }
 
+    RemoveSailorHat();
     PiecesController?.UnregisterSailor(this);
 
     MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center,
@@ -417,6 +443,134 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
         Instantiate(healVfx, transform.position + Vector3.up * 1f, Quaternion.identity);
       }
     }
+  }
+
+  public void EnsureRandomSailorHat()
+  {
+    string currentHat = "";
+    if (_nview != null && _nview.IsValid())
+    {
+      currentHat = _nview.GetZDO().GetString("SailorHat", "");
+    }
+    if (string.IsNullOrEmpty(currentHat))
+    {
+      currentHat = SailorHats[UnityEngine.Random.Range(0, SailorHats.Length)];
+      if (_nview != null && _nview.IsValid())
+      {
+        _nview.GetZDO().Set("SailorHat", currentHat);
+      }
+    }
+    AttachSailorHat(currentHat);
+  }
+
+  public void EquipSpecificHat(string hatPrefabName)
+  {
+    if (!IsSailorHat(hatPrefabName)) return;
+    if (_nview != null && _nview.IsValid())
+    {
+      _nview.GetZDO().Set("SailorHat", hatPrefabName);
+    }
+    AttachSailorHat(hatPrefabName, forceReplace: true);
+  }
+
+  public void AttachSailorHat(string hatPrefabName, bool forceReplace = false)
+  {
+    if (string.IsNullOrEmpty(hatPrefabName)) return;
+
+    Transform? headBone = FindHeadBone(_character);
+    if (headBone == null) return;
+
+    Transform existingHat = headBone.Find("SailorHatVisual");
+    if (existingHat != null)
+    {
+      if (!forceReplace) return;
+      Destroy(existingHat.gameObject);
+    }
+
+    GameObject? hatPrefab = ObjectDB.instance?.GetItemPrefab(hatPrefabName);
+    if (hatPrefab == null)
+    {
+      hatPrefab = ZNetScene.instance?.GetPrefab(hatPrefabName);
+    }
+    if (hatPrefab == null)
+    {
+      ZLog.LogWarning($"[ValheimRAFT] Sailor hat prefab not found: {hatPrefabName}");
+      return;
+    }
+
+    GameObject hatVisual = Instantiate(hatPrefab, headBone);
+    hatVisual.name = "SailorHatVisual";
+
+    var itemDrop = hatVisual.GetComponent<ItemDrop>();
+    if (itemDrop != null) Destroy(itemDrop);
+
+    var zNetView = hatVisual.GetComponent<ZNetView>();
+    if (zNetView != null) Destroy(zNetView);
+
+    var rb = hatVisual.GetComponent<Rigidbody>();
+    if (rb != null) Destroy(rb);
+
+    foreach (var col in hatVisual.GetComponentsInChildren<Collider>(true))
+    {
+      Destroy(col);
+    }
+
+    foreach (var rend in hatVisual.GetComponentsInChildren<Renderer>(true))
+    {
+      rend.enabled = true;
+    }
+
+    // Align with Greydwarf head brow
+    hatVisual.transform.localPosition = new Vector3(0f, 0.08f, 0.04f);
+    hatVisual.transform.localRotation = Quaternion.Euler(10f, 0f, 0f);
+
+    float scale = DwarfType == GreydwarfSailorType.Brute ? 1.25f : 1.0f;
+    hatVisual.transform.localScale = Vector3.one * scale;
+  }
+
+  public void RemoveSailorHat()
+  {
+    Transform? headBone = FindHeadBone(_character);
+    if (headBone != null)
+    {
+      Transform existingHat = headBone.Find("SailorHatVisual");
+      if (existingHat != null)
+      {
+        Destroy(existingHat.gameObject);
+      }
+    }
+    if (_nview != null && _nview.IsValid())
+    {
+      _nview.GetZDO().Set("SailorHat", "");
+    }
+  }
+
+  public static Transform? FindHeadBone(Character? character)
+  {
+    if (character == null) return null;
+
+    var anim = character.GetComponentInChildren<Animator>();
+    if (anim != null && anim.isHuman)
+    {
+      var b = anim.GetBoneTransform(HumanBodyBones.Head);
+      if (b != null) return b;
+    }
+
+    var all = character.GetComponentsInChildren<Transform>(true);
+    foreach (var t in all)
+    {
+      if (t.name.Equals("Head", StringComparison.OrdinalIgnoreCase))
+      {
+        return t;
+      }
+    }
+
+    if (character.m_eye != null && character.m_eye.parent != null)
+    {
+      return character.m_eye.parent;
+    }
+
+    return character.m_eye ?? character.transform;
   }
 
   private void OnDestroy()

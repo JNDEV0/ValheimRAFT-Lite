@@ -55,7 +55,8 @@ public static class PatchController
       typeof(VehicleOwnership_Patches),
       typeof(ZNet_WorldSession_Patches),
       typeof(VesselHorn_Patches),
-      typeof(ByUsagePieceList_Patch)
+      typeof(ByUsagePieceList_Patch),
+      typeof(GreydwarfTaming_Patch)
     );
 
     if (PatchConfig.MineRockPatch.Value)

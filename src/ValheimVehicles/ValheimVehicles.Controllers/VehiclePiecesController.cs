@@ -3628,6 +3628,7 @@
         }
         var sailor = go.GetComponent<RaftGreydwarfSailorComponent>() ?? go.AddComponent<RaftGreydwarfSailorComponent>();
         sailor.SetAssignedShip(this);
+        sailor.EnsureRandomSailorHat();
         RegisterSailor(sailor);
       }
     }
