@@ -101,12 +101,6 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         },
         new RequirementConfig
         {
-          Amount = 6,
-          Item = "Wood",
-          Recover = true
-        },
-        new RequirementConfig
-        {
           Amount = 4,
           Item = "BronzeNails",
           Recover = true
@@ -177,6 +171,20 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
     {
       PrefabNames.GetHullSlabName(HullMaterial.Iron, PrefabNames.PrefabSizeVariant.TwoByTwo), [
         new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_hull_seal_tri_bow_left_iron_reinforced", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_hull_seal_tri_bow_right_iron_reinforced", [
+        new RequirementConfig { Item = "RoundLog", Amount = 8, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
@@ -538,7 +546,6 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "hull_floor_4x4_iron", [
         new RequirementConfig { Item = "RoundLog", Amount = 24, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
-        new RequirementConfig { Item = "Resin", Amount = 4, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
       ]
     },
@@ -853,6 +860,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "ValheimVehicles_hull_bow_center_iron_reinforced", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
@@ -860,6 +868,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "ValheimVehicles_hull_rib_iron_reinforced", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
@@ -867,6 +876,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "ValheimVehicles_hull_bow_tri_left_iron_reinforced", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
@@ -874,6 +884,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "ValheimVehicles_hull_bow_tri_right_iron_reinforced", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
@@ -881,6 +892,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "ValheimVehicles_hull_bow_curved_left_iron_reinforced", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
@@ -888,6 +900,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "ValheimVehicles_hull_bow_curved_right_iron_reinforced", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
@@ -895,6 +908,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "ValheimVehicles_hull_rib_aft_center_iron_reinforced", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
@@ -902,6 +916,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "ValheimVehicles_hull_rib_aft_left_iron_reinforced", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
@@ -909,6 +924,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "ValheimVehicles_hull_rib_aft_right_iron_reinforced", [
         new RequirementConfig { Item = "Wood", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 2, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
       ]
     },
@@ -918,14 +934,14 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "MBRaftMast", [
         new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
         new RequirementConfig { Item = "DeerHide", Amount = 6, Recover = true },
-        new RequirementConfig { Item = "Dandelion", Amount = 6, Recover = true }
+        new RequirementConfig { Item = "Dandelion", Amount = 12, Recover = true }
       ]
     },
     {
       "mb_raft_mast", [
         new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
         new RequirementConfig { Item = "DeerHide", Amount = 6, Recover = true },
-        new RequirementConfig { Item = "Dandelion", Amount = 6, Recover = true }
+        new RequirementConfig { Item = "Dandelion", Amount = 12, Recover = true }
       ]
     },
     {
@@ -933,7 +949,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
         new RequirementConfig { Item = "RoundLog", Amount = 4, Recover = true },
         new RequirementConfig { Item = "TrollHide", Amount = 6, Recover = true },
-        new RequirementConfig { Item = "Dandelion", Amount = 6, Recover = true }
+        new RequirementConfig { Item = "Dandelion", Amount = 12, Recover = true }
       ]
     },
     {
@@ -941,7 +957,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         new RequirementConfig { Item = "Wood", Amount = 20, Recover = true },
         new RequirementConfig { Item = "RoundLog", Amount = 4, Recover = true },
         new RequirementConfig { Item = "TrollHide", Amount = 6, Recover = true },
-        new RequirementConfig { Item = "Dandelion", Amount = 6, Recover = true }
+        new RequirementConfig { Item = "Dandelion", Amount = 12, Recover = true }
       ]
     },
     // Rigging Cleat
@@ -1022,6 +1038,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "ValheimVehicles_Ship_Hull_Iron_Plated", [
         new RequirementConfig { Item = "RoundLog", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 8, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
       ]
     },
@@ -1029,6 +1046,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       "hull_center_iron_plated", [
         new RequirementConfig { Item = "RoundLog", Amount = 10, Recover = true },
         new RequirementConfig { Item = "Iron", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "Resin", Amount = 8, Recover = true },
         new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
       ]
     },

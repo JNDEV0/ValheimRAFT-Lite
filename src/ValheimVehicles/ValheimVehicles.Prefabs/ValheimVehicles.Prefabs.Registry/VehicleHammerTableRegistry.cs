@@ -262,6 +262,9 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Left_Iron", // Iron-Reinforced Deck Stern Planking - Long - Left
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", // Iron-Reinforced Deck Stern Planking - Long - Right
 
+      "ValheimVehicles_hull_seal_tri_bow_left_iron_reinforced", // Iron-Reinforced Deck Prow Planking - Left
+      "ValheimVehicles_hull_seal_tri_bow_right_iron_reinforced", // Iron-Reinforced Deck Prow Planking - Right
+
       // Iron-Reinforced Frame Walls
       "ValheimVehicles_Hull_Wall_Iron_2x2", // Iron-Reinforced Frame Wall - Small
       "ValheimVehicles_Hull_Wall_Iron_4x4"  // Iron-Reinforced Frame Wall

@@ -228,6 +228,12 @@
       public static readonly string WindowWallPortholeWood4x4Prefab =
         $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_Wood_4x4";
 
+      public static readonly string HullSealTriBowLeftIronReinforcedPrefabName =
+        $"{ValheimVehiclesPrefix}_hull_seal_tri_bow_left_iron_reinforced";
+
+      public static readonly string HullSealTriBowRightIronReinforcedPrefabName =
+        $"{ValheimVehiclesPrefix}_hull_seal_tri_bow_right_iron_reinforced";
+
       public static readonly string WindowWallPortholeWood8x4Prefab =
         $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_Wood_8x4";
 

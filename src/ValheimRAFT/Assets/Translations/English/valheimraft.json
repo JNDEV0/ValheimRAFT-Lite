@@ -595,5 +595,9 @@
   "valheim_vehicles_hull_rib_aft_left_iron_reinforced": "Iron-Reinforced Hull Rear Counter Stern - Left",
   "valheim_vehicles_hull_rib_aft_left_iron_reinforced_desc": "An iron-reinforced port-side counter stern piece.",
   "valheim_vehicles_hull_rib_aft_right_iron_reinforced": "Iron-Reinforced Hull Rear Counter Stern - Right",
-  "valheim_vehicles_hull_rib_aft_right_iron_reinforced_desc": "An iron-reinforced starboard-side counter stern piece."
+  "valheim_vehicles_hull_rib_aft_right_iron_reinforced_desc": "An iron-reinforced starboard-side counter stern piece.",
+  "valheim_vehicles_hull_seal_tri_bow_left_iron_reinforced": "Iron-Reinforced Deck Prow Planking - Left",
+  "valheim_vehicles_hull_seal_tri_bow_left_iron_reinforced_desc": "An iron-reinforced triangular deck prow planking piece for the port side.",
+  "valheim_vehicles_hull_seal_tri_bow_right_iron_reinforced": "Iron-Reinforced Deck Prow Planking - Right",
+  "valheim_vehicles_hull_seal_tri_bow_right_iron_reinforced_desc": "An iron-reinforced triangular deck prow planking piece for the starboard side."
 }

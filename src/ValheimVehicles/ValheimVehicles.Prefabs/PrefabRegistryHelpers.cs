@@ -664,7 +664,19 @@ public abstract class PrefabRegistryHelpers
       ("ValheimVehicles_hull_rib_aft_left_iron_reinforced", "hull_rib_aft_left_wood"),
       ("ValheimVehicles_hull_rib_aft_right_iron_reinforced", "hull_rib_aft_right_wood"),
     };
-    foreach (var (pName, iconName) in ironReinforcedPieces)
+      PieceDataDictionary["ValheimVehicles_hull_seal_tri_bow_left_iron_reinforced"] = new PieceData
+      {
+        Name = "$valheim_vehicles_hull_seal_tri_bow_left_iron_reinforced",
+        Description = "$valheim_vehicles_hull_seal_tri_bow_left_iron_reinforced_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("hull_seal_tri_bow_left_wood")
+      };
+      PieceDataDictionary["ValheimVehicles_hull_seal_tri_bow_right_iron_reinforced"] = new PieceData
+      {
+        Name = "$valheim_vehicles_hull_seal_tri_bow_right_iron_reinforced",
+        Description = "$valheim_vehicles_hull_seal_tri_bow_right_iron_reinforced_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("hull_seal_tri_bow_right_wood")
+      };
+        foreach (var (pName, iconName) in ironReinforcedPieces)
     {
       PieceDataDictionary[pName] = new PieceData
       {
