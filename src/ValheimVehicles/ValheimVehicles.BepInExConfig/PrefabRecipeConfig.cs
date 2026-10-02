@@ -780,13 +780,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       ]
     },
     // Iron-Reinforced Deck Planking (2x2)
-    {
-      "hull_slab_iron_2x2", [
-        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
-      ]
-    },
+
     // Iron-Reinforced Corner Floors
     {
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_left_Iron", [
@@ -830,20 +824,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
       ]
     },
-    {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Left_Iron", [
-        new RequirementConfig { Item = "RoundLog", Amount = 12, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
-      ]
-    },
-    {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", [
-        new RequirementConfig { Item = "RoundLog", Amount = 12, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 4, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 4, Recover = true }
-      ]
-    },
+
     {
       "hull_rib_corner_floor_iron_left_2x2", [
         new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
@@ -1060,21 +1041,7 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         new RequirementConfig { Item = "IronNails", Amount = 6, Recover = true }
       ]
     },
-    // Iron-Reinforced Deck Stern Planking 2x2 Left / Right (both cases)
-    {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_Left_Iron", [
-        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
-      ]
-    },
-    {
-      "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x2_Right_Iron", [
-        new RequirementConfig { Item = "RoundLog", Amount = 6, Recover = true },
-        new RequirementConfig { Item = "Iron", Amount = 2, Recover = true },
-        new RequirementConfig { Item = "IronNails", Amount = 2, Recover = true }
-      ]
-    },
+
     // Rigging Cleat
     {
       "MBRopeAnchor", [
