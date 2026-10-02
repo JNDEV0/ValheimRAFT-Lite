@@ -557,7 +557,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     RegisterSmallDeckPlanks();
     RegisterIronReinforcedHulls();
     RegisterIronReinforcedDeckProwPlanking();
-    RegisterHull(PrefabNames.ShipHullCenterIronPlatedPrefabName, HullMaterial.Iron, 20, PrefabNames.PrefabSizeVariant.FourByEight);
+    RegisterIronPlatedKeelExtension();
 
     foreach (var hullMaterialType in hullMaterialTypes)
     foreach (var sizeVariant in sizeVariants)
@@ -892,7 +892,64 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     return null;
   }
 
-  private static void FixKeelIronPlatedMaterials(GameObject prefab)
+    private static Material GetIronReinforcedPoleMaterial()
+  {
+    try
+    {
+      if (LoadValheimVehicleAssets._bundle != null)
+      {
+        var mat = LoadValheimVehicleAssets._bundle.LoadAsset<Material>("iron_pole_vert.mat");
+        if (mat == null) mat = LoadValheimVehicleAssets._bundle.LoadAsset<Material>("iron_pole_vert");
+        if (mat != null) return mat;
+      }
+    }
+    catch { }
+
+    if (LoadValheimVehicleAssets.ShipHullIronAsset != null)
+    {
+      foreach (var r in LoadValheimVehicleAssets.ShipHullIronAsset.GetComponentsInChildren<MeshRenderer>(true))
+      {
+        if (r.sharedMaterial != null && r.sharedMaterial.name.IndexOf("pole", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+          return r.sharedMaterial;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static Mesh GetIronBandMesh()
+  {
+    try
+    {
+      if (LoadValheimVehicleAssets.ShipHullIronAsset != null)
+      {
+        var mf = LoadValheimVehicleAssets.ShipHullIronAsset.transform.Find("new/bands/iron_band_1")?.GetComponent<MeshFilter>();
+        if (mf != null && mf.sharedMesh != null) return mf.sharedMesh;
+      }
+    }
+    catch { }
+    return null;
+  }
+
+  public static void RegisterIronPlatedKeelExtension()
+  {
+    try
+    {
+      var prefab = PrefabManager.Instance.CreateClonedPrefab(
+        PrefabNames.ShipHullCenterIronPlatedPrefabName,
+        LoadValheimVehicleAssets.ShipHullWoodAsset);
+      FixKeelIronPlatedMaterials(prefab);
+      SetupHullPrefab(prefab, PrefabNames.ShipHullCenterIronPlatedPrefabName,
+        HullMaterial.Iron, 20, prefab.transform.Find("new"), ["new", "snappoints"]);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogWarning($"Failed to register iron-plated keel extension: {e.Message}");
+    }
+  }
+
+private static void FixKeelIronPlatedMaterials(GameObject prefab)
   {
     if (!prefab) return;
     try
@@ -1093,7 +1150,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
           r.sharedMaterial = nailedWoodMat;
         }
       }
-      SetupHullPrefab(woodPrefab, "ValheimVehicles_hull_floor_2x2_wood", HullMaterial.Wood, 2, null, null, VehicleHammerTableCategories.Nailed);
+      SetupHullPrefab(woodPrefab, "ValheimVehicles_hull_floor_2x2_wood", HullMaterial.Wood, 2, null, null, VehicleHammerTableCategories.Nailed, addToPieceTable: false);
     }
     catch (Exception e)
     {
@@ -1113,7 +1170,7 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
           r.sharedMaterial = ironMat;
         }
       }
-      SetupHullPrefab(ironPrefab, "ValheimVehicles_hull_floor_2x2_iron", HullMaterial.Iron, 2, null, null, VehicleHammerTableCategories.Iron);
+      SetupHullPrefab(ironPrefab, "ValheimVehicles_hull_floor_2x2_iron", HullMaterial.Iron, 2, null, null, VehicleHammerTableCategories.Iron, addToPieceTable: false);
     }
     catch (Exception e)
     {
@@ -1125,16 +1182,20 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
   {
     var pieces = new[]
     {
-      ("ValheimVehicles_hull_bow_center_iron_reinforced", "hull_bow_center_iron"),
-      ("ValheimVehicles_hull_rib_iron_reinforced", "hull_rib_iron"),
-      ("ValheimVehicles_hull_bow_tri_left_iron_reinforced", "hull_bow_tri_left_iron"),
-      ("ValheimVehicles_hull_bow_tri_right_iron_reinforced", "hull_bow_tri_right_iron"),
-      ("ValheimVehicles_hull_bow_curved_left_iron_reinforced", "hull_bow_curved_left_iron"),
-      ("ValheimVehicles_hull_bow_curved_right_iron_reinforced", "hull_bow_curved_right_iron"),
-      ("ValheimVehicles_hull_rib_aft_center_iron_reinforced", "hull_rib_aft_center_iron"),
-      ("ValheimVehicles_hull_rib_aft_left_iron_reinforced", "hull_rib_aft_left_iron"),
-      ("ValheimVehicles_hull_rib_aft_right_iron_reinforced", "hull_rib_aft_right_iron")
+      ("ValheimVehicles_hull_bow_center_iron_reinforced", "hull_bow_center_wood"),
+      ("ValheimVehicles_hull_rib_iron_reinforced", "hull_rib_wood"),
+      ("ValheimVehicles_hull_bow_tri_left_iron_reinforced", "hull_bow_tri_left_wood"),
+      ("ValheimVehicles_hull_bow_tri_right_iron_reinforced", "hull_bow_tri_right_wood"),
+      ("ValheimVehicles_hull_bow_curved_left_iron_reinforced", "hull_bow_curved_left_wood"),
+      ("ValheimVehicles_hull_bow_curved_right_iron_reinforced", "hull_bow_curved_right_wood"),
+      ("ValheimVehicles_hull_rib_aft_center_iron_reinforced", "hull_rib_aft_center_wood"),
+      ("ValheimVehicles_hull_rib_aft_left_iron_reinforced", "hull_rib_aft_left_wood"),
+      ("ValheimVehicles_hull_rib_aft_right_iron_reinforced", "hull_rib_aft_right_wood")
     };
+
+    var reinforcedMat = GetIronReinforcedMaterial();
+    var poleMat = GetIronReinforcedPoleMaterial();
+    var bandMesh = GetIronBandMesh();
 
     foreach (var (prefabName, baseAssetName) in pieces)
     {
@@ -1148,6 +1209,19 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
         }
 
         var prefab = PrefabManager.Instance.CreateClonedPrefab(prefabName, baseAsset);
+        if (reinforcedMat != null)
+        {
+          foreach (var r in prefab.GetComponentsInChildren<MeshRenderer>(true))
+          {
+            r.sharedMaterial = reinforcedMat;
+          }
+        }
+
+        if (bandMesh != null && poleMat != null)
+        {
+          AttachHullIronBands(prefab, prefabName, bandMesh, poleMat);
+        }
+
         SetupHullPrefab(prefab, prefabName, HullMaterial.Iron, 4, null, null, VehicleHammerTableCategories.Iron);
       }
       catch (Exception e)
@@ -1157,15 +1231,54 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     }
   }
 
+  private static void AttachHullIronBands(GameObject prefab, string prefabName, Mesh bandMesh, Material poleMat)
+  {
+    try
+    {
+      var bandsRoot = new GameObject("bands");
+      bandsRoot.transform.SetParent(prefab.transform, false);
+
+      void AddBand(Vector3 pos, Vector3 rot, Vector3 scale)
+      {
+        var band = new GameObject("iron_band");
+        band.transform.SetParent(bandsRoot.transform, false);
+        band.transform.localPosition = pos;
+        band.transform.localEulerAngles = rot;
+        band.transform.localScale = scale;
+        var mf = band.AddComponent<MeshFilter>();
+        mf.sharedMesh = bandMesh;
+        var mr = band.AddComponent<MeshRenderer>();
+        mr.sharedMaterial = poleMat;
+      }
+
+      if (prefabName.Contains("center"))
+      {
+        AddBand(new Vector3(0f, 0.1f, 1f), new Vector3(0f, 0f, 0f), new Vector3(0.04f, 3.5f, 0.15f));
+      }
+      else
+      {
+        AddBand(new Vector3(0.5f, 0.1f, 1f), new Vector3(0f, 0f, 0f), new Vector3(0.04f, 3.5f, 0.15f));
+        AddBand(new Vector3(1.5f, 0.1f, 1f), new Vector3(0f, 0f, 0f), new Vector3(0.04f, 3.5f, 0.15f));
+      }
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogWarning($"Failed to attach iron bands to {prefabName}: {e.Message}");
+    }
+  }
+
   public static void RegisterIronReinforcedDeckProwPlanking()
   {
     var pieces = new[]
     {
-      ("ValheimVehicles_hull_seal_tri_bow_left_iron_reinforced", "hull_seal_tri_bow_left_iron"),
-      ("ValheimVehicles_hull_seal_tri_bow_right_iron_reinforced", "hull_seal_tri_bow_right_iron")
+      ("ValheimVehicles_hull_seal_tri_bow_left_iron_reinforced", "hull_seal_tri_bow_left_wood", PrefabNames.DirectionVariant.Left),
+      ("ValheimVehicles_hull_seal_tri_bow_right_iron_reinforced", "hull_seal_tri_bow_right_wood", PrefabNames.DirectionVariant.Right)
     };
 
-    foreach (var (prefabName, baseAssetName) in pieces)
+    var reinforcedMat = GetIronReinforcedMaterial();
+    var poleMat = GetIronReinforcedPoleMaterial();
+
+    foreach (var (prefabName, baseAssetName, dir) in pieces)
     {
       try
       {
@@ -1177,6 +1290,36 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
         }
 
         var prefab = PrefabManager.Instance.CreateClonedPrefab(prefabName, baseAsset);
+        if (reinforcedMat != null)
+        {
+          foreach (var r in prefab.GetComponentsInChildren<MeshRenderer>(true))
+          {
+            r.sharedMaterial = reinforcedMat;
+          }
+        }
+
+        // Attach bands from corresponding hull_corner_floor_2x4 piece
+        var bandsSource = LoadValheimVehicleAssets.GetShipHullCornerFloor(HullMaterial.Iron, dir, PrefabNames.PrefabSizeVariant.TwoByFour);
+        if (bandsSource != null)
+        {
+          var sourceBands = bandsSource.transform.Find("new/bands");
+          if (sourceBands != null)
+          {
+            var bandsClone = UnityEngine.Object.Instantiate(sourceBands.gameObject, prefab.transform);
+            bandsClone.name = "bands";
+            bandsClone.transform.localPosition = new Vector3(0f, 0.22f, 0f);
+            bandsClone.transform.localRotation = Quaternion.identity;
+            bandsClone.transform.localScale = new Vector3(2f, 1f, 2f);
+            if (poleMat != null)
+            {
+              foreach (var r in bandsClone.GetComponentsInChildren<MeshRenderer>(true))
+              {
+                r.sharedMaterial = poleMat;
+              }
+            }
+          }
+        }
+
         SetupHullPrefab(prefab, prefabName, HullMaterial.Iron, 4, null, null, VehicleHammerTableCategories.Iron);
       }
       catch (Exception e)

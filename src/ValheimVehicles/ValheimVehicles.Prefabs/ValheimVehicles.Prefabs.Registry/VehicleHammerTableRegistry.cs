@@ -174,7 +174,6 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_hull_rib_aft_center_wood", // Nailed Hull Rear Counter Stern - center
       "ValheimVehicles_hull_rib_aft_left_wood", // Nailed Hull Rear Counter Stern - Left
       "ValheimVehicles_hull_rib_aft_right_wood", // Nailed Hull Rear Counter Stern - Right
-      "ValheimVehicles_hull_floor_2x2_wood", // Nailed Deck Planking - Small
       "ValheimVehicles_hull_floor_4x4_wood", // Nailed Deck Planking
       "ValheimVehicles_hull_seal_corner_left_wood", // Nailed Deck Counter Stern Planking - Left
       "ValheimVehicles_hull_seal_corner_right_wood", // Nailed Deck Counter Stern Planking - Right
@@ -206,7 +205,6 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_hull_rib_aft_center_iron", // Iron-Plated Hull Rear Counter Stern - center
       "ValheimVehicles_hull_rib_aft_left_iron", // Iron-Plated Hull Rear Counter Stern - Left
       "ValheimVehicles_hull_rib_aft_right_iron", // Iron-Plated Hull Rear Counter Stern - Right
-      "ValheimVehicles_hull_floor_2x2_iron", // Iron-Plated Deck Planking - Small
       "ValheimVehicles_hull_floor_4x4_iron", // Iron-Plated Deck Planking (moved before iron guard-rails)
       "ValheimVehicles_hull_seal_corner_left_iron", // Iron-Plated Deck Counter Stern Planking - Left
       "ValheimVehicles_hull_seal_corner_right_iron", // Iron-Plated Deck Counter Stern Planking - Right
@@ -272,6 +270,9 @@ namespace ValheimVehicles.Prefabs.Registry
 
     private static readonly HashSet<string> RedundantPieces = new(StringComparer.OrdinalIgnoreCase)
     {
+      // User requested removals:
+      "ValheimVehicles_hull_floor_2x2_wood",
+      "ValheimVehicles_hull_floor_2x2_iron",
       // Garboard strakes (removed per user request)
       "hull_floor_keel_4x2_left_wood",
       "ValheimVehicles_hull_floor_keel_4x2_left_wood",
