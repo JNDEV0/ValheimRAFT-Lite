@@ -345,6 +345,12 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
               Amount = 6,
               Item = "DeerHide",
               Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 6,
+              Item = "Dandelion",
+              Recover = true
             }
           ]
       }));
@@ -411,6 +417,12 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
             {
               Amount = 6,
               Item = "TrollHide",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 6,
+              Item = "Dandelion",
               Recover = true
             }
           ]

@@ -1,3 +1,4 @@
+using ValheimVehicles.BepInExConfig;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -56,21 +57,29 @@ public class RopeAnchorPrefabRegistry : RegisterPrefab<RopeAnchorPrefabRegistry>
       Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("rope_anchor"),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
       Enabled = true,
-      Requirements =
-      [
-        new RequirementConfig
-        {
-          Amount = 1,
-          Item = "Iron",
-          Recover = true
-        },
-        new RequirementConfig
-        {
-          Amount = 4,
-          Item = "BronzeNails",
-          Recover = true
-        }
-      ]
+      Requirements = PrefabRecipeConfig.GetRequirements(PrefabNames.MBRopeAnchor).Length > 0
+        ? PrefabRecipeConfig.GetRequirements(PrefabNames.MBRopeAnchor)
+        :
+        [
+          new RequirementConfig
+          {
+            Amount = 1,
+            Item = "Iron",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 4,
+            Item = "BronzeNails",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 2,
+            Item = "Dandelion",
+            Recover = true
+          }
+        ]
     }));
   }
 }

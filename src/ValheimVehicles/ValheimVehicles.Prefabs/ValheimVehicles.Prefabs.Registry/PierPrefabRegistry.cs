@@ -62,12 +62,6 @@ public class PierPrefabRegistry : RegisterPrefab<PierPrefabRegistry>
           Amount = 4,
           Item = "RoundLog",
           Recover = true
-        },
-        new RequirementConfig
-        {
-          Amount = 4,
-          Item = "Resin",
-          Recover = true
         }
       ]
     });

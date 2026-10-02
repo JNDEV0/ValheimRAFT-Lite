@@ -110,7 +110,7 @@ public class RampPrefabRegistry : RegisterPrefab<RampPrefabRegistry>
         new RequirementConfig
         {
           Amount = 10,
-          Item = "LeatherScraps",
+          Item = "Dandelion",
           Recover = true
         }
       ]

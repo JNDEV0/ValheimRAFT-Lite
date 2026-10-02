@@ -222,6 +222,18 @@
       public static readonly string WindowFloorPorthole4x4Prefab =
         $"{ValheimVehiclesPrefix}_ShipWindow_Floor_Porthole_4x4";
 
+      public static readonly string WindowWallPortholeWood2x2Prefab =
+        $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_Wood_2x2";
+
+      public static readonly string WindowWallPortholeWood4x4Prefab =
+        $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_Wood_4x4";
+
+      public static readonly string WindowWallPortholeWood8x4Prefab =
+        $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Porthole_Wood_8x4";
+
+      public static readonly string WindowFloorPortholeWood4x4Prefab =
+        $"{ValheimVehiclesPrefix}_ShipWindow_Floor_Porthole_Wood_4x4";
+
       public static readonly string WindowWallSquareIronPrefabName =
         $"{ValheimVehiclesPrefix}_ShipWindow_Wall_Square_{HullMaterial.Iron}_2x2";
 
@@ -237,6 +249,9 @@
 
       public static readonly string ShipHullCenterIronPrefabName =
         $"{ValheimVehiclesPrefix}_{ShipHullPrefabName}_Iron";
+
+      public static readonly string ShipHullCenterIronPlatedPrefabName =
+        $"{ValheimVehiclesPrefix}_{ShipHullPrefabName}_Iron_Plated";
 
       public static readonly string ShipRudderBasic =
         $"{ValheimVehiclesPrefix}_ShipRudderBasic";

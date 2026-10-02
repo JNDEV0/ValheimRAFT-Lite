@@ -549,11 +549,20 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     RegisterWindowFloorPorthole4x4Iron();
     // RegisterWindowPortholeIronStandalone(); // Disabled per build menu cleanup
 
+    RegisterWindowWallPorthole2x2Wood();
+    RegisterWindowWallPorthole4x4Wood();
+    RegisterWindowWallPorthole8x4Wood();
+    RegisterWindowFloorPorthole4x4Wood();
+
+    RegisterSmallDeckPlanks();
+    RegisterIronReinforcedHulls();
+    RegisterHull(PrefabNames.ShipHullCenterIronPlatedPrefabName, HullMaterial.Iron, 20, PrefabNames.PrefabSizeVariant.FourByEight);
+
     foreach (var hullMaterialType in hullMaterialTypes)
     foreach (var sizeVariant in sizeVariants)
     {
       var materialCount = PrefabNames.GetPrefabSizeArea(sizeVariant);
-      var addToPieceTable = !(hullMaterialType == HullMaterial.Wood && sizeVariant == PrefabNames.PrefabSizeVariant.TwoByTwo);
+      var addToPieceTable = true;
       RegisterHull(
         PrefabNames.GetHullSlabName(hullMaterialType, sizeVariant),
         hullMaterialType,
@@ -794,6 +803,275 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     catch (Exception e)
     {
       LoggerProvider.LogWarning($"[ValheimRAFT] Could not adjust porthole 8x4 iron material: {e.Message}");
+    }
+  }
+
+  private static Material GetIronPlatedMaterial()
+  {
+    try
+    {
+      if (LoadValheimVehicleAssets._bundle != null)
+      {
+        var mat = LoadValheimVehicleAssets._bundle.LoadAsset<Material>("iron_metal");
+        if (mat != null) return mat;
+      }
+    }
+    catch { }
+
+    if (LoadValheimVehicleAssets.ShipHullWall4X4IronAsset != null)
+    {
+      foreach (var r in LoadValheimVehicleAssets.ShipHullWall4X4IronAsset.GetComponentsInChildren<MeshRenderer>(true))
+      {
+        if (r.sharedMaterial != null && r.sharedMaterial.name.IndexOf("iron", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+          return r.sharedMaterial;
+        }
+      }
+    }
+    if (LoadValheimVehicleAssets.ShipWindowPortholeWall4x4 != null)
+    {
+      foreach (var r in LoadValheimVehicleAssets.ShipWindowPortholeWall4x4.GetComponentsInChildren<MeshRenderer>(true))
+      {
+        if (r.sharedMaterial != null && r.sharedMaterial.name.IndexOf("iron", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+          return r.sharedMaterial;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static Material GetIronReinforcedMaterial()
+  {
+    if (LoadValheimVehicleAssets.ShipHullIronAsset != null)
+    {
+      foreach (var r in LoadValheimVehicleAssets.ShipHullIronAsset.GetComponentsInChildren<MeshRenderer>(true))
+      {
+        if (r.sharedMaterial != null && r.sharedMaterial.name.IndexOf("wood_alt", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+          return r.sharedMaterial;
+        }
+      }
+      foreach (var r in LoadValheimVehicleAssets.ShipHullIronAsset.GetComponentsInChildren<MeshRenderer>(true))
+      {
+        if (r.sharedMaterial != null && r.sharedMaterial.name.IndexOf("pole", StringComparison.OrdinalIgnoreCase) < 0)
+        {
+          return r.sharedMaterial;
+        }
+      }
+    }
+    if (LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset != null)
+    {
+      var r = LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset.GetComponentInChildren<MeshRenderer>(true);
+      if (r != null && r.sharedMaterial != null) return r.sharedMaterial;
+    }
+    return null;
+  }
+
+  private static void FixKeelIronPlatedMaterials(GameObject prefab)
+  {
+    if (!prefab) return;
+    try
+    {
+      var ironMat = GetIronPlatedMaterial();
+      if (ironMat != null)
+      {
+        foreach (var r in prefab.GetComponentsInChildren<MeshRenderer>(true))
+        {
+          r.sharedMaterial = ironMat;
+        }
+      }
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogWarning($"[ValheimRAFT] Could not adjust keel iron plated material: {e.Message}");
+    }
+  }
+
+  private static void FixPortholeWoodMaterials(GameObject prefab)
+  {
+    if (!prefab) return;
+    try
+    {
+      Material woodMat = null;
+      if (LoadValheimVehicleAssets.ShipHullWall4X4WoodAsset != null)
+      {
+        foreach (var r in LoadValheimVehicleAssets.ShipHullWall4X4WoodAsset.GetComponentsInChildren<MeshRenderer>(true))
+        {
+          if (r.sharedMaterial != null && r.sharedMaterial.name.IndexOf("wood", StringComparison.OrdinalIgnoreCase) >= 0)
+          {
+            woodMat = r.sharedMaterial;
+            break;
+          }
+        }
+      }
+      if (woodMat == null && LoadValheimVehicleAssets.ShipHullSlab4X4WoodAsset != null)
+      {
+        foreach (var r in LoadValheimVehicleAssets.ShipHullSlab4X4WoodAsset.GetComponentsInChildren<MeshRenderer>(true))
+        {
+          if (r.sharedMaterial != null && r.sharedMaterial.name.IndexOf("wood", StringComparison.OrdinalIgnoreCase) >= 0)
+          {
+            woodMat = r.sharedMaterial;
+            break;
+          }
+        }
+      }
+      if (woodMat != null)
+      {
+        foreach (var r in prefab.GetComponentsInChildren<MeshRenderer>(true))
+        {
+          if (r.sharedMaterial != null &&
+              r.sharedMaterial.name.IndexOf("iron", StringComparison.OrdinalIgnoreCase) >= 0 &&
+              r.gameObject.name.IndexOf("glass", StringComparison.OrdinalIgnoreCase) < 0 &&
+              (r.gameObject.name.IndexOf("wall", StringComparison.OrdinalIgnoreCase) >= 0 ||
+               r.gameObject.name.IndexOf("floor", StringComparison.OrdinalIgnoreCase) >= 0 ||
+               r.gameObject.name.IndexOf("slab", StringComparison.OrdinalIgnoreCase) >= 0 ||
+               r.gameObject.name.IndexOf("sheet", StringComparison.OrdinalIgnoreCase) >= 0 ||
+               r.gameObject.name.IndexOf("frame", StringComparison.OrdinalIgnoreCase) >= 0))
+          {
+            r.sharedMaterial = woodMat;
+          }
+        }
+      }
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogWarning($"[ValheimRAFT] Could not adjust porthole wood material: {e.Message}");
+    }
+  }
+
+  public static void RegisterWindowWallPorthole2x2Wood()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        PrefabNames.WindowWallPortholeWood2x2Prefab,
+        LoadValheimVehicleAssets.ShipWindowPortholeWall2x2);
+
+    FixPortholeWoodMaterials(prefab);
+
+    SetupHullPrefab(prefab, PrefabNames.WindowWallPortholeWood2x2Prefab,
+      HullMaterial.Wood, 2, null, null, VehicleHammerTableCategories.Nailed);
+  }
+
+  public static void RegisterWindowWallPorthole4x4Wood()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        PrefabNames.WindowWallPortholeWood4x4Prefab,
+        LoadValheimVehicleAssets.ShipWindowPortholeWall4x4);
+
+    FixPortholeWoodMaterials(prefab);
+
+    SetupHullPrefab(prefab, PrefabNames.WindowWallPortholeWood4x4Prefab,
+      HullMaterial.Wood, 4, null, null, VehicleHammerTableCategories.Nailed);
+  }
+
+  public static void RegisterWindowWallPorthole8x4Wood()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        PrefabNames.WindowWallPortholeWood8x4Prefab,
+        LoadValheimVehicleAssets.ShipWindowPortholeWall8x4);
+
+    FixPortholeWoodMaterials(prefab);
+
+    SetupHullPrefab(prefab, PrefabNames.WindowWallPortholeWood8x4Prefab,
+      HullMaterial.Wood, 8, null, null, VehicleHammerTableCategories.Nailed);
+  }
+
+  public static void RegisterWindowFloorPorthole4x4Wood()
+  {
+    var prefab =
+      PrefabManager.Instance.CreateClonedPrefab(
+        PrefabNames.WindowFloorPortholeWood4x4Prefab,
+        LoadValheimVehicleAssets.ShipWindowPortholeFloor4x4);
+
+    FixPortholeWoodMaterials(prefab);
+
+    SetupHullPrefab(prefab, PrefabNames.WindowFloorPortholeWood4x4Prefab,
+      HullMaterial.Wood, 4, null, null, VehicleHammerTableCategories.Nailed);
+    var wnt = prefab.GetComponent<WearNTear>();
+    if (wnt) wnt.m_health /= 2f;
+  }
+
+  public static void RegisterSmallDeckPlanks()
+  {
+    try
+    {
+      var woodPrefab = PrefabManager.Instance.CreateClonedPrefab(
+        "ValheimVehicles_hull_floor_2x2_wood",
+        LoadValheimVehicleAssets.ShipHullSlab2X2WoodAsset);
+      SetupHullPrefab(woodPrefab, "ValheimVehicles_hull_floor_2x2_wood", HullMaterial.Wood, 2, null, null, VehicleHammerTableCategories.Nailed);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogWarning($"Failed to register ValheimVehicles_hull_floor_2x2_wood: {e.Message}");
+    }
+
+    try
+    {
+      var ironPrefab = PrefabManager.Instance.CreateClonedPrefab(
+        "ValheimVehicles_hull_floor_2x2_iron",
+        LoadValheimVehicleAssets.ShipHullSlab2X2IronAsset);
+      var ironMat = GetIronPlatedMaterial();
+      if (ironMat != null)
+      {
+        foreach (var r in ironPrefab.GetComponentsInChildren<MeshRenderer>(true))
+        {
+          r.sharedMaterial = ironMat;
+        }
+      }
+      SetupHullPrefab(ironPrefab, "ValheimVehicles_hull_floor_2x2_iron", HullMaterial.Iron, 2, null, null, VehicleHammerTableCategories.Iron);
+    }
+    catch (Exception e)
+    {
+      LoggerProvider.LogWarning($"Failed to register ValheimVehicles_hull_floor_2x2_iron: {e.Message}");
+    }
+  }
+
+  public static void RegisterIronReinforcedHulls()
+  {
+    var pieces = new[]
+    {
+      ("ValheimVehicles_hull_bow_center_iron_reinforced", "hull_bow_center_wood"),
+      ("ValheimVehicles_hull_rib_iron_reinforced", "hull_rib_wood"),
+      ("ValheimVehicles_hull_bow_tri_left_iron_reinforced", "hull_bow_tri_left_wood"),
+      ("ValheimVehicles_hull_bow_tri_right_iron_reinforced", "hull_bow_tri_right_wood"),
+      ("ValheimVehicles_hull_bow_curved_left_iron_reinforced", "hull_bow_curved_left_wood"),
+      ("ValheimVehicles_hull_bow_curved_right_iron_reinforced", "hull_bow_curved_right_wood"),
+      ("ValheimVehicles_hull_rib_aft_center_iron_reinforced", "hull_rib_aft_center_wood"),
+      ("ValheimVehicles_hull_rib_aft_left_iron_reinforced", "hull_rib_aft_left_wood"),
+      ("ValheimVehicles_hull_rib_aft_right_iron_reinforced", "hull_rib_aft_right_wood")
+    };
+
+    var reinforcedMat = GetIronReinforcedMaterial();
+
+    foreach (var (prefabName, baseAssetName) in pieces)
+    {
+      try
+      {
+        var baseAsset = LoadValheimVehicleAssets._bundle.LoadAsset<GameObject>($"{baseAssetName}.prefab");
+        if (!baseAsset)
+        {
+          LoggerProvider.LogWarning($"Failed to load base asset {baseAssetName} for {prefabName}");
+          continue;
+        }
+
+        var prefab = PrefabManager.Instance.CreateClonedPrefab(prefabName, baseAsset);
+        if (reinforcedMat != null)
+        {
+          foreach (var r in prefab.GetComponentsInChildren<MeshRenderer>(true))
+          {
+            r.sharedMaterial = reinforcedMat;
+          }
+        }
+
+        SetupHullPrefab(prefab, prefabName, HullMaterial.Iron, 4, null, null, VehicleHammerTableCategories.Iron);
+      }
+      catch (Exception e)
+      {
+        LoggerProvider.LogWarning($"Failed to register {prefabName}: {e.Message}");
+      }
     }
   }
 
@@ -1850,6 +2128,11 @@ public class ShipHullPrefabRegistry : RegisterPrefab<ShipHullPrefabRegistry>
     var prefab =
       PrefabManager.Instance.CreateClonedPrefab(
         prefabName, prefabClone);
+
+    if (prefabName == PrefabNames.ShipHullCenterIronPlatedPrefabName)
+    {
+      FixKeelIronPlatedMaterials(prefab);
+    }
 
     var hoistParents = new[] { "new", "snappoints" };
 

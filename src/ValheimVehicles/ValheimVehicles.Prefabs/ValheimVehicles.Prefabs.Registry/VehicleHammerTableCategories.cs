@@ -65,7 +65,14 @@ namespace ValheimVehicles.Prefabs.Registry
       if (string.IsNullOrEmpty(name)) return Misc;
       var clean = name.Replace("(Clone)", "").Trim();
 
-      // 1. Check Iron
+      // 1. Check Nailed Wood Portholes
+      if (clean.IndexOf("porthole", StringComparison.OrdinalIgnoreCase) >= 0 &&
+          clean.IndexOf("wood", StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        return Nailed;
+      }
+
+      // 2. Check Iron
       if (clean.IndexOf("iron", StringComparison.OrdinalIgnoreCase) >= 0 ||
           clean.IndexOf("porthole", StringComparison.OrdinalIgnoreCase) >= 0)
       {
@@ -78,6 +85,7 @@ namespace ValheimVehicles.Prefabs.Registry
           clean.StartsWith("ValheimVehicles_Ship_Hull_Rib_Corner_Wood", StringComparison.OrdinalIgnoreCase) ||
           clean.StartsWith("ValheimVehicles_Ship_Hull_Rib_Corner_2x2x4", StringComparison.OrdinalIgnoreCase) ||
           clean.StartsWith("ValheimVehicles_Hull_Slab_Wood_4x4", StringComparison.OrdinalIgnoreCase) ||
+          clean.StartsWith("ValheimVehicles_Hull_Slab_Wood_2x2", StringComparison.OrdinalIgnoreCase) ||
           clean.StartsWith("ValheimVehicles_Ship_Hull_Rib_Corner_Floor", StringComparison.OrdinalIgnoreCase))
       {
         return Resined;

@@ -1,3 +1,4 @@
+using ValheimVehicles.BepInExConfig;
 using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
@@ -123,27 +124,29 @@ public class AnchorPrefabs : RegisterPrefab<AnchorPrefabs>
         PieceTable = PrefabRegistryController.GetPieceTableName(),
         Icon = piece.m_icon,
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
-        Requirements =
-        [
-          new RequirementConfig
-          {
-            Amount = 10,
-            Item = "RoundLog",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 20,
-            Item = "Stone",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 8,
-            Item = "LeatherScraps",
-            Recover = true
-          }
-        ],
+        Requirements = PrefabRecipeConfig.GetRequirements(PrefabNames.ShipAnchorWood).Length > 0
+          ? PrefabRecipeConfig.GetRequirements(PrefabNames.ShipAnchorWood)
+          :
+          [
+            new RequirementConfig
+            {
+              Amount = 10,
+              Item = "RoundLog",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 20,
+              Item = "Stone",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 20,
+              Item = "Dandelion",
+              Recover = true
+            }
+          ],
         Enabled = true
       }));
   }

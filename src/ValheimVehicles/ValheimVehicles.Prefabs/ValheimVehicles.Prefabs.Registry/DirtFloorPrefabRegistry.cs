@@ -73,7 +73,7 @@ public class DirtFloorPrefabRegistry : RegisterPrefab<DirtFloorPrefabRegistry>
           new RequirementConfig
           {
             Amount = 2 * size,
-            Item = "GreydwarfEye",
+            Item = "BoneFragments",
             Recover = true
           }
         ]

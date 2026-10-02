@@ -590,6 +590,93 @@ public abstract class PrefabRegistryHelpers
           .HullCenterIron)
       });
 
+    PieceDataDictionary.Add(PrefabNames.ShipHullCenterIronPlatedPrefabName,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_hull_center_iron_plated",
+        Description = "$valheim_vehicles_hull_center_iron_plated_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames
+          .HullCenterIron)
+      });
+
+    PieceDataDictionary.Add("ValheimVehicles_Hull_Slab_Wood_2x2",
+      new PieceData
+      {
+        Name = "$valheim_vehicles_hull_slab_wood_2x2",
+        Description = "$valheim_vehicles_hull_slab_wood_2x2_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.HullSlabWood)
+      });
+
+    PieceDataDictionary.Add("ValheimVehicles_hull_floor_2x2_wood",
+      new PieceData
+      {
+        Name = "$valheim_vehicles_hull_floor_2x2_wood",
+        Description = "$valheim_vehicles_hull_floor_2x2_wood_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("hull_floor_4x4_wood")
+      });
+
+    PieceDataDictionary.Add("ValheimVehicles_hull_floor_2x2_iron",
+      new PieceData
+      {
+        Name = "$valheim_vehicles_hull_floor_2x2_iron",
+        Description = "$valheim_vehicles_hull_floor_2x2_iron_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite("hull_floor_4x4_iron")
+      });
+
+    PieceDataDictionary.Add(PrefabNames.WindowWallPortholeWood2x2Prefab,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_window_wall_porthole_wood_2x2",
+        Description = "$valheim_vehicles_window_wall_porthole_wood_2x2_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WindowWallPorthole2x2)
+      });
+
+    PieceDataDictionary.Add(PrefabNames.WindowWallPortholeWood4x4Prefab,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_window_wall_porthole_wood_4x4",
+        Description = "$valheim_vehicles_window_wall_porthole_wood_4x4_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WindowWallPorthole4x4)
+      });
+
+    PieceDataDictionary.Add(PrefabNames.WindowWallPortholeWood8x4Prefab,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_window_wall_porthole_wood_8x4",
+        Description = "$valheim_vehicles_window_wall_porthole_wood_8x4_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WindowWallPorthole8x4)
+      });
+
+    PieceDataDictionary.Add(PrefabNames.WindowFloorPortholeWood4x4Prefab,
+      new PieceData
+      {
+        Name = "$valheim_vehicles_window_floor_porthole_wood_4x4",
+        Description = "$valheim_vehicles_window_floor_porthole_wood_4x4_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(SpriteNames.WindowFloorPorthole4x4Prefab)
+      });
+
+    var ironReinforcedPieces = new[]
+    {
+      ("ValheimVehicles_hull_bow_center_iron_reinforced", "hull_bow_center_wood"),
+      ("ValheimVehicles_hull_rib_iron_reinforced", "hull_rib_wood"),
+      ("ValheimVehicles_hull_bow_tri_left_iron_reinforced", "hull_bow_tri_left_wood"),
+      ("ValheimVehicles_hull_bow_tri_right_iron_reinforced", "hull_bow_tri_right_wood"),
+      ("ValheimVehicles_hull_bow_curved_left_iron_reinforced", "hull_bow_curved_left_wood"),
+      ("ValheimVehicles_hull_bow_curved_right_iron_reinforced", "hull_bow_curved_right_wood"),
+      ("ValheimVehicles_hull_rib_aft_center_iron_reinforced", "hull_rib_aft_center_wood"),
+      ("ValheimVehicles_hull_rib_aft_left_iron_reinforced", "hull_rib_aft_left_wood"),
+      ("ValheimVehicles_hull_rib_aft_right_iron_reinforced", "hull_rib_aft_right_wood"),
+    };
+    foreach (var (pName, iconName) in ironReinforcedPieces)
+    {
+      PieceDataDictionary.Add(pName, new PieceData
+      {
+        Name = $"${pName.Replace("ValheimVehicles_", "valheim_vehicles_")}",
+        Description = $"${pName.Replace("ValheimVehicles_", "valheim_vehicles_")}_desc",
+        Icon = LoadValheimVehicleAssets.VehicleSprites.GetSprite(iconName)
+      });
+    }
+
 
     PieceDataDictionary.Add(PrefabNames.ShipSteeringWheel, new PieceData
     {
