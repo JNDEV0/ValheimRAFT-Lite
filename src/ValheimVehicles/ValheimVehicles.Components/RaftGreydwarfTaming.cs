@@ -32,31 +32,20 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     {
       var sailor = GetComponent<RaftGreydwarfSailorComponent>();
       string loyaltyStr = sailor != null ? sailor.GetLoyaltyHoverString() : "<color=#00FF00>Satisfied</color>";
+      string dismissPrompt = Localization.instance.Localize("$valheim_vehicles_sailor_dismiss");
       return Localization.instance.Localize(
-        $"$valheim_vehicles_sailor_greydwarf\nLoyalty: {loyaltyStr}\n<color=grey>Keep resin available in chests</color>");
+        $"$valheim_vehicles_sailor_greydwarf\nLoyalty: {loyaltyStr}\n[<color=yellow><b>Shift+$KEY_Use</b></color>] {dismissPrompt}\n<color=grey>Keep resin available in chests</color>");
     }
 
     var nearestShip = FindNearestShip(transform.position, 250f);
-    string capacityStatus;
     if (nearestShip == null)
     {
-      capacityStatus = "<color=red>(No ship nearby)</color>";
-    }
-    else if (nearestShip.TotalRowingSeatsCount == 0)
-    {
-      capacityStatus = "<color=orange>(Requires Greydwarf Rowing Seat on ship)</color>";
-    }
-    else if (nearestShip.ActiveSailorsCount >= nearestShip.TotalRowingSeatsCount)
-    {
-      capacityStatus = $"<color=red>(Ship Full: {nearestShip.ActiveSailorsCount}/{nearestShip.TotalRowingSeatsCount} Seats)</color>";
-    }
-    else
-    {
-      capacityStatus = $"<color=cyan>(Crew: {nearestShip.ActiveSailorsCount}/{nearestShip.TotalRowingSeatsCount} Seats)</color>";
+      return Localization.instance.Localize(
+        $"[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_tame_prompt\n<color=red>(No ship nearby)</color>");
     }
 
     return Localization.instance.Localize(
-      $"[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_tame_prompt\n{capacityStatus}");
+      $"[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_tame_prompt");
   }
 
   public string GetHoverName()
@@ -78,18 +67,6 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       return false;
     }
 
-    if (nearestShip.TotalRowingSeatsCount == 0)
-    {
-      reason = Localization.instance.Localize("$valheim_vehicles_tame_no_seats");
-      return false;
-    }
-
-    if (nearestShip.ActiveSailorsCount >= nearestShip.TotalRowingSeatsCount)
-    {
-      reason = Localization.instance.Localize("$valheim_vehicles_tame_crew_full");
-      return false;
-    }
-
     reason = "";
     return true;
   }
@@ -98,10 +75,25 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
   {
     if (hold) return false;
     if (user == null || !user.IsPlayer()) return false;
-    if (_character != null && _character.IsTamed()) return false;
 
     var player = user as Player;
     if (player == null) return false;
+
+    // If tamed, check for Shift+E dismiss
+    if (_character != null && _character.IsTamed())
+    {
+      bool isShift = alt || Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+      if (isShift)
+      {
+        var sailor = GetComponent<RaftGreydwarfSailorComponent>();
+        if (sailor != null)
+        {
+          sailor.Dismiss(player);
+          return true;
+        }
+      }
+      return false;
+    }
 
     if (!CanHireSailor(player, out string reason, out var nearestShip))
     {

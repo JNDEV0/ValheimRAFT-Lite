@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Controllers;
 
@@ -41,8 +42,6 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   public VehiclePiecesController? PiecesController { get; private set; }
   public Character? Character => _character;
   public SailorLoyalty Loyalty { get; private set; } = SailorLoyalty.Satisfied;
-  public bool IsSeated => _isSeated;
-  public GreydwarfRowingSeatComponent? CurrentSeat => _currentSeat;
   public bool IsEnRouteToShip { get; private set; }
 
   private Character? _character;
@@ -50,10 +49,6 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   private MonsterAI? _monsterAI;
   private Animator? _animator;
   private ZNetView? _nview;
-
-  private GreydwarfRowingSeatComponent? _currentSeat;
-  private bool _isSeated;
-  private float _manningTimer;
 
   // En-route embarkation sequence
   private float _embarkTimer;
@@ -67,6 +62,13 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   private float _nextRockThrowTime;
   private float _nextTauntTime;
   private float _nextHealTime;
+
+  // Deck rooting & safe anchoring
+  private Vector3? _deckLocalPos;
+  private Quaternion? _deckLocalRot;
+  private bool _isAnchoredOnDeck;
+  private Vector3? _lastSafeLocalPos;
+  private Quaternion? _lastSafeLocalRot;
 
   // Overboard recovery
   private float _waterTimer;
@@ -103,13 +105,12 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   private void DetermineDwarfType()
   {
-    string name = gameObject.name;
-    if (name.IndexOf("Shaman", StringComparison.OrdinalIgnoreCase) >= 0)
+    string goName = gameObject.name;
+    if (goName.Contains("Shaman"))
     {
       DwarfType = GreydwarfSailorType.Shaman;
     }
-    else if (name.IndexOf("Elite", StringComparison.OrdinalIgnoreCase) >= 0 ||
-             name.IndexOf("Brute", StringComparison.OrdinalIgnoreCase) >= 0)
+    else if (goName.Contains("Elite") || goName.Contains("Brute"))
     {
       DwarfType = GreydwarfSailorType.Brute;
     }
@@ -210,7 +211,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     }
 
     UpdateUpkeep(Time.deltaTime);
-    UpdateManningAndSeating(Time.deltaTime);
+    UpdateDeckStation(Time.deltaTime);
     UpdateWaterAndLadderRecovery(Time.deltaTime);
     UpdateCombatDefense();
   }
@@ -304,7 +305,6 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     _character.SetTamed(false);
     _character.m_faction = Character.Faction.ForestMonsters;
 
-    UnseatFromStation();
     RemoveSailorHat();
     PiecesController?.UnregisterSailor(this);
 
@@ -319,80 +319,139 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     Destroy(this);
   }
 
-  private void UpdateManningAndSeating(float dt)
+  public void Dismiss(Player player)
   {
-    if (PiecesController == null) return;
+    if (_character == null) return;
 
-    // Sailors remain stationed at their rowing benches both while moving and stationary
-    if (!_isSeated)
+    _character.SetTamed(false);
+    _character.m_faction = Character.Faction.ForestMonsters;
+
+    RemoveSailorHat();
+    PiecesController?.UnregisterSailor(this);
+
+    if (transform.parent != null)
     {
-      _manningTimer += dt;
-      var availableSeat = _currentSeat ?? FindAvailableSeat();
-      if (availableSeat != null)
-      {
-        if (_manningTimer >= 2.0f || Vector3.Distance(transform.position, availableSeat.GetSeatPosition()) <= 1.5f)
-        {
-          SeatAtStation(availableSeat);
-          _manningTimer = 0f;
-        }
-      }
+      transform.SetParent(null);
     }
-  }
 
-  private GreydwarfRowingSeatComponent? FindAvailableSeat()
-  {
-    if (PiecesController == null) return null;
-    GreydwarfRowingSeatComponent? closest = null;
-    float minDist = float.MaxValue;
-
-    foreach (var seat in PiecesController.GreydwarfRowingSeats)
-    {
-      if (seat == null || seat.OccupantCharacter != null) continue;
-      float d = Vector3.Distance(transform.position, seat.GetSeatPosition());
-      if (d < minDist)
-      {
-        minDist = d;
-        closest = seat;
-      }
-    }
-    return closest;
-  }
-
-  public void SeatAtStation(GreydwarfRowingSeatComponent seat)
-  {
-    if (seat == null) return;
-    _currentSeat = seat;
-    _currentSeat.OccupantCharacter = _character;
-    _isSeated = true;
-
-    // Lower position slightly so Greydwarf perches right on top of the bench plank
-    Vector3 seatPos = seat.GetSeatPosition() - seat.transform.up * 0.12f;
-    transform.position = seatPos;
-    transform.rotation = seat.transform.rotation;
-
-    if (_character != null && _character.m_body != null)
-    {
-      _character.m_body.isKinematic = true;
-    }
-    if (_monsterAI != null)
-    {
-      _monsterAI.m_targetCreature = null;
-      _monsterAI.SetAlerted(false);
-    }
-  }
-
-  public void UnseatFromStation()
-  {
-    if (_currentSeat != null)
-    {
-      _currentSeat.OccupantCharacter = null;
-      _currentSeat = null;
-    }
-    _isSeated = false;
-
-    if (_character != null && _character.m_body != null)
+    if (_character.m_body != null)
     {
       _character.m_body.isKinematic = false;
+      // Launch off the boat into the water away from ship center
+      Vector3 shipCenter = PiecesController != null ? PiecesController.transform.position : transform.position;
+      Vector3 jumpDir = (transform.position - shipCenter);
+      jumpDir.y = 0f;
+      if (jumpDir.sqrMagnitude < 0.1f) jumpDir = transform.forward;
+      jumpDir.Normalize();
+      jumpDir += Vector3.up * 0.35f;
+      _character.m_body.linearVelocity = jumpDir.normalized * 7.5f;
+    }
+
+    if (_monsterAI != null && player != null)
+    {
+      _monsterAI.SetAlerted(true);
+      _monsterAI.Flee(Time.deltaTime, player.transform.position);
+    }
+
+    MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center,
+      Localization.instance.Localize("$valheim_vehicles_sailor_dismissed"));
+
+    Destroy(this);
+  }
+
+  private void UpdateDeckStation(float dt)
+  {
+    if (PiecesController == null || _character == null) return;
+    if (_character.InWater()) return;
+
+    // Ensure parented to ship so coordinates move with the vessel
+    if (transform.parent != PiecesController.transform)
+    {
+      transform.SetParent(PiecesController.transform);
+    }
+
+    // Detect if ship is moving or rotating
+    bool isShipMoving = false;
+    var moveCtrl = PiecesController.MovementController;
+    if (moveCtrl != null && moveCtrl.GetSpeedSetting() != Ship.Speed.Stop)
+    {
+      isShipMoving = true;
+    }
+    else
+    {
+      var rb = PiecesController.m_syncRigidbody != null ? PiecesController.m_syncRigidbody : PiecesController.m_localRigidbody;
+      if (rb != null && (rb.linearVelocity.sqrMagnitude > 0.04f || rb.angularVelocity.sqrMagnitude > 0.005f))
+      {
+        isShipMoving = true;
+      }
+    }
+
+    if (isShipMoving)
+    {
+      // Root firmly to deck position when ship is in motion
+      if (!_isAnchoredOnDeck)
+      {
+        _deckLocalPos = transform.localPosition;
+        _deckLocalRot = transform.localRotation;
+        _isAnchoredOnDeck = true;
+      }
+
+      if (_character.m_body != null)
+      {
+        _character.m_body.isKinematic = true;
+      }
+
+      if (_deckLocalPos.HasValue)
+      {
+        transform.localPosition = _deckLocalPos.Value;
+      }
+      if (_deckLocalRot.HasValue)
+      {
+        transform.localRotation = _deckLocalRot.Value;
+      }
+
+      if (_monsterAI != null)
+      {
+        _monsterAI.StopMoving();
+      }
+    }
+    else
+    {
+      // Ship is stopped: allow standing/idle ground physics
+      if (_isAnchoredOnDeck)
+      {
+        _isAnchoredOnDeck = false;
+        if (_character.m_body != null)
+        {
+          _character.m_body.isKinematic = false;
+        }
+      }
+
+      // Hull edge guard: Raycast downwards to make sure sailor does not walk off the ship's hull
+      Ray ray = new Ray(transform.position + Vector3.up * 0.5f, Vector3.down);
+      if (Physics.Raycast(ray, out var hit, 3.5f))
+      {
+        var hitVpc = hit.collider.GetComponentInParent<VehiclePiecesController>();
+        if (hitVpc == PiecesController)
+        {
+          _lastSafeLocalPos = transform.localPosition;
+          _lastSafeLocalRot = transform.localRotation;
+        }
+        else if (_lastSafeLocalPos.HasValue)
+        {
+          // Stepped over edge or foreign collider: keep rooted safely on deck
+          transform.localPosition = _lastSafeLocalPos.Value;
+          if (_lastSafeLocalRot.HasValue) transform.localRotation = _lastSafeLocalRot.Value;
+          if (_character.m_body != null) _character.m_body.linearVelocity = Vector3.zero;
+        }
+      }
+      else if (_lastSafeLocalPos.HasValue)
+      {
+        // Stepped over open ocean: immediately snap back onto deck
+        transform.localPosition = _lastSafeLocalPos.Value;
+        if (_lastSafeLocalRot.HasValue) transform.localRotation = _lastSafeLocalRot.Value;
+        if (_character.m_body != null) _character.m_body.linearVelocity = Vector3.zero;
+      }
     }
   }
 
@@ -402,39 +461,71 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
     if (_character.InWater())
     {
+      if (_isAnchoredOnDeck)
+      {
+        _isAnchoredOnDeck = false;
+      }
+      if (_character.m_body != null)
+      {
+        _character.m_body.isKinematic = false;
+      }
+
       // Check for nearby rope ladder (within 3.5m)
+      RopeLadderComponent? targetLadder = null;
+      float closestDist = float.MaxValue;
       foreach (var ladder in PiecesController.RopeLadders)
       {
         if (ladder == null || ladder.m_attachPoint == null || ladder.m_exitPoint == null) continue;
-        if (Vector3.Distance(transform.position, ladder.m_attachPoint.position) <= 3.5f)
+        float d = Vector3.Distance(transform.position, ladder.m_attachPoint.position);
+        if (d < closestDist)
+        {
+          closestDist = d;
+          targetLadder = ladder;
+        }
+      }
+
+      if (targetLadder != null && targetLadder.m_attachPoint != null && targetLadder.m_exitPoint != null)
+      {
+        if (closestDist <= 3.5f)
         {
           // Clamber up ladder to deck
-          transform.position = ladder.m_exitPoint.position;
+          transform.position = targetLadder.m_exitPoint.position;
+          if (transform.parent != PiecesController.transform)
+          {
+            transform.SetParent(PiecesController.transform);
+          }
+          _lastSafeLocalPos = transform.localPosition;
+          _lastSafeLocalRot = transform.localRotation;
+          if (_character.m_body != null) _character.m_body.linearVelocity = Vector3.zero;
           _waterTimer = 0f;
           return;
+        }
+        else if (_monsterAI != null)
+        {
+          // Swim towards ladder base
+          _monsterAI.MoveTo(dt, targetLadder.m_attachPoint.position, 1f, true);
         }
       }
 
       _waterTimer += dt;
-      // 20-second overboard failsafe recovery to Rowing Seat or Safe Deck
+      // 20-second overboard failsafe recovery to Rope Ladder or Safe Deck
       if (_waterTimer >= 20.0f)
       {
-        var seat = _currentSeat ?? PiecesController.GetNextAvailableRowingSeat();
-        if (seat != null)
+        RopeLadderComponent? fallbackLadder = PiecesController.RopeLadders.FirstOrDefault(l => l != null && l.m_exitPoint != null);
+        Vector3 safePos = fallbackLadder != null ? fallbackLadder.m_exitPoint.position : PiecesController.GetPlanterOrSafeDeckPosition();
+        transform.position = safePos;
+        if (transform.parent != PiecesController.transform)
         {
-          SeatAtStation(seat);
+          transform.SetParent(PiecesController.transform);
         }
-        else
+        _lastSafeLocalPos = transform.localPosition;
+        _lastSafeLocalRot = transform.localRotation;
+        if (_character.m_body != null)
         {
-          Vector3 safePos = PiecesController.GetPlanterOrSafeDeckPosition();
-          transform.position = safePos;
-          if (_character != null && _character.m_body != null)
-          {
-            _character.m_body.linearVelocity = Vector3.zero;
-          }
+          _character.m_body.linearVelocity = Vector3.zero;
         }
         _waterTimer = 0f;
-        ZLog.Log("[ValheimRAFT] Sailor Greydwarf was overboard >20s; safely recovered to Rowing Seat.");
+        ZLog.Log("[ValheimRAFT] Sailor Greydwarf was overboard >20s; safely recovered to Rope Ladder / Deck.");
       }
     }
     else
@@ -644,9 +735,9 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       rend.enabled = true;
     }
 
-    // Position upright on Greydwarf brow
-    hatVisual.transform.localPosition = new Vector3(0f, 0.05f, 0.02f);
-    hatVisual.transform.localRotation = Quaternion.identity;
+    // Rotate 180 degrees so hat faces forward on Greydwarf brow
+    hatVisual.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+    hatVisual.transform.localPosition = Vector3.zero;
 
     // Compensate for parent bone scale so world size is always exact
     Vector3 parentLossy = headBone.lossyScale;
@@ -656,6 +747,37 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       targetScale / (Mathf.Abs(parentLossy.y) > 0.001f ? Mathf.Abs(parentLossy.y) : 1f),
       targetScale / (Mathf.Abs(parentLossy.z) > 0.001f ? Mathf.Abs(parentLossy.z) : 1f)
     );
+
+    // Automatically eliminate any prefab offset by centering the hat mesh directly on the head
+    var rends = hatVisual.GetComponentsInChildren<Renderer>(true);
+    Bounds meshBounds = new Bounds();
+    bool hasBounds = false;
+    foreach (var r in rends)
+    {
+      if (r is MeshRenderer || r is SkinnedMeshRenderer)
+      {
+        if (!hasBounds)
+        {
+          meshBounds = r.bounds;
+          hasBounds = true;
+        }
+        else
+        {
+          meshBounds.Encapsulate(r.bounds);
+        }
+      }
+    }
+
+    if (hasBounds)
+    {
+      Vector3 targetHeadPos = headBone.position + headBone.up * 0.12f;
+      Vector3 shift = targetHeadPos - meshBounds.center;
+      hatVisual.transform.position += shift;
+    }
+    else
+    {
+      hatVisual.transform.localPosition = new Vector3(0f, 0.12f, 0f);
+    }
   }
 
   public void RemoveSailorHat()
@@ -701,22 +823,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       }
     }
 
-    if (character.m_eye != null && character.m_eye.parent != null)
-    {
-      return character.m_eye.parent;
-    }
-
-    return character.m_eye ?? character.transform;
-  }
-
-  private void OnDestroy()
-  {
-    if (IsEnRouteToShip)
-    {
-      return;
-    }
-    UnseatFromStation();
-    PiecesController?.UnregisterSailor(this);
+    return character.transform;
   }
 
   private static VehiclePiecesController? FindNearestShip(Vector3 pos, float maxDistance = 250f)

@@ -3515,16 +3515,11 @@
     public float GetRowingSpeed()
     {
       m_rudderPieces.RemoveAll(r => r == null || !r);
-      m_greydwarfRowingSeats.RemoveAll(s => s == null || !s);
 
       var speed = 0f;
       foreach (var rudder in m_rudderPieces)
       {
         if (rudder != null) speed += rudder.RowSpeed;
-      }
-      foreach (var seat in m_greydwarfRowingSeats)
-      {
-        if (seat != null) speed += seat.GetRowingSpeedBonus();
       }
       return speed;
     }
@@ -3555,16 +3550,7 @@
         if (seat == null || !seat) continue;
         if (!seat.IsOccupied && seat.OccupantCharacter == null)
         {
-          bool alreadyAssigned = false;
-          foreach (var s in m_activeSailors)
-          {
-            if (s != null && s.CurrentSeat == seat)
-            {
-              alreadyAssigned = true;
-              break;
-            }
-          }
-          if (!alreadyAssigned) return seat;
+          return seat;
         }
       }
       return null;
@@ -3666,12 +3652,12 @@
       var prefab = ZNetScene.instance?.GetPrefab(prefabName);
       if (prefab == null) return;
 
+      var ladder = RopeLadders.FirstOrDefault(l => l != null && l.m_exitPoint != null);
+      Vector3 spawnPos = ladder != null ? ladder.m_exitPoint.position : GetPlanterOrSafeDeckPosition();
+      Quaternion spawnRot = ladder != null ? ladder.transform.rotation : transform.rotation;
+
       for (int i = 0; i < needed; i++)
       {
-        var seat = GetNextAvailableRowingSeat();
-        Vector3 spawnPos = seat != null ? seat.GetSeatPosition() : GetPlanterOrSafeDeckPosition();
-        Quaternion spawnRot = seat != null ? seat.transform.rotation : transform.rotation;
-
         var go = UnityEngine.Object.Instantiate(prefab, spawnPos, spawnRot);
         var ch = go.GetComponent<Character>();
         if (ch != null)
@@ -3682,11 +3668,6 @@
         sailor.SetAssignedShip(this);
         sailor.EnsureRandomSailorHat();
         RegisterSailor(sailor);
-
-        if (seat != null)
-        {
-          sailor.SeatAtStation(seat);
-        }
       }
     }
 

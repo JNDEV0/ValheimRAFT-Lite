@@ -62,10 +62,27 @@ public class GreydwarfTaming_Patch
     {
       var taming = target.GetComponentInParent<RaftGreydwarfTaming>();
       var ch = target.GetComponentInParent<Character>();
-      if (taming != null && ch != null && !ch.IsTamed())
+      if (taming != null && ch != null)
       {
-        taming.Interact(__instance, hold, alt);
-        return false;
+        if (!ch.IsTamed())
+        {
+          taming.Interact(__instance, hold, alt);
+          return false;
+        }
+        else
+        {
+          // Tamed sailor: check for Shift+E dismiss
+          bool isShift = alt || Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+          if (isShift)
+          {
+            var sailor = target.GetComponentInParent<RaftGreydwarfSailorComponent>();
+            if (sailor != null)
+            {
+              sailor.Dismiss(__instance);
+              return false;
+            }
+          }
+        }
       }
     }
     return true;
@@ -92,6 +109,16 @@ public class GreydwarfTaming_Patch
       }
     }
     return true;
+  }
+
+  [HarmonyPatch(typeof(BaseAI), nameof(BaseAI.IsAggravatable))]
+  [HarmonyPostfix]
+  public static void BaseAI_IsAggravatable_Postfix(BaseAI __instance, ref bool __result)
+  {
+    if (__instance != null && __instance.GetComponent<RaftGreydwarfSailorComponent>() != null)
+    {
+      __result = true;
+    }
   }
 
   [HarmonyPatch(typeof(Character), nameof(Character.RPC_Damage))]

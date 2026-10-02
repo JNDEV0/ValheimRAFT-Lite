@@ -855,7 +855,7 @@ namespace ValheimVehicles.Prefabs
       CannonPrefabs.Register();
 
       // Greydwarf rowing seat
-      GreydwarfRowingSeatPrefab.Register();
+      // GreydwarfRowingSeatPrefab.Register();
     }
 
   #endregion

@@ -130,7 +130,7 @@ namespace ValheimVehicles.Prefabs.Registry
       "MBKarveMast", // Karve Sail / Mast (between square rigged sail and rigging cleat)
       "MBVikingShipMast", // Viking Sail
       "ValheimVehicles_DrakkalMast", // Drakkal Sail
-      "ValheimVehicles_Greydwarf_Rowing_Seat", // Greydwarf Rowing Seat (next to the sails)
+      // "ValheimVehicles_Greydwarf_Rowing_Seat", // Greydwarf Rowing Seat
       "MBRopeAnchor", // 116. Rigging Cleat
       "ValheimVehicles_ShipAnchor_Wood", // 118. Ship Anchor
       "MBBoardingRamp", // 119. Boarding Ramp
