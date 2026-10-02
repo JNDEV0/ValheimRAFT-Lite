@@ -256,12 +256,12 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
     );
 
     SailTier1Propulsion = config.BindUnique(GenericSectionName,
-      "SailTier1Propulsion", 5f,
+      "SailTier1Propulsion", 3f,
       ConfigHelpers.CreateConfigDescription(
         "Flat propulsion added per Raft sail (Tier 1).", true, false));
-    if (System.Math.Abs(SailTier1Propulsion.Value - 3f) < 0.01f)
+    if (System.Math.Abs(SailTier1Propulsion.Value - 5f) < 0.01f)
     {
-      SailTier1Propulsion.Value = 5f;
+      SailTier1Propulsion.Value = 3f;
     }
 
     SailTier2Propulsion = config.BindUnique(GenericSectionName,

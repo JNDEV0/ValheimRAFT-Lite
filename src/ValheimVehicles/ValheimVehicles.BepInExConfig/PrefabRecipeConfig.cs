@@ -960,6 +960,32 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
         new RequirementConfig { Item = "Dandelion", Amount = 12, Recover = true }
       ]
     },
+    {
+      "MBVikingShipMast", [
+        new RequirementConfig { Item = "FineWood", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "RoundLog", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "WolfPelt", Amount = 6, Recover = true }
+      ]
+    },
+    {
+      "mb_vikingship_mast", [
+        new RequirementConfig { Item = "FineWood", Amount = 10, Recover = true },
+        new RequirementConfig { Item = "RoundLog", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "WolfPelt", Amount = 6, Recover = true }
+      ]
+    },
+    {
+      "ValheimVehicles_DrakkalMast", [
+        new RequirementConfig { Item = "YggdrasilWood", Amount = 20, Recover = true },
+        new RequirementConfig { Item = "LinenThread", Amount = 20, Recover = true }
+      ]
+    },
+    {
+      "valheim_vehicles_drakkalship_mast", [
+        new RequirementConfig { Item = "YggdrasilWood", Amount = 20, Recover = true },
+        new RequirementConfig { Item = "LinenThread", Amount = 20, Recover = true }
+      ]
+    },
     // Rigging Cleat
     {
       "MBRopeAnchor", [

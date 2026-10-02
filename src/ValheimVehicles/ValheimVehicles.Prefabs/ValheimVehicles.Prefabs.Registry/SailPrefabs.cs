@@ -87,27 +87,29 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
           .VikingMast),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
         Enabled = true,
-        Requirements =
-        [
-          new RequirementConfig
-          {
-            Amount = 10,
-            Item = "FineWood",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 2,
-            Item = "RoundLog",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 6,
-            Item = "WolfPelt",
-            Recover = true
-          }
-        ]
+        Requirements = PrefabRecipeConfig.GetRequirements(PrefabNames.Tier3RaftMastName).Length > 0
+          ? PrefabRecipeConfig.GetRequirements(PrefabNames.Tier3RaftMastName)
+          :
+          [
+            new RequirementConfig
+            {
+              Amount = 10,
+              Item = "FineWood",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 2,
+              Item = "RoundLog",
+              Recover = true
+            },
+            new RequirementConfig
+            {
+              Amount = 6,
+              Item = "WolfPelt",
+              Recover = true
+            }
+          ]
       }));
   }
 
@@ -149,21 +151,23 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
         .VikingMast),
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
       Enabled = true,
-      Requirements =
-      [
-        new RequirementConfig
-        {
-          Amount = 20,
-          Item = "YggdrasilWood",
-          Recover = true
-        },
-        new RequirementConfig
-        {
-          Amount = 20,
-          Item = "LinenThread",
-          Recover = true
-        }
-      ]
+      Requirements = PrefabRecipeConfig.GetRequirements(PrefabNames.Tier4RaftMastName).Length > 0
+        ? PrefabRecipeConfig.GetRequirements(PrefabNames.Tier4RaftMastName)
+        :
+        [
+          new RequirementConfig
+          {
+            Amount = 20,
+            Item = "YggdrasilWood",
+            Recover = true
+          },
+          new RequirementConfig
+          {
+            Amount = 20,
+            Item = "LinenThread",
+            Recover = true
+          }
+        ]
     }));
   }
 

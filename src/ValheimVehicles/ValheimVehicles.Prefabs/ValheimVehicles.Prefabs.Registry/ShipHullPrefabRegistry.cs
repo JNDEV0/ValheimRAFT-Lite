@@ -957,15 +957,48 @@ private static void FixKeelIronPlatedMaterials(GameObject prefab)
       var ironMat = GetIronPlatedMaterial();
       if (ironMat != null)
       {
+        // Clone material so we can adjust it specifically for the keel model
+        var mat = new Material(ironMat);
+        mat.name = "iron_plated_keel_material";
+
+        // 1. Fix texture moving with camera angle:
+        // Disable parallax mapping completely so the texture stays anchored to the 3D surface
+        mat.DisableKeyword("_PARALLAXMAP");
+        if (mat.HasProperty("_Parallax")) mat.SetFloat("_Parallax", 0f);
+        if (mat.HasProperty("_ParallaxMap")) mat.SetTexture("_ParallaxMap", null);
+
+        // 2. Fix scale:
+        // Set texture scale to 0.01f so the corrugated plating is appropriately sized (not 15x too big)
+        mat.mainTextureScale = new Vector2(0.01f, 0.01f);
+        if (mat.HasProperty("_BumpMap")) mat.SetTextureScale("_BumpMap", new Vector2(0.01f, 0.01f));
+
         foreach (var r in prefab.GetComponentsInChildren<MeshRenderer>(true))
         {
-          r.sharedMaterial = ironMat;
+          r.sharedMaterial = mat;
+        }
+      }
+
+      // 3. Fix sideways texture:
+      // Rotate UVs 90 degrees by swapping U and V on the cloned mesh so iron ribs run lengthwise along the keel
+      foreach (var mf in prefab.GetComponentsInChildren<MeshFilter>(true))
+      {
+        if (mf.sharedMesh != null && mf.sharedMesh.uv != null && mf.sharedMesh.uv.Length > 0)
+        {
+          var clonedMesh = UnityEngine.Object.Instantiate(mf.sharedMesh);
+          clonedMesh.name = $"{mf.sharedMesh.name}_KeelRotatedUV";
+          var uvs = clonedMesh.uv;
+          for (int i = 0; i < uvs.Length; i++)
+          {
+            uvs[i] = new Vector2(uvs[i].y, uvs[i].x);
+          }
+          clonedMesh.uv = uvs;
+          mf.sharedMesh = clonedMesh;
         }
       }
     }
     catch (Exception e)
     {
-      LoggerProvider.LogWarning($"[ValheimRAFT] Could not adjust keel iron plated material: {e.Message}");
+      LoggerProvider.LogWarning($"[ValheimRAFT] Could not adjust keel iron plated material/UVs: {e.Message}");
     }
   }
 
@@ -1222,7 +1255,7 @@ private static void FixKeelIronPlatedMaterials(GameObject prefab)
           AttachHullIronBands(prefab, prefabName, bandMesh, poleMat);
         }
 
-        SetupHullPrefab(prefab, prefabName, HullMaterial.Iron, 4, null, null, VehicleHammerTableCategories.Iron);
+        SetupHullPrefab(prefab, prefabName, HullMaterial.Iron, 4, null, null, VehicleHammerTableCategories.Iron, addToPieceTable: false);
       }
       catch (Exception e)
       {
@@ -1320,7 +1353,7 @@ private static void FixKeelIronPlatedMaterials(GameObject prefab)
           }
         }
 
-        SetupHullPrefab(prefab, prefabName, HullMaterial.Iron, 4, null, null, VehicleHammerTableCategories.Iron);
+        SetupHullPrefab(prefab, prefabName, HullMaterial.Iron, 4, null, null, VehicleHammerTableCategories.Iron, addToPieceTable: false);
       }
       catch (Exception e)
       {

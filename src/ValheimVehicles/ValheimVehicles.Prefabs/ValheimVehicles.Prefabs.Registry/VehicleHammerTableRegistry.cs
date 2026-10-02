@@ -128,6 +128,8 @@ namespace ValheimVehicles.Prefabs.Registry
       "MBRopeLadder", // 117. Jacob's Ladder
       "MBRaftMast", // 113. Square Rigged Sail / Raft Mast
       "MBKarveMast", // Karve Sail / Mast (between square rigged sail and rigging cleat)
+      "MBVikingShipMast", // Viking Sail
+      "ValheimVehicles_DrakkalMast", // Drakkal Sail
       "ValheimVehicles_Greydwarf_Rowing_Seat", // Greydwarf Rowing Seat (next to the sails)
       "MBRopeAnchor", // 116. Rigging Cleat
       "ValheimVehicles_ShipAnchor_Wood", // 118. Ship Anchor
@@ -238,15 +240,6 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_Ship_Hull_Rib_Corner_2x1x8_Right_Iron", // Solid Iron Hull Stern Corner - Right - Long
 
       // Iron-Reinforced Hull Set (9 pieces)
-      "ValheimVehicles_hull_bow_center_iron_reinforced",
-      "ValheimVehicles_hull_rib_iron_reinforced",
-      "ValheimVehicles_hull_bow_tri_left_iron_reinforced",
-      "ValheimVehicles_hull_bow_tri_right_iron_reinforced",
-      "ValheimVehicles_hull_bow_curved_left_iron_reinforced",
-      "ValheimVehicles_hull_bow_curved_right_iron_reinforced",
-      "ValheimVehicles_hull_rib_aft_center_iron_reinforced",
-      "ValheimVehicles_hull_rib_aft_left_iron_reinforced",
-      "ValheimVehicles_hull_rib_aft_right_iron_reinforced",
 
       // Iron-Reinforced Deck Planking (2x2 and 4x4 ahead of stern planking pieces per user request)
       "ValheimVehicles_Hull_Slab_Iron_2x2", // Iron-Reinforced Deck Planking - Small
@@ -260,8 +253,6 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Left_Iron", // Iron-Reinforced Deck Stern Planking - Long - Left
       "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", // Iron-Reinforced Deck Stern Planking - Long - Right
 
-      "ValheimVehicles_hull_seal_tri_bow_left_iron_reinforced", // Iron-Reinforced Deck Prow Planking - Left
-      "ValheimVehicles_hull_seal_tri_bow_right_iron_reinforced", // Iron-Reinforced Deck Prow Planking - Right
 
       // Iron-Reinforced Frame Walls
       "ValheimVehicles_Hull_Wall_Iron_2x2", // Iron-Reinforced Frame Wall - Small
@@ -271,6 +262,18 @@ namespace ValheimVehicles.Prefabs.Registry
     private static readonly HashSet<string> RedundantPieces = new(StringComparer.OrdinalIgnoreCase)
     {
       // User requested removals:
+      // Iron-reinforced hull parts & deck prow planking (disabled per user request)
+      "ValheimVehicles_hull_bow_center_iron_reinforced",
+      "ValheimVehicles_hull_rib_iron_reinforced",
+      "ValheimVehicles_hull_bow_tri_left_iron_reinforced",
+      "ValheimVehicles_hull_bow_tri_right_iron_reinforced",
+      "ValheimVehicles_hull_bow_curved_left_iron_reinforced",
+      "ValheimVehicles_hull_bow_curved_right_iron_reinforced",
+      "ValheimVehicles_hull_rib_aft_center_iron_reinforced",
+      "ValheimVehicles_hull_rib_aft_left_iron_reinforced",
+      "ValheimVehicles_hull_rib_aft_right_iron_reinforced",
+      "ValheimVehicles_hull_seal_tri_bow_left_iron_reinforced",
+      "ValheimVehicles_hull_seal_tri_bow_right_iron_reinforced",
       "ValheimVehicles_hull_floor_2x2_wood",
       "ValheimVehicles_hull_floor_2x2_iron",
       // Garboard strakes (removed per user request)
@@ -281,11 +284,6 @@ namespace ValheimVehicles.Prefabs.Registry
       "hull_floor_keel_4x2_left_iron",
       "ValheimVehicles_hull_floor_keel_4x2_left_iron",
 
-      // Rigged sails (temporarily hidden from build menu per user request)
-      "MBVikingShipMast",
-      "mb_vikingship_mast",
-      "ValheimVehicles_DrakkalMast",
-      "valheim_vehicles_drakkalship_mast",
 
       // User requested removals:
       // 44. Land Vehicle
