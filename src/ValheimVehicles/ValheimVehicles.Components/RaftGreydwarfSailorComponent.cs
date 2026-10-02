@@ -4,6 +4,15 @@ using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Components;
 
+public enum SailorLoyalty
+{
+  Satisfied = 0,
+  Unsatisfied = 1,
+  Hungry = 2,
+  NearMutiny = 3,
+  Mutineer = 4
+}
+
 public class RaftGreydwarfSailorComponent : MonoBehaviour
 {
   public static readonly string[] SailorHats =
@@ -31,7 +40,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   public VehiclePiecesController? PiecesController { get; private set; }
   public Character? Character => _character;
-  public bool IsUnfed => _isUnfed;
+  public SailorLoyalty Loyalty { get; private set; } = SailorLoyalty.Satisfied;
   public bool IsSeated => _isSeated;
   public GreydwarfRowingSeatComponent? CurrentSeat => _currentSeat;
   public bool IsEnRouteToShip { get; private set; }
@@ -50,10 +59,9 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   private float _embarkTimer;
   private Vector3 _shipTargetPos;
 
-  // Upkeep & Mutiny (15 minutes = 900s)
+  // Upkeep & Loyalty (15 minutes = 900s)
   private float _resinCheckTimer = 900f;
   private float _mutinyTickTimer = 60f;
-  private bool _isUnfed;
 
   // Combat cooldowns
   private float _nextRockThrowTime;
@@ -72,6 +80,11 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     _nview = GetComponent<ZNetView>();
 
     DetermineDwarfType();
+
+    if (_nview != null && _nview.IsValid())
+    {
+      Loyalty = (SailorLoyalty)_nview.GetZDO().GetInt("SailorLoyalty", (int)SailorLoyalty.Satisfied);
+    }
   }
 
   private void Start()
@@ -111,15 +124,39 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     PiecesController = ship;
   }
 
+  public void FeedResin()
+  {
+    Loyalty = SailorLoyalty.Satisfied;
+    _resinCheckTimer = 900f;
+    if (_nview != null && _nview.IsValid())
+    {
+      _nview.GetZDO().Set("SailorLoyalty", (int)Loyalty);
+    }
+  }
+
+  public string GetLoyaltyHoverString()
+  {
+    return Loyalty switch
+    {
+      SailorLoyalty.Satisfied => "<color=#00FF00>Satisfied</color>",
+      SailorLoyalty.Unsatisfied => "<color=#FFFF00>Unsatisfied</color>",
+      SailorLoyalty.Hungry => "<color=#FFA500>Hungry</color>",
+      SailorLoyalty.NearMutiny => "<color=#FF4500>Near-Mutiny</color>",
+      SailorLoyalty.Mutineer => "<color=#FF0000>Mutineer</color>",
+      _ => "<color=#00FF00>Satisfied</color>"
+    };
+  }
+
   public void StartEmbarkSequence(Vector3 shipPosition)
   {
     IsEnRouteToShip = true;
     _embarkTimer = 0f;
     _shipTargetPos = shipPosition;
 
-    if (_animator != null)
+    // Trigger celebratory roar/taunt
+    if (_character != null && _character.m_zanim != null)
     {
-      _animator.SetTrigger("cheer");
+      _character.m_zanim.SetTrigger("taunt");
     }
 
     if (_monsterAI != null)
@@ -141,7 +178,8 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
         _monsterAI.MoveTo(Time.deltaTime, _shipTargetPos, 1f, true);
       }
 
-      if (_embarkTimer >= 3.5f || (_character != null && _character.InWater()) || Vector3.Distance(transform.position, _shipTargetPos) <= 5f)
+      // Run for 4.0 seconds or until reaching deep water swimming / close to ship
+      if (_embarkTimer >= 4.0f || (_embarkTimer >= 1.5f && _character != null && _character.IsSwimming()) || Vector3.Distance(transform.position, _shipTargetPos) <= 5f)
       {
         if (ZNetScene.instance != null)
         {
@@ -186,13 +224,13 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       ConsumeResin();
     }
 
-    if (_isUnfed)
+    if (Loyalty == SailorLoyalty.NearMutiny)
     {
       _mutinyTickTimer -= dt;
       if (_mutinyTickTimer <= 0f)
       {
         _mutinyTickTimer = 60f;
-        // 50% chance per tick to mutiny
+        // 50% chance per tick to mutiny when Near-Mutiny
         if (UnityEngine.Random.value <= 0.5f)
         {
           TriggerMutiny();
@@ -223,13 +261,39 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
     if (fed)
     {
-      _isUnfed = false;
+      Loyalty = SailorLoyalty.Satisfied;
+      if (_nview != null && _nview.IsValid())
+      {
+        _nview.GetZDO().Set("SailorLoyalty", (int)Loyalty);
+      }
     }
     else
     {
-      _isUnfed = true;
-      MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center,
-        Localization.instance.Localize("$valheim_vehicles_sailor_unfed_warning"));
+      // Step down loyalty
+      if (Loyalty < SailorLoyalty.Mutineer)
+      {
+        Loyalty = (SailorLoyalty)((int)Loyalty + 1);
+        if (_nview != null && _nview.IsValid())
+        {
+          _nview.GetZDO().Set("SailorLoyalty", (int)Loyalty);
+        }
+      }
+
+      if (Loyalty == SailorLoyalty.Mutineer)
+      {
+        TriggerMutiny();
+      }
+      else
+      {
+        string msg = Loyalty switch
+        {
+          SailorLoyalty.Unsatisfied => "Sailor Greydwarf is Unsatisfied! (No resin found in chests)",
+          SailorLoyalty.Hungry => "Sailor Greydwarf is Hungry! (No resin found in chests)",
+          SailorLoyalty.NearMutiny => "WARNING: Sailor Greydwarf is Near-Mutiny! Provide resin immediately!",
+          _ => "Sailor Greydwarf needs resin!"
+        };
+        MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, msg);
+      }
     }
   }
 
@@ -240,21 +304,13 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     _character.SetTamed(false);
     _character.m_faction = Character.Faction.ForestMonsters;
 
-    if (_isSeated && _currentSeat != null)
-    {
-      _currentSeat.OccupantCharacter = null;
-      _currentSeat = null;
-      _isSeated = false;
-      if (_character.m_body != null) _character.m_body.isKinematic = false;
-    }
-
+    UnseatFromStation();
     RemoveSailorHat();
     PiecesController?.UnregisterSailor(this);
 
     MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center,
       Localization.instance.Localize("$valheim_vehicles_sailor_mutinied"));
 
-    // Flee or swim towards shore
     if (_monsterAI != null)
     {
       _monsterAI.SetAlerted(true);
@@ -266,33 +322,19 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   private void UpdateManningAndSeating(float dt)
   {
     if (PiecesController == null) return;
-    var moveCtrl = PiecesController.MovementController;
-    bool isShipMoving = moveCtrl != null && moveCtrl.GetSpeedSetting() != Ship.Speed.Stop && !moveCtrl.isAnchored;
 
-    if (isShipMoving)
+    // Sailors remain stationed at their rowing benches both while moving and stationary
+    if (!_isSeated)
     {
-      if (!_isSeated)
+      _manningTimer += dt;
+      var availableSeat = _currentSeat ?? FindAvailableSeat();
+      if (availableSeat != null)
       {
-        _manningTimer += dt;
-        var availableSeat = FindAvailableSeat();
-        if (availableSeat != null)
+        if (_manningTimer >= 2.0f || Vector3.Distance(transform.position, availableSeat.GetSeatPosition()) <= 1.5f)
         {
-          // 5-second grace period: if pathing or waiting exceeds 5s, teleport to seat
-          if (_manningTimer >= 5.0f || Vector3.Distance(transform.position, availableSeat.GetSeatPosition()) <= 1.5f)
-          {
-            SeatAtStation(availableSeat);
-            _manningTimer = 0f;
-          }
+          SeatAtStation(availableSeat);
+          _manningTimer = 0f;
         }
-      }
-    }
-    else
-    {
-      _manningTimer = 0f;
-      if (_isSeated)
-      {
-        // Ship stopped/anchored: unseat
-        UnseatFromStation();
       }
     }
   }
@@ -323,12 +365,19 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     _currentSeat.OccupantCharacter = _character;
     _isSeated = true;
 
-    transform.position = seat.GetSeatPosition();
+    // Lower position slightly so Greydwarf perches right on top of the bench plank
+    Vector3 seatPos = seat.GetSeatPosition() - seat.transform.up * 0.12f;
+    transform.position = seatPos;
     transform.rotation = seat.transform.rotation;
 
     if (_character != null && _character.m_body != null)
     {
       _character.m_body.isKinematic = true;
+    }
+    if (_monsterAI != null)
+    {
+      _monsterAI.m_targetCreature = null;
+      _monsterAI.SetAlerted(false);
     }
   }
 
@@ -353,7 +402,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
     if (_character.InWater())
     {
-      // Check for nearby rope ladder
+      // Check for nearby rope ladder (within 3.5m)
       foreach (var ladder in PiecesController.RopeLadders)
       {
         if (ladder == null || ladder.m_attachPoint == null || ladder.m_exitPoint == null) continue;
@@ -367,8 +416,8 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       }
 
       _waterTimer += dt;
-      // 10-second overboard failsafe recovery to Rowing Seat or Safe Deck
-      if (_waterTimer >= 10.0f)
+      // 20-second overboard failsafe recovery to Rowing Seat or Safe Deck
+      if (_waterTimer >= 20.0f)
       {
         var seat = _currentSeat ?? PiecesController.GetNextAvailableRowingSeat();
         if (seat != null)
@@ -385,7 +434,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
           }
         }
         _waterTimer = 0f;
-        ZLog.Log("[ValheimRAFT] Sailor Greydwarf was overboard >10s; safely recovered to Rowing Seat.");
+        ZLog.Log("[ValheimRAFT] Sailor Greydwarf was overboard >20s; safely recovered to Rowing Seat.");
       }
     }
     else
@@ -398,8 +447,8 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   {
     if (_character == null || PiecesController == null) return;
 
-    // Scan for hostiles within 20m of ship
-    var colliders = Physics.OverlapSphere(transform.position, 20f, LayerMask.GetMask("character"));
+    // Scan for hostiles within 15m of ship
+    var colliders = Physics.OverlapSphere(transform.position, 15f, LayerMask.GetMask("character"));
     Character? target = null;
     foreach (var col in colliders)
     {
@@ -566,7 +615,14 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       return;
     }
 
-    GameObject hatVisual = Instantiate(hatPrefab, headBone);
+    // In Valheim helmet prefabs, child 'attach' or 'attach_skin' holds the fitted wearable hat model
+    Transform? attachChild = hatPrefab.transform.Find("attach") ??
+                             hatPrefab.transform.Find("attach_skin");
+
+    GameObject hatVisual = attachChild != null
+      ? Instantiate(attachChild.gameObject, headBone)
+      : Instantiate(hatPrefab, headBone);
+
     hatVisual.name = "SailorHatVisual";
 
     var itemDrop = hatVisual.GetComponent<ItemDrop>();
@@ -588,12 +644,18 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       rend.enabled = true;
     }
 
-    // Align with Greydwarf head brow
-    hatVisual.transform.localPosition = new Vector3(0f, 0.08f, 0.04f);
-    hatVisual.transform.localRotation = Quaternion.Euler(10f, 0f, 0f);
+    // Position upright on Greydwarf brow
+    hatVisual.transform.localPosition = new Vector3(0f, 0.05f, 0.02f);
+    hatVisual.transform.localRotation = Quaternion.identity;
 
-    float scale = DwarfType == GreydwarfSailorType.Brute ? 1.25f : 1.0f;
-    hatVisual.transform.localScale = Vector3.one * scale;
+    // Compensate for parent bone scale so world size is always exact
+    Vector3 parentLossy = headBone.lossyScale;
+    float targetScale = DwarfType == GreydwarfSailorType.Brute ? 0.95f : 0.70f;
+    hatVisual.transform.localScale = new Vector3(
+      targetScale / (Mathf.Abs(parentLossy.x) > 0.001f ? Mathf.Abs(parentLossy.x) : 1f),
+      targetScale / (Mathf.Abs(parentLossy.y) > 0.001f ? Mathf.Abs(parentLossy.y) : 1f),
+      targetScale / (Mathf.Abs(parentLossy.z) > 0.001f ? Mathf.Abs(parentLossy.z) : 1f)
+    );
   }
 
   public void RemoveSailorHat()
@@ -616,6 +678,12 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   public static Transform? FindHeadBone(Character? character)
   {
     if (character == null) return null;
+
+    var humanoid = character as Humanoid;
+    if (humanoid != null && humanoid.m_head != null)
+    {
+      return humanoid.m_head;
+    }
 
     var anim = character.GetComponentInChildren<Animator>();
     if (anim != null && anim.isHuman)

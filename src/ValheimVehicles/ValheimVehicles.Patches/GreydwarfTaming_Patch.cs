@@ -93,4 +93,15 @@ public class GreydwarfTaming_Patch
     }
     return true;
   }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.RPC_Damage))]
+  [HarmonyPrefix]
+  public static void Character_RPC_Damage_Prefix(Character __instance, HitData hit)
+  {
+    if (__instance == null || hit == null) return;
+    if (__instance.GetComponent<RaftGreydwarfSailorComponent>() != null)
+    {
+      hit.m_ignorePVP = true;
+    }
+  }
 }

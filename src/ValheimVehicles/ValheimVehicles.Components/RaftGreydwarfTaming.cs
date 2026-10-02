@@ -31,8 +31,9 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     if (_character != null && _character.IsTamed())
     {
       var sailor = GetComponent<RaftGreydwarfSailorComponent>();
-      string status = sailor != null && sailor.IsUnfed ? "<color=red>Unfed</color>" : "<color=green>Ready</color>";
-      return Localization.instance.Localize($"$valheim_vehicles_sailor_greydwarf ({status})");
+      string loyaltyStr = sailor != null ? sailor.GetLoyaltyHoverString() : "<color=#00FF00>Satisfied</color>";
+      return Localization.instance.Localize(
+        $"$valheim_vehicles_sailor_greydwarf\nLoyalty: {loyaltyStr}\n<color=grey>Keep resin available in chests</color>");
     }
 
     var nearestShip = FindNearestShip(transform.position, 250f);
@@ -112,7 +113,6 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     if (inv == null) return false;
 
     int coins = GetItemCount(inv, "Coins", "$item_coins");
-    int dandelions = GetItemCount(inv, "Dandelion", "$item_dandelion");
 
     // 10 Coins = 100% success
     if (coins >= 10)
@@ -131,16 +131,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       return true;
     }
 
-    // 5 Dandelions = 50% success
-    if (dandelions >= 5)
-    {
-      RemoveItemCount(inv, "Dandelion", "$item_dandelion", 5);
-      bool success = UnityEngine.Random.value <= 0.5f;
-      ExecuteTaming(player, success, nearestShip: nearestShip);
-      return true;
-    }
-
-    // Insufficient items
+    // Insufficient coins
     player.Message(MessageHud.MessageType.Center,
       Localization.instance.Localize("$valheim_vehicles_tame_insufficient"));
     return false;
@@ -152,9 +143,12 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     var player = user as Player;
     if (player == null) return false;
 
-    // If already tamed, check if player is offering/changing a Sailor Hat!
+    var inv = player.GetInventory();
+
+    // If already tamed
     if (_character != null && _character.IsTamed())
     {
+      // 1. Check if offering/changing a Sailor Hat!
       string prefabName = item.m_dropPrefab != null ? item.m_dropPrefab.name : "";
       if (RaftGreydwarfSailorComponent.IsSailorHat(prefabName))
       {
@@ -167,16 +161,30 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
           return true;
         }
       }
+
+      // 2. Check if feeding Resin directly to restore loyalty
+      if (IsItemMatch(item, "Resin", "$item_resin"))
+      {
+        if (inv != null && GetItemCount(inv, "Resin", "$item_resin") >= 1)
+        {
+          RemoveItemCount(inv, "Resin", "$item_resin", 1);
+          var sailorComp = EnsureSailorComponent();
+          sailorComp?.FeedResin();
+          SpawnFeedEffects();
+          player.Message(MessageHud.MessageType.Center,
+            "Fed Sailor Greydwarf 1 Resin! Loyalty: Satisfied.");
+          return true;
+        }
+      }
+
       return false;
     }
 
-    var inv = player.GetInventory();
+    // If not tamed: only Coins
     if (inv == null) return false;
 
     bool isCoins = IsItemMatch(item, "Coins", "$item_coins");
-    bool isDandelion = IsItemMatch(item, "Dandelion", "$item_dandelion");
-
-    if (!isCoins && !isDandelion)
+    if (!isCoins)
     {
       return false;
     }
@@ -187,43 +195,24 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       return true; // handled, don't consume or equip item
     }
 
-    if (isCoins)
+    int coinCount = GetItemCount(inv, "Coins", "$item_coins");
+    if (coinCount >= 10)
     {
-      int coinCount = GetItemCount(inv, "Coins", "$item_coins");
-      if (coinCount >= 10)
-      {
-        RemoveItemCount(inv, "Coins", "$item_coins", 10);
-        ExecuteTaming(player, success: true, nearestShip: nearestShip);
-        return true;
-      }
-      if (coinCount >= 5)
-      {
-        RemoveItemCount(inv, "Coins", "$item_coins", 5);
-        bool success = UnityEngine.Random.value <= 0.5f;
-        ExecuteTaming(player, success, nearestShip: nearestShip);
-        return true;
-      }
-      player.Message(MessageHud.MessageType.Center,
-        Localization.instance.Localize("$valheim_vehicles_tame_insufficient"));
+      RemoveItemCount(inv, "Coins", "$item_coins", 10);
+      ExecuteTaming(player, success: true, nearestShip: nearestShip);
+      return true;
+    }
+    if (coinCount >= 5)
+    {
+      RemoveItemCount(inv, "Coins", "$item_coins", 5);
+      bool success = UnityEngine.Random.value <= 0.5f;
+      ExecuteTaming(player, success, nearestShip: nearestShip);
       return true;
     }
 
-    if (isDandelion)
-    {
-      int dandelionCount = GetItemCount(inv, "Dandelion", "$item_dandelion");
-      if (dandelionCount >= 5)
-      {
-        RemoveItemCount(inv, "Dandelion", "$item_dandelion", 5);
-        bool success = UnityEngine.Random.value <= 0.5f;
-        ExecuteTaming(player, success, nearestShip: nearestShip);
-        return true;
-      }
-      player.Message(MessageHud.MessageType.Center,
-        Localization.instance.Localize("$valheim_vehicles_tame_insufficient"));
-      return true;
-    }
-
-    return false;
+    player.Message(MessageHud.MessageType.Center,
+      Localization.instance.Localize("$valheim_vehicles_tame_insufficient"));
+    return true;
   }
 
   private void ExecuteTaming(Player player, bool success, VehiclePiecesController? nearestShip)
@@ -271,6 +260,16 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     if (vfx != null)
     {
       Instantiate(vfx, transform.position + Vector3.up * 1f, Quaternion.identity);
+    }
+  }
+
+  private void SpawnFeedEffects()
+  {
+    if (ZNetScene.instance == null) return;
+    var vfx = ZNetScene.instance.GetPrefab("vfx_boar_love") ?? ZNetScene.instance.GetPrefab("vfx_tame");
+    if (vfx != null)
+    {
+      Instantiate(vfx, transform.position + Vector3.up * 1.2f, Quaternion.identity);
     }
   }
 
