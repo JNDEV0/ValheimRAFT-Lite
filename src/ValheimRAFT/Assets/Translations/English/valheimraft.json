@@ -554,7 +554,7 @@
   "valheim_vehicles_hull_rib_corner_floor_iron_right_2x8": "Iron-Reinforced Deck Stern Planking - Long - Right",
   "valheim_vehicles_hull_rib_corner_floor_iron_right_2x8_desc": "Will seal off the ship's rib corner gap. A massive iron-reinforced starboard-side deck seal tailored to cover deep corner framing. <color=yellow>Eight meters of iron-reinforced timber sealing the deepest hull corners.</color>",
   "valheim_vehicles_sailor_greydwarf": "Sailor Greydwarf",
-  "valheim_vehicles_tame_prompt": "Offer Wage / Hire Sailor (10 Coins 100%, 5 Coins 50%)",
+  "valheim_vehicles_tame_prompt": "Hire Sailor",
   "valheim_vehicles_tame_insufficient": "Requires 10 Coins (100%) or 5 Coins (50%) to hire.",
   "valheim_vehicles_tame_success": "Greydwarf hired as Ship Sailor!",
   "valheim_vehicles_tame_failed": "The Greydwarf took the coins but refused your contract!",

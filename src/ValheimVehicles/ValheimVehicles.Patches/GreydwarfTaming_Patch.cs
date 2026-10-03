@@ -14,7 +14,11 @@ public class GreydwarfTaming_Patch
   {
     if (__instance == null || __instance.gameObject == null) return;
     var name = __instance.gameObject.name;
-    if (name.StartsWith("Greydwarf", StringComparison.OrdinalIgnoreCase))
+    // Only regular Greydwarfs can be hired as sailors (exclude Shaman, Brute/Elite)
+    if (name.StartsWith("Greydwarf", StringComparison.OrdinalIgnoreCase) &&
+        !name.Contains("Shaman", StringComparison.OrdinalIgnoreCase) &&
+        !name.Contains("Elite", StringComparison.OrdinalIgnoreCase) &&
+        !name.Contains("Brute", StringComparison.OrdinalIgnoreCase))
     {
       if (__instance.GetComponent<RaftGreydwarfTaming>() == null)
       {
@@ -130,5 +134,41 @@ public class GreydwarfTaming_Patch
     {
       hit.m_ignorePVP = true;
     }
+  }
+
+  [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.EquipBestWeapon))]
+  [HarmonyPrefix]
+  public static bool Humanoid_EquipBestWeapon_Prefix(Humanoid __instance)
+  {
+    if (__instance != null)
+    {
+      var sailor = __instance.GetComponent<RaftGreydwarfSailorComponent>();
+      if (sailor != null)
+      {
+        sailor.EnsureRockWeaponEquipped();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.StartAttack))]
+  [HarmonyPrefix]
+  public static bool Humanoid_StartAttack_Prefix(Humanoid __instance, Character target, bool isSecondaryAction)
+  {
+    if (__instance != null && __instance.GetComponent<RaftGreydwarfSailorComponent>() != null)
+    {
+      var weapon = __instance.GetCurrentWeapon();
+      if (weapon != null && weapon.m_shared != null)
+      {
+        var attack = isSecondaryAction ? weapon.m_shared.m_secondaryAttack : weapon.m_shared.m_attack;
+        if (attack != null && attack.m_attackProjectile == null)
+        {
+          // Disable melee claw swings for sailors: in combat they only throw rocks from the boat
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

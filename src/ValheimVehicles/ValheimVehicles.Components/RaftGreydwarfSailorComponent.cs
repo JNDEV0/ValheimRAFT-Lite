@@ -50,12 +50,8 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   private Animator? _animator;
   private ZNetView? _nview;
 
-  // En-route embarkation sequence
-  private float _embarkTimer;
-  private Vector3 _shipTargetPos;
-
-  // Upkeep & Loyalty (15 minutes = 900s)
-  private float _resinCheckTimer = 900f;
+  // Upkeep & Loyalty (5 minutes = 300s)
+  private float _resinCheckTimer = 300f;
   private float _mutinyTickTimer = 60f;
 
   // Combat cooldowns
@@ -100,6 +96,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     if (_character != null && _character.IsTamed())
     {
       EnsureRandomSailorHat();
+      EnsureRockWeaponEquipped();
     }
   }
 
@@ -128,7 +125,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   public void FeedResin()
   {
     Loyalty = SailorLoyalty.Satisfied;
-    _resinCheckTimer = 900f;
+    _resinCheckTimer = 300f;
     if (_nview != null && _nview.IsValid())
     {
       _nview.GetZDO().Set("SailorLoyalty", (int)Loyalty);
@@ -150,58 +147,59 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   public void StartEmbarkSequence(Vector3 shipPosition)
   {
-    IsEnRouteToShip = true;
-    _embarkTimer = 0f;
-    _shipTargetPos = shipPosition;
+    TeleportToShipDeck();
+  }
 
-    // Trigger celebratory roar/taunt
-    if (_character != null && _character.m_zanim != null)
+  public void TeleportToShipDeck()
+  {
+    if (PiecesController == null)
     {
-      _character.m_zanim.SetTrigger("taunt");
+      PiecesController = FindNearestShip(transform.position);
     }
+    if (PiecesController == null) return;
+
+    RopeLadderComponent? ladder = PiecesController.RopeLadders.FirstOrDefault(l => l != null && l.m_exitPoint != null);
+    Vector3 targetPos = ladder != null ? ladder.m_exitPoint.position : PiecesController.GetPlanterOrSafeDeckPosition();
+
+    if (ZNetScene.instance != null)
+    {
+      var poof = ZNetScene.instance.GetPrefab("vfx_boar_love") ?? ZNetScene.instance.GetPrefab("vfx_tame");
+      if (poof != null)
+      {
+        Instantiate(poof, transform.position + Vector3.up * 0.8f, Quaternion.identity);
+        Instantiate(poof, targetPos + Vector3.up * 0.8f, Quaternion.identity);
+      }
+    }
+
+    transform.position = targetPos;
+    transform.SetParent(PiecesController.transform);
+
+    if (_character != null && _character.m_body != null)
+    {
+      _character.m_body.linearVelocity = Vector3.zero;
+      _character.m_body.angularVelocity = Vector3.zero;
+    }
+
+    _deckLocalPos = transform.localPosition;
+    _deckLocalRot = transform.localRotation;
+    _lastSafeLocalPos = transform.localPosition;
+    _lastSafeLocalRot = transform.localRotation;
+    _isAnchoredOnDeck = false;
+
+    EnsureRandomSailorHat();
+    EnsureRockWeaponEquipped();
 
     if (_monsterAI != null)
     {
       _monsterAI.SetAlerted(false);
-      _monsterAI.MoveTo(Time.deltaTime, shipPosition, 1f, true);
+      _monsterAI.SetTarget(null);
+      _monsterAI.m_targetCreature = null;
     }
   }
 
   private void Update()
   {
     if (_character == null || !_character.IsTamed()) return;
-
-    if (IsEnRouteToShip)
-    {
-      _embarkTimer += Time.deltaTime;
-      if (_monsterAI != null)
-      {
-        _monsterAI.MoveTo(Time.deltaTime, _shipTargetPos, 1f, true);
-      }
-
-      // Run for 4.0 seconds or until reaching deep water swimming / close to ship
-      if (_embarkTimer >= 4.0f || (_embarkTimer >= 1.5f && _character != null && _character.IsSwimming()) || Vector3.Distance(transform.position, _shipTargetPos) <= 5f)
-      {
-        if (ZNetScene.instance != null)
-        {
-          var vfx = ZNetScene.instance.GetPrefab("vfx_wood_destroyed") ??
-                    ZNetScene.instance.GetPrefab("vfx_tame");
-          if (vfx != null)
-          {
-            Instantiate(vfx, transform.position + Vector3.up * 0.8f, Quaternion.identity);
-          }
-        }
-
-        if (PiecesController != null)
-        {
-          PiecesController.CheckAndRestoreRemoteCrew();
-        }
-
-        Destroy(gameObject);
-        return;
-      }
-      return;
-    }
 
     if (PiecesController == null)
     {
@@ -221,7 +219,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     _resinCheckTimer -= dt;
     if (_resinCheckTimer <= 0f)
     {
-      _resinCheckTimer = 900f; // 15 minutes
+      _resinCheckTimer = 300f; // 5 minutes
       ConsumeResin();
     }
 
@@ -534,6 +532,45 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     }
   }
 
+  public void EnsureRockWeaponEquipped()
+  {
+    if (_humanoid == null) return;
+    var current = _humanoid.GetCurrentWeapon();
+    if (current != null && current.m_shared != null && current.m_shared.m_attack != null && current.m_shared.m_attack.m_attackProjectile != null)
+    {
+      return; // Already equipped with rock throw weapon!
+    }
+
+    var inv = _humanoid.GetInventory();
+    if (inv != null)
+    {
+      foreach (var item in inv.GetAllItems())
+      {
+        if (item != null && item.m_shared != null && item.m_shared.m_attack != null && item.m_shared.m_attack.m_attackProjectile != null)
+        {
+          _humanoid.EquipItem(item, false);
+          return;
+        }
+      }
+    }
+
+    if (ObjectDB.instance != null)
+    {
+      var rockPrefab = ObjectDB.instance.GetItemPrefab("Greydwarf_throw");
+      if (rockPrefab != null && inv != null)
+      {
+        if (inv.AddItem(rockPrefab, 1))
+        {
+          var item = inv.GetAllItems().FirstOrDefault(i => i != null && i.m_shared?.m_attack?.m_attackProjectile != null);
+          if (item != null)
+          {
+            _humanoid.EquipItem(item, false);
+          }
+        }
+      }
+    }
+  }
+
   private void UpdateCombatDefense()
   {
     if (_character == null || PiecesController == null) return;
@@ -558,7 +595,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       case GreydwarfSailorType.Regular:
         if (Time.time >= _nextRockThrowTime)
         {
-          _nextRockThrowTime = Time.time + 10f;
+          _nextRockThrowTime = Time.time + 6f;
           PerformRockThrow(target);
         }
         break;
@@ -583,13 +620,25 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   private void PerformRockThrow(Character target)
   {
-    if (_monsterAI != null)
+    EnsureRockWeaponEquipped();
+
+    if (target != null)
     {
-      _monsterAI.DoAttack(target, false);
+      Vector3 dir = target.transform.position - transform.position;
+      dir.y = 0f;
+      if (dir.sqrMagnitude > 0.01f)
+      {
+        transform.rotation = Quaternion.LookRotation(dir);
+      }
     }
-    else if (_humanoid != null)
+
+    if (_humanoid != null)
     {
       _humanoid.StartAttack(target, false);
+    }
+    else if (_monsterAI != null)
+    {
+      _monsterAI.DoAttack(target, false);
     }
   }
 
@@ -735,8 +784,8 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       rend.enabled = true;
     }
 
-    // Rotate 180 degrees so hat faces forward on Greydwarf brow
-    hatVisual.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+    // Rotate 90 degrees (rotated -90 from previous 180) so hat faces forward on Greydwarf brow
+    hatVisual.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
     hatVisual.transform.localPosition = Vector3.zero;
 
     // Compensate for parent bone scale so world size is always exact
@@ -748,7 +797,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       targetScale / (Mathf.Abs(parentLossy.z) > 0.001f ? Mathf.Abs(parentLossy.z) : 1f)
     );
 
-    // Automatically eliminate any prefab offset by centering the hat mesh directly on the head
+    // Automatically eliminate any prefab offset by centering the hat mesh directly on the head with +0.5 Y offset
     var rends = hatVisual.GetComponentsInChildren<Renderer>(true);
     Bounds meshBounds = new Bounds();
     bool hasBounds = false;
@@ -770,13 +819,13 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
     if (hasBounds)
     {
-      Vector3 targetHeadPos = headBone.position + headBone.up * 0.12f;
+      Vector3 targetHeadPos = headBone.position + Vector3.up * 0.50f;
       Vector3 shift = targetHeadPos - meshBounds.center;
       hatVisual.transform.position += shift;
     }
     else
     {
-      hatVisual.transform.localPosition = new Vector3(0f, 0.12f, 0f);
+      hatVisual.transform.localPosition = new Vector3(0f, 0.50f, 0f);
     }
   }
 

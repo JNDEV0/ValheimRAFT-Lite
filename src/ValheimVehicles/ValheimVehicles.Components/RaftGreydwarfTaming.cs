@@ -37,15 +37,32 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
         $"$valheim_vehicles_sailor_greydwarf\nLoyalty: {loyaltyStr}\n[<color=yellow><b>Shift+$KEY_Use</b></color>] {dismissPrompt}\n<color=grey>Keep resin available in chests</color>");
     }
 
-    var nearestShip = FindNearestShip(transform.position, 250f);
-    if (nearestShip == null)
+    // Only regular Greydwarfs can be hired as sailors
+    if (_character != null)
     {
-      return Localization.instance.Localize(
-        $"[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_tame_prompt\n<color=red>(No ship nearby)</color>");
+      string cname = _character.gameObject.name;
+      if (cname.Contains("Shaman", StringComparison.OrdinalIgnoreCase) ||
+          cname.Contains("Elite", StringComparison.OrdinalIgnoreCase) ||
+          cname.Contains("Brute", StringComparison.OrdinalIgnoreCase))
+      {
+        return "";
+      }
     }
 
+    // Do NOT show hover taming text unless the player has coins in hand
+    var localPlayer = Player.m_localPlayer;
+    if (localPlayer == null) return "";
+    var inv = localPlayer.GetInventory();
+    if (inv == null) return "";
+    int coins = GetItemCount(inv, "Coins", "$item_coins");
+    if (coins <= 0)
+    {
+      return "";
+    }
+
+    // Simplified taming hover text: "[E] Hire Sailor"
     return Localization.instance.Localize(
-      $"[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_tame_prompt");
+      "[<color=yellow><b>$KEY_Use</b></color>] $valheim_vehicles_tame_prompt");
   }
 
   public string GetHoverName()
@@ -60,6 +77,20 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
 
   private bool CanHireSailor(Player player, out string reason, out VehiclePiecesController? nearestShip)
   {
+    nearestShip = null;
+
+    if (_character != null)
+    {
+      string cname = _character.gameObject.name;
+      if (cname.Contains("Shaman", StringComparison.OrdinalIgnoreCase) ||
+          cname.Contains("Elite", StringComparison.OrdinalIgnoreCase) ||
+          cname.Contains("Brute", StringComparison.OrdinalIgnoreCase))
+      {
+        reason = "Only regular Greydwarfs can be hired as sailors.";
+        return false;
+      }
+    }
+
     nearestShip = FindNearestShip(transform.position, 250f);
     if (nearestShip == null)
     {
@@ -229,9 +260,8 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       if (nearestShip != null && sailor != null)
       {
         sailor.SetAssignedShip(nearestShip);
-        sailor.EnsureRandomSailorHat();
         nearestShip.RegisterSailor(sailor);
-        sailor.StartEmbarkSequence(nearestShip.transform.position);
+        sailor.TeleportToShipDeck();
       }
 
       player.Message(MessageHud.MessageType.Center,
