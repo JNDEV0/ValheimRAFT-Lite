@@ -154,7 +154,7 @@ public class GreydwarfTaming_Patch
 
   [HarmonyPatch(typeof(MonsterAI), nameof(MonsterAI.DoAttack))]
   [HarmonyPrefix]
-  public static bool MonsterAI_DoAttack_Prefix(MonsterAI __instance, Character target)
+  public static bool MonsterAI_DoAttack_Prefix(MonsterAI __instance, Character target, bool isFriend)
   {
     if (__instance != null && __instance.GetComponent<RaftGreydwarfSailorComponent>() != null)
     {
@@ -171,7 +171,7 @@ public class GreydwarfTaming_Patch
 
   [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.StartAttack))]
   [HarmonyPrefix]
-  public static bool Humanoid_StartAttack_Prefix(Humanoid __instance, Character target, bool isSecondaryAction)
+  public static bool Humanoid_StartAttack_Prefix(Humanoid __instance, Character target, bool secondaryAttack)
   {
     if (__instance != null && __instance.GetComponent<RaftGreydwarfSailorComponent>() != null)
     {
@@ -189,7 +189,7 @@ public class GreydwarfTaming_Patch
       var weapon = __instance.GetCurrentWeapon();
       if (weapon != null && weapon.m_shared != null)
       {
-        var attack = isSecondaryAction ? weapon.m_shared.m_secondaryAttack : weapon.m_shared.m_attack;
+        var attack = secondaryAttack ? weapon.m_shared.m_secondaryAttack : weapon.m_shared.m_attack;
         if (attack != null && attack.m_attackProjectile == null)
         {
           return false;
