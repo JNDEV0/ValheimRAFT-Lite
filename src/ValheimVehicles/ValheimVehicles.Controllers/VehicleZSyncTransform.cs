@@ -289,16 +289,22 @@ public class VehicleZSyncTransform : MonoBehaviour, IMonoUpdater
         var vec3_2 = zdo.GetVec3(ZDOVars.s_bodyAVelHash, Vector3.zero);
         if (vec3_1.magnitude > 0.009999999776482582 || vec3_2.magnitude > 0.009999999776482582)
         {
-          m_body.linearVelocity = vec3_1;
-          m_body.angularVelocity = vec3_2;
+          if (!m_body.isKinematic)
+          {
+            m_body.linearVelocity = vec3_1;
+            m_body.angularVelocity = vec3_2;
+          }
         }
         else
           m_body.Sleep();
       }
       else if (!m_body.IsSleeping())
       {
-        m_body.linearVelocity = Vector3.zero;
-        m_body.angularVelocity = Vector3.zero;
+        if (!m_body.isKinematic)
+        {
+          m_body.linearVelocity = Vector3.zero;
+          m_body.angularVelocity = Vector3.zero;
+        }
         m_body.Sleep();
       }
     }

@@ -104,7 +104,7 @@
       if (zdo == null || !zdo.IsValid()) return false;
 
       // Check MBParentId on the piece
-      var parentVehicleId = zdo.GetInt(VehicleZdoVars.MBParentId, 0);
+      var parentVehicleId = GetParentID(zdo);
       if (parentVehicleId == 0) return false;
 
       // 1. Direct active instance lookup - if pieces controller is already active in memory, activate piece immediately
@@ -641,7 +641,7 @@
           {
             var zdo = kvp.Value;
             if (zdo == null || !zdo.IsValid()) continue;
-            if (zdo.GetInt(VehicleZdoVars.MBParentId, 0) == vehiclePersistentId)
+            if (GetParentID(zdo) == vehiclePersistentId)
             {
               pieceSet.Add(zdo.m_uid);
             }
@@ -1843,8 +1843,7 @@
           PersistentZdoId == 0) return;
 
 
-      var vehPos = transform.position;
-      var vehRot = transform.rotation;
+      var vehPos = Manager != null && Manager.m_zdo != null ? Manager.m_zdo.GetPosition() : (m_syncRigidbody != null ? m_syncRigidbody.position : transform.position);
 
       var piecesToClean = m_pieces.ToList();
       m_pieces.Clear();
@@ -1857,13 +1856,8 @@
         var zdo = piece.GetZDO();
         if (zdo != null && zdo.IsValid())
         {
-          var localPos = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-          var localRot = Quaternion.Euler(zdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero));
-          var pieceWorldPos = vehPos + vehRot * localPos;
-          var pieceWorldRot = vehRot * localRot;
-
-          zdo.SetPosition(pieceWorldPos);
-          zdo.SetRotation(pieceWorldRot);
+          // Keep piece ZDO parked at the vehicle hull's current world position and sector
+          SetPrefabWorldPosition(zdo, vehPos);
 
           if (ZNetScene.instance != null && ZNetScene.instance.m_instances != null)
           {
@@ -1879,35 +1873,6 @@
 
         piece.ResetZDO();
         Destroy(piece.gameObject);
-      }
-
-      if (Manager != null && Manager.PersistentZdoId != 0)
-      {
-        var allVehiclePieces = EnsurePiecesForVehicle(Manager.PersistentZdoId);
-        foreach (var pZdoId in allVehiclePieces)
-        {
-          var pZdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(pZdoId) : null;
-          if (pZdo != null && pZdo.IsValid())
-          {
-            var localPos = pZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
-            var localRot = Quaternion.Euler(pZdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero));
-            var pieceWorldPos = vehPos + vehRot * localPos;
-            var pieceWorldRot = vehRot * localRot;
-
-            pZdo.SetPosition(pieceWorldPos);
-            pZdo.SetRotation(pieceWorldRot);
-
-            if (ZNetScene.instance != null && ZNetScene.instance.m_instances != null)
-            {
-              ZNetScene.instance.m_instances.Remove(pZdo);
-            }
-          }
-        }
-      }
-
-      if (Manager != null && BasePieceActivatorComponent.m_pendingPieces.ContainsKey(Manager.PersistentZdoId))
-      {
-        BasePieceActivatorComponent.m_pendingPieces.Remove(Manager.PersistentZdoId);
       }
 
       // todo might need to do some freezing of positions if these pieces are rigidbodies/physics related such as animals and npcs.
@@ -3097,6 +3062,48 @@
         OnActivatePendingPiecesComplete(PendingPieceStateEnum.Failure,
           "No persistentID found on Vehicle instance");
         yield break;
+      }
+
+      // Proactively instantiate and attach all known pieces for this vehicle that are not yet active in scene
+      // This guarantees pieces (custom, vanilla, modded) reload instantly when sailing into render distance
+      var vehiclePos = Manager != null && Manager.m_zdo != null ? Manager.m_zdo.GetPosition() : (m_syncRigidbody != null ? m_syncRigidbody.position : transform.position);
+      var allKnownPieces = EnsurePiecesForVehicle(persistentZdoId);
+
+      if (ZNetScene.instance != null && allKnownPieces != null && allKnownPieces.Count > 0)
+      {
+        foreach (var pZdoId in allKnownPieces)
+        {
+          var pZdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(pZdoId) : null;
+          if (pZdo == null || !pZdo.IsValid()) continue;
+
+          // Align child ZDO position and sector with the vehicle hull
+          SetPrefabWorldPosition(pZdo, vehiclePos);
+
+          var existingNv = ZNetScene.instance.FindInstance(pZdo);
+          if (existingNv == null)
+          {
+            var pHash = pZdo.GetPrefab();
+            if (pHash == 0 || ZNetScene.instance.GetPrefab(pHash) == null) continue;
+
+            try
+            {
+              var createdGo = ZNetScene.instance.CreateObject(pZdo);
+              if (createdGo != null)
+              {
+                existingNv = createdGo.GetComponent<ZNetView>();
+              }
+            }
+            catch (Exception ex)
+            {
+              LoggerProvider.LogWarning($"[VPC:ActivatePendingPieces] Failed to create object for vehicle piece {pZdoId} ({pHash}): {ex.Message}");
+            }
+          }
+
+          if (existingNv != null && !m_pieces.Contains(existingNv))
+          {
+            ActivatePiece(existingNv);
+          }
+        }
       }
 
       var currentPieces = GetShipActiveInstances(persistentZdoId);
