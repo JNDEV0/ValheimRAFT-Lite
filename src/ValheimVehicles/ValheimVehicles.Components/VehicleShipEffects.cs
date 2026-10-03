@@ -12,7 +12,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
 
   public float m_offset = 0.01f;
 
-  public float m_minimumWakeVel = 5f;
+  public float m_minimumWakeVel = 1.5f;
 
   public GameObject m_speedWakeRoot;
 

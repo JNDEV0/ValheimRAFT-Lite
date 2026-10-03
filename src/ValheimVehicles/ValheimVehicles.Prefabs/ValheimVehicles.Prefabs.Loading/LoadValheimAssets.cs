@@ -22,6 +22,9 @@ public class LoadValheimAssets
   public static GameObject raftMast;
   public static GameObject shipWaterEffects;
 
+  public static GameObject? CutwaterSplashTemplate;
+  public static GameObject? WakeParticlesTemplate;
+
   public static Shader CustomPieceShader;
 
   public void Init(PrefabManager prefabManager)
@@ -34,6 +37,53 @@ public class LoadValheimAssets
     drakkarPrefab = prefabManager.GetPrefab("VikingShip_Ashlands");
     shipWaterEffects =
       vanillaRaftPrefab.transform.Find("WaterEffects").gameObject;
+
+    var karvePrefab = prefabManager.GetPrefab("Karve");
+    if (karvePrefab != null)
+    {
+      var karveShipEffects = karvePrefab.GetComponentInChildren<ShipEffects>();
+      if (karveShipEffects != null)
+      {
+        if (karveShipEffects.m_splashEffects != null)
+        {
+          CutwaterSplashTemplate = Object.Instantiate(karveShipEffects.m_splashEffects);
+          CutwaterSplashTemplate.name = "CutwaterSplashTemplate";
+          CutwaterSplashTemplate.SetActive(false);
+          Object.DontDestroyOnLoad(CutwaterSplashTemplate);
+        }
+        if (karveShipEffects.m_speedWakeRoot != null)
+        {
+          WakeParticlesTemplate = Object.Instantiate(karveShipEffects.m_speedWakeRoot);
+          WakeParticlesTemplate.name = "WakeParticlesTemplate";
+          WakeParticlesTemplate.SetActive(false);
+          Object.DontDestroyOnLoad(WakeParticlesTemplate);
+        }
+      }
+    }
+
+    if (CutwaterSplashTemplate == null && vikingShipPrefab != null)
+    {
+      var vsEffects = vikingShipPrefab.GetComponentInChildren<ShipEffects>();
+      if (vsEffects != null && vsEffects.m_splashEffects != null)
+      {
+        CutwaterSplashTemplate = Object.Instantiate(vsEffects.m_splashEffects);
+        CutwaterSplashTemplate.name = "CutwaterSplashTemplate";
+        CutwaterSplashTemplate.SetActive(false);
+        Object.DontDestroyOnLoad(CutwaterSplashTemplate);
+      }
+    }
+
+    if (WakeParticlesTemplate == null && vikingShipPrefab != null)
+    {
+      var vsEffects = vikingShipPrefab.GetComponentInChildren<ShipEffects>();
+      if (vsEffects != null && vsEffects.m_speedWakeRoot != null)
+      {
+        WakeParticlesTemplate = Object.Instantiate(vsEffects.m_speedWakeRoot);
+        WakeParticlesTemplate.name = "WakeParticlesTemplate";
+        WakeParticlesTemplate.SetActive(false);
+        Object.DontDestroyOnLoad(WakeParticlesTemplate);
+      }
+    }
 
     waterMask = vikingShipPrefab.transform.Find("ship/visual/watermask");
     waterMaskShader = waterMask.GetComponent<Renderer>().sharedMaterial.shader;

@@ -133,12 +133,14 @@ public class CultivatableComponent : MonoBehaviour
 
   public static void InitPiece(ZNetView netview)
   {
+    if (netview == null || !netview || netview.m_zdo == null) return;
     var id = GetParentID(netview);
     if (id != 0) AddChild(id, netview);
   }
 
   public static int GetParentID(ZNetView netview)
   {
+    if (netview == null || !netview || netview.m_zdo == null) return 0;
     var id = netview.m_zdo.GetInt(VehicleZdoVars.MBCultivatableParentIdHash);
     if (id == 0)
     {

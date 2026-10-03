@@ -1843,20 +1843,67 @@
           PersistentZdoId == 0) return;
 
 
-      for (var index = 0; index < m_pieces.Count; index++)
+      var vehPos = transform.position;
+      var vehRot = transform.rotation;
+
+      var piecesToClean = m_pieces.ToList();
+      m_pieces.Clear();
+
+      for (var index = 0; index < piecesToClean.Count; index++)
       {
-        if (!m_pieces.TryGetValidElement(ref index, ["m_zdo"], out var piece))
+        var piece = piecesToClean[index];
+        if (piece == null || !piece.gameObject) continue;
+
+        var zdo = piece.GetZDO();
+        if (zdo != null && zdo.IsValid())
         {
-          continue;
+          var localPos = zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+          var localRot = Quaternion.Euler(zdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero));
+          var pieceWorldPos = vehPos + vehRot * localPos;
+          var pieceWorldRot = vehRot * localRot;
+
+          zdo.SetPosition(pieceWorldPos);
+          zdo.SetRotation(pieceWorldRot);
+
+          if (ZNetScene.instance != null && ZNetScene.instance.m_instances != null)
+          {
+            ZNetScene.instance.m_instances.Remove(zdo);
+          }
         }
 
-        if (piece != null && piece.gameObject != null)
+        var wnt = piece.GetComponent<WearNTear>();
+        if (wnt != null)
         {
-          piece.ResetZDO();
-          Destroy(piece.gameObject);
+          wnt.enabled = false;
+        }
+
+        piece.ResetZDO();
+        Destroy(piece.gameObject);
+      }
+
+      if (Manager != null && Manager.PersistentZdoId != 0)
+      {
+        var allVehiclePieces = EnsurePiecesForVehicle(Manager.PersistentZdoId);
+        foreach (var pZdoId in allVehiclePieces)
+        {
+          var pZdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(pZdoId) : null;
+          if (pZdo != null && pZdo.IsValid())
+          {
+            var localPos = pZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+            var localRot = Quaternion.Euler(pZdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero));
+            var pieceWorldPos = vehPos + vehRot * localPos;
+            var pieceWorldRot = vehRot * localRot;
+
+            pZdo.SetPosition(pieceWorldPos);
+            pZdo.SetRotation(pieceWorldRot);
+
+            if (ZNetScene.instance != null && ZNetScene.instance.m_instances != null)
+            {
+              ZNetScene.instance.m_instances.Remove(pZdo);
+            }
+          }
         }
       }
-      m_pieces.Clear();
 
       if (Manager != null && BasePieceActivatorComponent.m_pendingPieces.ContainsKey(Manager.PersistentZdoId))
       {
@@ -2207,7 +2254,7 @@
     {
       if (!Manager.IsInitialized) return;
       if (Manager.isCreative) return;
-      if (m_zdo == null || !isActiveAndEnabled) return;
+      if (m_zdo == null) return;
       if (ZDOMan.instance == null) return;
       Physics.SyncTransforms();
 
@@ -4253,6 +4300,24 @@
 
       AddPiece(netView);
       LoggerProvider.LogInfo($"[VPC:LoadPiece] Vehicle #{PersistentZdoId}: Activated '{netView.name}' (ZDO: {zdo.m_uid}). Total loaded: {m_pieces.Count}");
+
+      var pName = netView.name;
+      if (pName.IndexOf("bow_center", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          pName.IndexOf("bow_tri", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          pName.IndexOf("cutwater", StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        var we = netView.GetComponent<VehiclePieceWaterEffects>();
+        if (we == null) we = netView.gameObject.AddComponent<VehiclePieceWaterEffects>();
+        we.Initialize(VehicleWaterEffectType.Cutwater, Manager);
+      }
+      else if (pName.IndexOf("rudder", StringComparison.OrdinalIgnoreCase) >= 0 ||
+               pName.IndexOf("keel", StringComparison.OrdinalIgnoreCase) >= 0 ||
+               pName.IndexOf("Ship_Hull_", StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        var we = netView.GetComponent<VehiclePieceWaterEffects>();
+        if (we == null) we = netView.gameObject.AddComponent<VehiclePieceWaterEffects>();
+        we.Initialize(VehicleWaterEffectType.Wake, Manager);
+      }
     }
 
 

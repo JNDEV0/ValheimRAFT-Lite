@@ -83,6 +83,21 @@
       return true;
     }
 
+    [HarmonyPatch(typeof(WearNTear), "UpdateBiome")]
+    [HarmonyPrefix]
+    private static bool WearNTear_UpdateBiome(WearNTear __instance)
+    {
+      if (__instance == null || !__instance || __instance.m_renderers == null) return false;
+      for (int i = __instance.m_renderers.Count - 1; i >= 0; i--)
+      {
+        if (__instance.m_renderers[i] == null)
+        {
+          __instance.m_renderers.RemoveAt(i);
+        }
+      }
+      return true;
+    }
+
     [HarmonyPatch(typeof(WearNTear), "Destroy")]
     [HarmonyPrefix]
     private static bool WearNTear_Destroy(WearNTear __instance)

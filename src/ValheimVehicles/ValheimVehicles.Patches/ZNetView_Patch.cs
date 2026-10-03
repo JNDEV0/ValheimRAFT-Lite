@@ -28,17 +28,24 @@
     [HarmonyPostfix]
     private static void ZNetView_Awake(ZNetView __instance)
     {
-      if (__instance.m_zdo == null || __instance.m_ghost) return;
+      if (__instance == null || !__instance || __instance.m_zdo == null || __instance.m_ghost) return;
 
       // Automatically attempts to attach/register to its parent vehicle if MBParentId is set
       if (VehiclePiecesController.TryInitPieceFromNetView(__instance))
       {
-        CultivatableComponent.InitPiece(__instance);
+        if (__instance != null && __instance && __instance.m_zdo != null)
+        {
+          CultivatableComponent.InitPiece(__instance);
+        }
         return;
       }
 
+      if (__instance == null || !__instance || __instance.m_zdo == null) return;
+
       // for any vehicle like components
       BasePieceActivatorComponent.InitPiece(__instance);
+
+      if (__instance == null || !__instance || __instance.m_zdo == null) return;
 
       // other components
       CultivatableComponent.InitPiece(__instance);
