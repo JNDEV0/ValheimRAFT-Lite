@@ -14,7 +14,7 @@ public class GreydwarfTaming_Patch
   {
     if (__instance == null || __instance.gameObject == null) return;
     var name = __instance.gameObject.name;
-    // Only regular Greydwarfs can be hired as sailors (exclude Shaman, Brute/Elite)
+    // Only regular Greydwarf can be hired as sailors (exclude Shaman, Brute/Elite)
     if (name.StartsWith("Greydwarf", StringComparison.OrdinalIgnoreCase) &&
         !name.Contains("Shaman", StringComparison.OrdinalIgnoreCase) &&
         !name.Contains("Elite", StringComparison.OrdinalIgnoreCase) &&
@@ -152,19 +152,46 @@ public class GreydwarfTaming_Patch
     return true;
   }
 
+  [HarmonyPatch(typeof(MonsterAI), nameof(MonsterAI.DoAttack))]
+  [HarmonyPrefix]
+  public static bool MonsterAI_DoAttack_Prefix(MonsterAI __instance, Character target)
+  {
+    if (__instance != null && __instance.GetComponent<RaftGreydwarfSailorComponent>() != null)
+    {
+      // Only attack hostile enemies that are alerted (have an exclamation mark)
+      if (target == null) return false;
+      var targetAI = target.GetBaseAI();
+      if (targetAI == null || !targetAI.IsAlerted())
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
   [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.StartAttack))]
   [HarmonyPrefix]
   public static bool Humanoid_StartAttack_Prefix(Humanoid __instance, Character target, bool isSecondaryAction)
   {
     if (__instance != null && __instance.GetComponent<RaftGreydwarfSailorComponent>() != null)
     {
+      // 1. Only allow attacks against hostile, alerted enemies (with an exclamation mark)
+      if (target != null)
+      {
+        var targetAI = target.GetBaseAI();
+        if (targetAI == null || !targetAI.IsAlerted())
+        {
+          return false;
+        }
+      }
+
+      // 2. Disable melee claw swings for sailors: in combat they only throw rocks from the boat
       var weapon = __instance.GetCurrentWeapon();
       if (weapon != null && weapon.m_shared != null)
       {
         var attack = isSecondaryAction ? weapon.m_shared.m_secondaryAttack : weapon.m_shared.m_attack;
         if (attack != null && attack.m_attackProjectile == null)
         {
-          // Disable melee claw swings for sailors: in combat they only throw rocks from the boat
           return false;
         }
       }

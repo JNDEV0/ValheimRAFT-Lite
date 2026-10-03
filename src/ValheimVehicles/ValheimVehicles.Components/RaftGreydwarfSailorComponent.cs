@@ -368,6 +368,17 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       transform.SetParent(PiecesController.transform);
     }
 
+    // Clear target if target is not actively alerted (no exclamation mark)
+    if (_monsterAI != null && _monsterAI.m_targetCreature != null)
+    {
+      var targetAI = _monsterAI.m_targetCreature.GetBaseAI();
+      if (targetAI == null || !targetAI.IsAlerted())
+      {
+        _monsterAI.SetTarget(null);
+        _monsterAI.m_targetCreature = null;
+      }
+    }
+
     // Detect if ship is moving or rotating
     bool isShipMoving = false;
     var moveCtrl = PiecesController.MovementController;
@@ -575,16 +586,20 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   {
     if (_character == null || PiecesController == null) return;
 
-    // Scan for hostiles within 15m of ship
-    var colliders = Physics.OverlapSphere(transform.position, 15f, LayerMask.GetMask("character"));
+    // Scan for hostiles within 18m of ship that are actively alerted (exclamation mark)
+    var colliders = Physics.OverlapSphere(transform.position, 18f, LayerMask.GetMask("character"));
     Character? target = null;
     foreach (var col in colliders)
     {
       var ch = col.GetComponentInParent<Character>();
       if (ch != null && !ch.IsTamed() && !ch.IsPlayer() && ch.GetFaction() != Character.Faction.Players)
       {
-        target = ch;
-        break;
+        var ai = ch.GetBaseAI();
+        if (ai != null && ai.IsAlerted())
+        {
+          target = ch;
+          break;
+        }
       }
     }
 
@@ -620,16 +635,17 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   private void PerformRockThrow(Character target)
   {
+    if (target == null) return;
+    var targetAI = target.GetBaseAI();
+    if (targetAI == null || !targetAI.IsAlerted()) return;
+
     EnsureRockWeaponEquipped();
 
-    if (target != null)
+    Vector3 dir = target.transform.position - transform.position;
+    dir.y = 0f;
+    if (dir.sqrMagnitude > 0.01f)
     {
-      Vector3 dir = target.transform.position - transform.position;
-      dir.y = 0f;
-      if (dir.sqrMagnitude > 0.01f)
-      {
-        transform.rotation = Quaternion.LookRotation(dir);
-      }
+      transform.rotation = Quaternion.LookRotation(dir);
     }
 
     if (_humanoid != null)
@@ -784,8 +800,8 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       rend.enabled = true;
     }
 
-    // Rotate 90 degrees (rotated -90 from previous 180) so hat faces forward on Greydwarf brow
-    hatVisual.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
+    // Rotate 90, 180, 0 degrees
+    hatVisual.transform.localRotation = Quaternion.Euler(90f, 180f, 0f);
     hatVisual.transform.localPosition = Vector3.zero;
 
     // Compensate for parent bone scale so world size is always exact
@@ -797,7 +813,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       targetScale / (Mathf.Abs(parentLossy.z) > 0.001f ? Mathf.Abs(parentLossy.z) : 1f)
     );
 
-    // Automatically eliminate any prefab offset by centering the hat mesh directly on the head with +0.5 Y offset
+    // Automatically eliminate any prefab offset by centering the hat mesh directly on the head with +0.25 Y offset
     var rends = hatVisual.GetComponentsInChildren<Renderer>(true);
     Bounds meshBounds = new Bounds();
     bool hasBounds = false;
@@ -819,13 +835,13 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
     if (hasBounds)
     {
-      Vector3 targetHeadPos = headBone.position + Vector3.up * 0.50f;
+      Vector3 targetHeadPos = headBone.position + Vector3.up * 0.25f;
       Vector3 shift = targetHeadPos - meshBounds.center;
       hatVisual.transform.position += shift;
     }
     else
     {
-      hatVisual.transform.localPosition = new Vector3(0f, 0.50f, 0f);
+      hatVisual.transform.localPosition = new Vector3(0f, 0.25f, 0f);
     }
   }
 
