@@ -1336,6 +1336,36 @@
         return;
       }
 
+      var zdo = netView.GetZDO();
+      if (zdo != null)
+      {
+        for (int i = 0; i < m_pieces.Count; i++)
+        {
+          var existing = m_pieces[i];
+          if (existing == null || existing == netView) continue;
+          var existingZdo = existing.GetZDO();
+          if (existingZdo == null) continue;
+
+          if (existingZdo.m_uid == zdo.m_uid)
+          {
+            LoggerProvider.LogWarning($"[ValheimRAFT:AddPiece] Duplicate piece detected by ZDOID {zdo.m_uid} ({netView.name}). Destroying duplicate GameObject.");
+            if (ZNetScene.instance != null) ZNetScene.instance.Destroy(netView.gameObject);
+            else Destroy(netView.gameObject);
+            return;
+          }
+
+          if (existingZdo.GetPrefab() == zdo.GetPrefab() &&
+              Vector3.Distance(existing.transform.localPosition, netView.transform.localPosition) < 0.02f &&
+              Quaternion.Angle(existing.transform.localRotation, netView.transform.localRotation) < 1.0f)
+          {
+            LoggerProvider.LogWarning($"[ValheimRAFT:AddPiece] Duplicate piece detected by spatial/prefab match: '{netView.name}' (Incoming ZDO: {zdo.m_uid}, Existing ZDO: {existingZdo.m_uid}) at localPos {netView.transform.localPosition}. Destroying duplicate.");
+            if (ZNetScene.instance != null) ZNetScene.instance.Destroy(netView.gameObject);
+            else Destroy(netView.gameObject);
+            return;
+          }
+        }
+      }
+
       // incrementRevision
       IncrementPieceRevision();
       PieceActivatorHelpers.FixPieceMeshes(netView);
@@ -1820,8 +1850,17 @@
           continue;
         }
 
-        piece.transform.SetParent(null);
-        AddInactivePiece(Manager!.PersistentZdoId, piece, null, true);
+        if (piece != null && piece.gameObject != null)
+        {
+          piece.ResetZDO();
+          Destroy(piece.gameObject);
+        }
+      }
+      m_pieces.Clear();
+
+      if (Manager != null && BasePieceActivatorComponent.m_pendingPieces.ContainsKey(Manager.PersistentZdoId))
+      {
+        BasePieceActivatorComponent.m_pendingPieces.Remove(Manager.PersistentZdoId);
       }
 
       // todo might need to do some freezing of positions if these pieces are rigidbodies/physics related such as animals and npcs.
@@ -2117,9 +2156,6 @@
       zdo.SetPosition(targetPos);
       if (oldSector != newSector)
       {
-        ZDOMan.instance.RemoveFromSector(zdo, oldSector);
-        ZDOMan.instance.AddToSector(zdo, newSector);
-
         var isPortal = Game.instance != null && Game.instance.PortalPrefabHash.Contains(zdo.GetPrefab());
         if (isPortal && ZDOMan.instance.m_portalObjects != null)
         {
@@ -4179,6 +4215,37 @@
       {
         var legacyRot = netView.m_zdo.GetQuaternion(VehicleZdoVars.MBRotationHash, Quaternion.identity);
         netView.transform.localRotation = legacyRot;
+      }
+
+      // Deduplicate: check if an identical piece is already active on this vehicle
+      var incomingPos = netView.transform.localPosition;
+      var incomingRot = netView.transform.localRotation;
+      var incomingPrefab = zdo.GetPrefab();
+
+      for (int i = 0; i < m_pieces.Count; i++)
+      {
+        var existing = m_pieces[i];
+        if (existing == null || existing == netView) continue;
+        var existingZdo = existing.GetZDO();
+        if (existingZdo == null) continue;
+
+        if (existingZdo.m_uid == zdo.m_uid)
+        {
+          LoggerProvider.LogWarning($"[ValheimRAFT] Duplicate piece detected by ZDOID {zdo.m_uid} ({netView.name}). Destroying duplicate GameObject.");
+          if (ZNetScene.instance != null) ZNetScene.instance.Destroy(netView.gameObject);
+          else Destroy(netView.gameObject);
+          return;
+        }
+
+        if (existingZdo.GetPrefab() == incomingPrefab &&
+            Vector3.Distance(existing.transform.localPosition, incomingPos) < 0.02f &&
+            Quaternion.Angle(existing.transform.localRotation, incomingRot) < 1.0f)
+        {
+          LoggerProvider.LogWarning($"[ValheimRAFT] Duplicate piece detected by spatial/prefab match: '{netView.name}' (Incoming ZDO: {zdo.m_uid}, Existing ZDO: {existingZdo.m_uid}) at localPos {incomingPos}. Destroying duplicate.");
+          if (ZNetScene.instance != null) ZNetScene.instance.Destroy(netView.gameObject);
+          else Destroy(netView.gameObject);
+          return;
+        }
       }
 
       var wnt = netView.GetComponent<WearNTear>();

@@ -73,7 +73,8 @@ public class Teleport_Patch
         zdo.SetPosition(pieceWorldPos);
         zdo.SetRotation(pieceWorldRot);
 
-        if (ZDOMan.instance != null)
+        var isPortal = Game.instance != null && Game.instance.PortalPrefabHash.Contains(zdo.GetPrefab());
+        if (isPortal && ZDOMan.instance != null)
         {
           VehiclePiecesController.MigratePortalSectorInZdoMan(zdo, pieceWorldPos);
         }
