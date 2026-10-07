@@ -837,7 +837,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       }
     }
 
-    Vector3 localOffset = new Vector3(0.25f, 0.25f, 0f);
+    Vector3 localOffset = new Vector3(0f, 0.25f, 0f);
     if (hasBounds)
     {
       Vector3 targetHeadPos = headBone.TransformPoint(localOffset);

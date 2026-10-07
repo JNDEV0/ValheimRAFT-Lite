@@ -803,7 +803,7 @@ namespace ValheimVehicles.Prefabs
     {
       // main hammer for opening the custom vehicle build menu.
       VehicleHammerItemRegistry.Register();
-      VehicleRecallHornItemRegistry.Register();
+      // VehicleRecallHornItemRegistry.Register(); // Disabled
     }
 
     public static void RegisterAllPiecePrefabs()

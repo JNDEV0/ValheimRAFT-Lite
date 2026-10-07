@@ -180,9 +180,12 @@
           continue;
         }
 
-        if (keyValuePair.Value.character.transform.root
-              .GetComponentInParent<VehiclePiecesController>() == null)
-          itemsToRemove.Add(keyValuePair.Value.character);
+        var ch = keyValuePair.Value.character;
+        bool isOnThisVehicle = ch.GetComponentInParent<VehiclePiecesController>() != null ||
+                               ch.GetComponentInParent<VehicleManager>() != null ||
+                               (ch == Player.m_localPlayer && (ch.IsAttached() || WaterZoneUtils.IsOnboard(ch)));
+        if (!isOnThisVehicle)
+          itemsToRemove.Add(ch);
       }
 
       foreach (var zdoid in keysToRemove) RemoveByZdoid(zdoid);

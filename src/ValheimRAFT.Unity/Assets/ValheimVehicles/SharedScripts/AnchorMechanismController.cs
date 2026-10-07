@@ -175,6 +175,11 @@ namespace ValheimVehicles.SharedScripts
           {
             anchorTransform.localPosition = anchorStartLocalPosition;
             anchorTransform.localRotation = Quaternion.identity;
+            anchorRb.transform.localPosition = anchorStartLocalPosition;
+            anchorRb.position = anchorTransform.position;
+            anchorRb.rotation = anchorTransform.rotation;
+            anchorRb.linearVelocity = Vector3.zero;
+            anchorRb.angularVelocity = Vector3.zero;
           }
           break;
       }
@@ -292,7 +297,22 @@ namespace ValheimVehicles.SharedScripts
       if (anchorRb == null) return;
 
       if (currentState == AnchorState.Reeling)
+      {
         UpdateAnchorState(AnchorState.Recovered, GetCurrentStateText());
+        if (anchorTransform != null)
+        {
+          anchorTransform.localPosition = anchorStartLocalPosition;
+          anchorTransform.localRotation = Quaternion.identity;
+        }
+        if (anchorRb != null)
+        {
+          anchorRb.transform.localPosition = anchorStartLocalPosition;
+          anchorRb.position = anchorTransform != null ? anchorTransform.position : anchorRb.position;
+          anchorRb.rotation = anchorTransform != null ? anchorTransform.rotation : Quaternion.identity;
+          anchorRb.linearVelocity = Vector3.zero;
+          anchorRb.angularVelocity = Vector3.zero;
+        }
+      }
     }
 
     private void DropAnchor()

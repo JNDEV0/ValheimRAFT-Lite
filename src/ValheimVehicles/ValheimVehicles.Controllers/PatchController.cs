@@ -54,7 +54,7 @@ public static class PatchController
       typeof(Container_Patches),
       typeof(VehicleOwnership_Patches),
       typeof(ZNet_WorldSession_Patches),
-      typeof(VesselHorn_Patches),
+      // typeof(VesselHorn_Patches), // Disabled with horn item
       typeof(ByUsagePieceList_Patch),
       typeof(GreydwarfTaming_Patch)
     );

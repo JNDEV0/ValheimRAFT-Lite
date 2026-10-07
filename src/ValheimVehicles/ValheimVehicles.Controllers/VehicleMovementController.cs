@@ -7653,6 +7653,8 @@
     public void DelayedAnchor()
     {
       if (OnboardController != null && OnboardController.m_localPlayers.Count > 0) return;
+      if (HaveControllingPlayer()) return;
+      if (Player.m_localPlayer != null && (Player.m_localPlayer.IsAttached() || WaterZoneUtils.IsOnboard(Player.m_localPlayer))) return;
       HasPendingAnchor = false;
       if (Manager != null && Manager.IsLandVehicle)
         SendSetAnchor(AnchorState.Anchored);
@@ -7676,7 +7678,9 @@
     /// </summary>
     public void SendDelayedAnchor()
     {
-      if (isAnchored || vehicleAnchorState == AnchorState.Lowering) return;
+      if (isAnchored || vehicleAnchorState == AnchorState.Lowering || vehicleAnchorState == AnchorState.Reeling) return;
+      if (HaveControllingPlayer()) return;
+      if (Player.m_localPlayer != null && (Player.m_localPlayer.IsAttached() || WaterZoneUtils.IsOnboard(Player.m_localPlayer))) return;
 
       if (VehicleGuiMenuConfig.HasAutoAnchorDelay.Value)
       {
@@ -9507,11 +9511,21 @@
 
 
 
+      var isPlayerPresent =
+        (OnboardController != null && OnboardController.m_localPlayers.Count > 0) ||
+        HaveControllingPlayer() ||
+        (Player.m_localPlayer != null && (Player.m_localPlayer.IsAttached() || WaterZoneUtils.IsOnboard(Player.m_localPlayer)));
+
       var isNotAnchoredWithNobodyOnboard =
-        OnboardController != null &&
-        OnboardController.m_localPlayers.Count == 0 &&
+        !isPlayerPresent &&
         !isAnchored &&
-        vehicleAnchorState != AnchorState.Lowering;
+        vehicleAnchorState != AnchorState.Lowering &&
+        vehicleAnchorState != AnchorState.Reeling;
+
+      if (isPlayerPresent && HasPendingAnchor)
+      {
+        CancelDelayedAnchor();
+      }
 
       if (isNotAnchoredWithNobodyOnboard)
       {

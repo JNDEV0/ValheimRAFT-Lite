@@ -3350,6 +3350,26 @@
             anchorComponent.UpdateAnchorPositionIfNotNearGround();
           }
         }
+
+        if (anchorState == AnchorState.Recovered || anchorState == AnchorState.Idle)
+        {
+          if (anchorComponent.anchorTransform != null)
+          {
+            var startPos = anchorComponent.GetAnchorStartLocalPosition();
+            anchorComponent.anchorTransform.localPosition = startPos;
+            anchorComponent.anchorTransform.localRotation = Quaternion.identity;
+            var rb = anchorComponent.anchorTransform.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+              rb.transform.localPosition = startPos;
+              rb.position = anchorComponent.anchorTransform.position;
+              rb.rotation = anchorComponent.anchorTransform.rotation;
+              rb.linearVelocity = Vector3.zero;
+              rb.angularVelocity = Vector3.zero;
+            }
+          }
+          anchorComponent.UpdateRopeVisual();
+        }
       }
 
       if (_steeringWheelPiece)

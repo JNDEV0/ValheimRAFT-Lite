@@ -102,21 +102,13 @@ public class VehiclePieceWaterEffects : MonoBehaviour
 
     if (shouldEmit && _effectInstance != null)
     {
-      var effPos = _effectInstance.transform.position;
-      float waterY;
-      if (_vehicleManager != null && _vehicleManager.MovementController != null)
-      {
-        waterY = _vehicleManager.MovementController.ShipFloatationObj.AverageWaterHeight;
-      }
-      else
-      {
-        waterY = Floating.GetWaterLevel(effPos, ref _previousWaterVolume);
-      }
-
+      var effPos = transform.TransformPoint(new Vector3(0f, 0f, -0.6f));
+      var waterY = Floating.GetWaterLevel(effPos, ref _previousWaterVolume);
       if (waterY > -1000f)
       {
         effPos.y = waterY;
         _effectInstance.transform.position = effPos;
+        _effectInstance.transform.rotation = transform.rotation;
       }
     }
   }

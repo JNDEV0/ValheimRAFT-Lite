@@ -154,12 +154,15 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
     }
     else
     {
-      if (_mManager.MovementController != null)
+      if (_mManager.MovementController != null && m_speedWakeRoot != null)
       {
         var speedWakePos = m_speedWakeRoot.transform.position;
-        speedWakePos.y = _mManager.MovementController.ShipFloatationObj
-          .AverageWaterHeight;
-        m_speedWakeRoot.transform.position = speedWakePos;
+        var waterY = Floating.GetWaterLevel(speedWakePos, ref m_previousWaterVolume);
+        if (waterY > -1000f)
+        {
+          speedWakePos.y = waterY;
+          m_speedWakeRoot.transform.position = speedWakePos;
+        }
       }
 
       m_speedWakeRoot.SetActive(true);

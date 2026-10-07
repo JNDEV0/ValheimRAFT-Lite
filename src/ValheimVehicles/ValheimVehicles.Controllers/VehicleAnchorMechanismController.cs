@@ -158,8 +158,18 @@
         case AnchorState.Recovered:
           if (anchorTransform != null)
           {
-            anchorTransform.localPosition = GetAnchorStartLocalPosition();
+            var startPos = GetAnchorStartLocalPosition();
+            anchorTransform.localPosition = startPos;
             anchorTransform.localRotation = Quaternion.identity;
+            var rb = anchorTransform.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+              rb.transform.localPosition = startPos;
+              rb.position = anchorTransform.position;
+              rb.rotation = anchorTransform.rotation;
+              rb.linearVelocity = Vector3.zero;
+              rb.angularVelocity = Vector3.zero;
+            }
           }
           UpdateRopeVisual();
           break;

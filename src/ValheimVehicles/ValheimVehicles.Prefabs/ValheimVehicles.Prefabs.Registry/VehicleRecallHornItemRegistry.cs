@@ -13,6 +13,8 @@ public class VehicleRecallHornItemRegistry : RegisterPrefab<VehicleRecallHornIte
 {
   public static void RegisterVehicleHorn()
   {
+    // Horn of the Seas disabled
+    return;
     GameObject? hornPrefab = null;
 
     if (PrefabManager.Instance.GetPrefab("Tankard_Odin") != null)
@@ -118,6 +120,7 @@ public class VehicleRecallHornItemRegistry : RegisterPrefab<VehicleRecallHornIte
 
   public override void OnRegister()
   {
-    RegisterVehicleHorn();
+    // Horn of the Seas disabled
+    return;
   }
 }

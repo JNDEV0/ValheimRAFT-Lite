@@ -517,61 +517,7 @@ public class VehicleCommands : ConsoleCommand
 
   private void GiveHornOfTheSeas()
   {
-    var player = Player.m_localPlayer;
-    if (player == null)
-    {
-      Logger.LogMessage("No local player found. Must be in-game to give Horn of the Seas.");
-      return;
-    }
-
-    if (ObjectDB.instance == null)
-    {
-      Logger.LogMessage("ObjectDB not loaded.");
-      return;
-    }
-
-    var prefab = ObjectDB.instance.GetItemPrefab(PrefabNames.VesselHorn);
-    if (prefab == null)
-    {
-      var customItem = ItemManager.Instance != null ? ItemManager.Instance.GetItem(PrefabNames.VesselHorn) : null;
-      if (customItem != null)
-      {
-        prefab = customItem.ItemPrefab;
-      }
-    }
-
-    if (prefab == null)
-    {
-      Logger.LogWarning($"Horn of the Seas prefab '{PrefabNames.VesselHorn}' not found.");
-      return;
-    }
-
-    var itemDrop = prefab.GetComponent<ItemDrop>();
-    if (itemDrop == null || itemDrop.m_itemData == null)
-    {
-      Logger.LogWarning($"Prefab '{PrefabNames.VesselHorn}' has no ItemDrop component.");
-      return;
-    }
-
-    var inventory = player.GetInventory();
-    if (inventory != null)
-    {
-      var itemData = itemDrop.m_itemData.Clone();
-      itemData.m_stack = 1;
-      if (inventory.AddItem(itemData))
-      {
-        Logger.LogMessage("Added Horn of the Seas to inventory.");
-        player.Message(MessageHud.MessageType.Center, "Added Horn of the Seas to inventory");
-      }
-      else
-      {
-        ItemDrop.DropItem(itemData, 1, player.transform.position + Vector3.up * 0.5f, player.transform.rotation);
-        Logger.LogMessage("Inventory full. Dropped Horn of the Seas at feet.");
-        player.Message(MessageHud.MessageType.Center, "Inventory full. Dropped Horn of the Seas at feet");
-      }
-      player.AddKnownItem(itemDrop.m_itemData);
-      player.UpdateKnownRecipesList();
-    }
+    Logger.LogMessage("Horn of the Seas has been disabled and removed from the game.");
   }
 
   private void GiveGreydwarfSailorKit()
