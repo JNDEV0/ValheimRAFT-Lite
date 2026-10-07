@@ -591,27 +591,31 @@
           var name = prefabGo.name;
 
           // Reject natural terrain, boulders, trees, rocks, destruction effects
-          if (name.StartsWith("sfx_") || name.StartsWith("vfx_") || name.StartsWith("fx_") ||
-              name.Contains("TerrainComp") || name.StartsWith("LocationProxy") ||
-              name.StartsWith("MineRock") || name.StartsWith("cliff_") || name.StartsWith("rock4_") ||
-              name.StartsWith("TreeBase") || name.StartsWith("TreeLog") || name.StartsWith("stubbe"))
+          var isPlanter = prefabGo.GetComponent<CultivatableComponent>() != null || name.StartsWith("MBDirtFloor");
+          if (!isPlanter)
           {
-            return false;
-          }
+            if (name.StartsWith("sfx_") || name.StartsWith("vfx_") || name.StartsWith("fx_") ||
+                name.Contains("TerrainComp") || name.StartsWith("LocationProxy") ||
+                name.StartsWith("MineRock") || name.StartsWith("cliff_") || name.StartsWith("rock4_") ||
+                name.StartsWith("TreeBase") || name.StartsWith("TreeLog") || name.StartsWith("stubbe"))
+            {
+              return false;
+            }
 
-          if (prefabGo.GetComponent<Character>() != null ||
-              prefabGo.GetComponent<MonsterAI>() != null ||
-              prefabGo.GetComponent<AnimalAI>() != null ||
-              prefabGo.GetComponent<Heightmap>() != null ||
-              prefabGo.GetComponent<TerrainComp>() != null ||
-              prefabGo.GetComponent<TerrainModifier>() != null ||
-              prefabGo.GetComponent<LocationProxy>() != null ||
-              prefabGo.GetComponent<MineRock>() != null ||
-              prefabGo.GetComponent<MineRock5>() != null ||
-              prefabGo.GetComponent<TreeBase>() != null ||
-              prefabGo.GetComponent<TreeLog>() != null)
-          {
-            return false;
+            if (prefabGo.GetComponent<Character>() != null ||
+                prefabGo.GetComponent<MonsterAI>() != null ||
+                prefabGo.GetComponent<AnimalAI>() != null ||
+                prefabGo.GetComponent<Heightmap>() != null ||
+                prefabGo.GetComponent<TerrainComp>() != null ||
+                prefabGo.GetComponent<TerrainModifier>() != null ||
+                prefabGo.GetComponent<LocationProxy>() != null ||
+                prefabGo.GetComponent<MineRock>() != null ||
+                prefabGo.GetComponent<MineRock5>() != null ||
+                prefabGo.GetComponent<TreeBase>() != null ||
+                prefabGo.GetComponent<TreeLog>() != null)
+            {
+              return false;
+            }
           }
         }
       }
@@ -1871,7 +1875,10 @@
           wnt.enabled = false;
         }
 
-        piece.ResetZDO();
+        if (piece.m_zdo != null)
+        {
+          piece.ResetZDO();
+        }
         Destroy(piece.gameObject);
       }
 
@@ -4226,12 +4233,13 @@
       }
 
       // Reject non-piece objects (creatures, terrain compilers, location proxies, heightmaps)
-      if (netView.GetComponent<Character>() != null ||
+      var isPlanter = netView.GetComponent<CultivatableComponent>() != null || netView.name.StartsWith("MBDirtFloor");
+      if (!isPlanter && (netView.GetComponent<Character>() != null ||
           netView.GetComponent<Heightmap>() != null ||
           netView.GetComponent<TerrainComp>() != null || netView.GetComponent<TerrainModifier>() != null ||
           netView.name.Contains("TerrainComp") ||
           netView.name.StartsWith("LocationProxy") ||
-          netView.GetComponent<LocationProxy>() != null)
+          netView.GetComponent<LocationProxy>() != null))
       {
         LoggerProvider.LogWarning($"[Auto-Purge] Rejecting and unparenting invalid piece {netView.name} (ZDO: {zdo.m_uid}) from vehicle {PersistentZdoId}");
         RemoveVehicleDataFromZdo(zdo);
@@ -4735,20 +4743,22 @@
                                netView.GetComponent<VehicleAnchorMechanismController>() != null ||
                                netView.GetComponent<SwivelPieceActivator>() != null ||
                                netView.GetComponent<VehicleRamAoe>() != null;
+      var isPlanter = netView.GetComponent<CultivatableComponent>() != null || prefabName.StartsWith("MBDirtFloor");
+      var isPlantOrCrop = netView.GetComponent<Plant>() != null || netView.GetComponent<Pickable>() != null;
 
-      if (piece == null && !isVehicleComponent && !prefabName.StartsWith("MB_") && !prefabName.StartsWith("ShipHull") && !prefabName.StartsWith("Sail") && !prefabName.StartsWith("Mast") && !prefabName.StartsWith("Rudder") && !prefabName.StartsWith("Rope") && !prefabName.StartsWith("Swivel") && !prefabName.StartsWith("VehiclePiece") && !prefabName.StartsWith("WaterVehicle") && !prefabName.StartsWith("ValheimVehicles"))
+      if (piece == null && !isVehicleComponent && !isPlanter && !isPlantOrCrop && !prefabName.StartsWith("MB_") && !prefabName.StartsWith("ShipHull") && !prefabName.StartsWith("Sail") && !prefabName.StartsWith("Mast") && !prefabName.StartsWith("Rudder") && !prefabName.StartsWith("Rope") && !prefabName.StartsWith("Swivel") && !prefabName.StartsWith("VehiclePiece") && !prefabName.StartsWith("WaterVehicle") && !prefabName.StartsWith("ValheimVehicles"))
       {
         LoggerProvider.LogWarning($"[AddNewPiece] Rejected non-piece/non-vehicle NetView <{prefabName}>");
         return;
       }
 
       // Safeguard 2: Reject terrain, boulders, trees, and destruction effects
-      if (prefabName.StartsWith("sfx_") || prefabName.StartsWith("vfx_") || prefabName.StartsWith("fx_") ||
+      if (!isPlanter && !isPlantOrCrop && (prefabName.StartsWith("sfx_") || prefabName.StartsWith("vfx_") || prefabName.StartsWith("fx_") ||
           prefabName.StartsWith("MineRock") || prefabName.StartsWith("cliff_") || prefabName.StartsWith("rock4_") ||
           prefabName.StartsWith("TreeBase") || prefabName.StartsWith("TreeLog") || prefabName.StartsWith("stubbe") ||
           netView.GetComponent<Character>() != null || netView.GetComponent<MonsterAI>() != null ||
           netView.GetComponent<Heightmap>() != null || netView.GetComponent<TerrainComp>() != null ||
-          netView.GetComponent<TerrainModifier>() != null || netView.GetComponent<LocationProxy>() != null)
+          netView.GetComponent<TerrainModifier>() != null || netView.GetComponent<LocationProxy>() != null))
       {
         LoggerProvider.LogWarning($"[AddNewPiece] Rejected terrain/effect NetView <{prefabName}>");
         return;

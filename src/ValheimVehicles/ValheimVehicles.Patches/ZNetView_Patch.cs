@@ -16,12 +16,17 @@
     [HarmonyPrefix]
     private static bool ZNetView_ResetZDO(ZNetView __instance)
     {
-      if (!ZNetView.m_forceDisableInit || __instance == null)
+      if (__instance == null || __instance.m_zdo == null)
       {
-        return true;
+        return false;
       }
 
-      return __instance.m_zdo != null;
+      if (ZNetView.m_forceDisableInit)
+      {
+        return false;
+      }
+
+      return true;
     }
 
     [HarmonyPatch(typeof(ZNetView), "Awake")]

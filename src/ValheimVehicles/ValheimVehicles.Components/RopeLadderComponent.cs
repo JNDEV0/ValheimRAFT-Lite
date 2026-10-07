@@ -177,17 +177,15 @@
         return false;
       }
 
-      // If flying: only retract if actively moving (> 0.01f). When stopped/hovering, extend as if anchored.
-      if (movementController.IsFlying())
-      {
-        var isMoving = movementController.m_body != null &&
-                       (movementController.m_body.linearVelocity.sqrMagnitude > 0.01f ||
-                        movementController.GetSpeedSetting() != Ship.Speed.Stop);
+      // If actively moving (> 0.01f or speed != Stop), retract ladder (applies to both flight and float modes).
+      // When stopped, extend ladder (down to water level or ground).
+      var isMoving = movementController.m_body != null &&
+                     (movementController.m_body.linearVelocity.sqrMagnitude > 0.01f ||
+                      movementController.GetSpeedSetting() != Ship.Speed.Stop);
 
-        if (isMoving)
-        {
-          return true;
-        }
+      if (isMoving)
+      {
+        return true;
       }
 
       return false;
@@ -251,6 +249,7 @@
           hitpoint.y = vehiclePiecesController.GetColliderBottom();
 
         m_ladderHeight = (hitpoint - raystart).magnitude;
+        m_ladderHeight = Mathf.Max(m_ladderHeight, 5 * m_stepDistance);
         m_lastHitWaterDistance = 0f;
       }
       else
