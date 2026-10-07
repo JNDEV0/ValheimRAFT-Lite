@@ -3369,10 +3369,13 @@
             if (rb != null)
             {
               rb.transform.localPosition = startPos;
-              rb.position = anchorComponent.anchorTransform.position;
-              rb.rotation = anchorComponent.anchorTransform.rotation;
-              rb.linearVelocity = Vector3.zero;
-              rb.angularVelocity = Vector3.zero;
+              if (!rb.isKinematic)
+              {
+                rb.position = anchorComponent.anchorTransform.position;
+                rb.rotation = anchorComponent.anchorTransform.rotation;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+              }
             }
           }
           anchorComponent.UpdateRopeVisual();

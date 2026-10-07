@@ -69,7 +69,9 @@ namespace ValheimVehicles.SharedScripts
 
     public Vector3 GetAnchorStartLocalPosition()
     {
-      return anchorStartLocalPosition;
+      if (anchorStartLocalPosition != Vector3.zero)
+        return anchorStartLocalPosition;
+      return new Vector3(-0.201f, -0.755f, -0.379f);
     }
 
     /// <summary>
@@ -87,7 +89,7 @@ namespace ValheimVehicles.SharedScripts
       if (anchorTransform == null)
         anchorTransform = transform.Find("anchor");
 
-      if (anchorRopeAttachmentPoint == null)
+      if (anchorRopeAttachmentPoint == null && anchorTransform != null)
         anchorRopeAttachmentPoint = anchorTransform.Find("attachpoint_anchor");
 
       if (rotationAnchorRopeAttachpoint == null)
@@ -99,14 +101,36 @@ namespace ValheimVehicles.SharedScripts
 
       anchorStateFadeTextTransform = transform.Find("hover_anchor_state_message");
 
-      anchorTransform.Find("scalar/colliders").gameObject
-        .AddComponent<ChildCollisionDetector>();
+      if (anchorTransform != null)
+      {
+        var colliders = anchorTransform.Find("scalar/colliders");
+        if (colliders != null)
+        {
+          colliders.gameObject.AddComponent<ChildCollisionDetector>();
+          var collidersRb = colliders.GetComponent<Rigidbody>();
+          if (collidersRb != null)
+          {
+            collidersRb.isKinematic = true;
+            collidersRb.useGravity = false;
+          }
+        }
+      }
+
       anchorReelTransform = transform.Find("anchor_reel");
       anchorReelCogsTransform = transform.Find("anchor_reel/cogs");
-      anchorRb = anchorTransform.GetComponent<Rigidbody>();
-      anchorStartLocalPosition = anchorRb.transform.localPosition;
+      if (anchorTransform != null)
+      {
+        anchorRb = anchorTransform.GetComponent<Rigidbody>();
+        if (anchorRb != null)
+        {
+          anchorRb.isKinematic = true;
+          anchorRb.useGravity = false;
+          anchorStartLocalPosition = anchorRb.transform.localPosition;
+        }
+      }
 
-      anchorStateFadeText = anchorStateFadeTextTransform.gameObject.AddComponent<HoverFadeText>();
+      if (anchorStateFadeTextTransform != null)
+        anchorStateFadeText = anchorStateFadeTextTransform.gameObject.AddComponent<HoverFadeText>();
     }
 
     public virtual void Start()
@@ -119,7 +143,7 @@ namespace ValheimVehicles.SharedScripts
         UpdateAnchorState(AnchorState.Recovered, GetCurrentStateText());
         if (anchorRb != null)
         {
-          anchorRb.transform.localPosition = anchorStartLocalPosition;
+          anchorRb.transform.localPosition = GetAnchorStartLocalPosition();
         }
       }
     }
@@ -171,13 +195,17 @@ namespace ValheimVehicles.SharedScripts
           break;
         case AnchorState.Recovered:
         case AnchorState.Idle:
-          if (anchorRb != null)
+          if (anchorTransform != null)
           {
-            anchorTransform.localPosition = anchorStartLocalPosition;
+            var startPos = GetAnchorStartLocalPosition();
+            anchorTransform.localPosition = startPos;
             anchorTransform.localRotation = Quaternion.identity;
-            anchorRb.transform.localPosition = anchorStartLocalPosition;
-            anchorRb.position = anchorTransform.position;
-            anchorRb.rotation = anchorTransform.rotation;
+          }
+          if (anchorRb != null && !anchorRb.isKinematic)
+          {
+            anchorRb.transform.localPosition = GetAnchorStartLocalPosition();
+            anchorRb.position = anchorTransform != null ? anchorTransform.position : anchorRb.position;
+            anchorRb.rotation = anchorTransform != null ? anchorTransform.rotation : Quaternion.identity;
             anchorRb.linearVelocity = Vector3.zero;
             anchorRb.angularVelocity = Vector3.zero;
           }
@@ -299,18 +327,22 @@ namespace ValheimVehicles.SharedScripts
       if (currentState == AnchorState.Reeling)
       {
         UpdateAnchorState(AnchorState.Recovered, GetCurrentStateText());
+        var startPos = GetAnchorStartLocalPosition();
         if (anchorTransform != null)
         {
-          anchorTransform.localPosition = anchorStartLocalPosition;
+          anchorTransform.localPosition = startPos;
           anchorTransform.localRotation = Quaternion.identity;
         }
         if (anchorRb != null)
         {
-          anchorRb.transform.localPosition = anchorStartLocalPosition;
-          anchorRb.position = anchorTransform != null ? anchorTransform.position : anchorRb.position;
-          anchorRb.rotation = anchorTransform != null ? anchorTransform.rotation : Quaternion.identity;
-          anchorRb.linearVelocity = Vector3.zero;
-          anchorRb.angularVelocity = Vector3.zero;
+          anchorRb.transform.localPosition = startPos;
+          if (!anchorRb.isKinematic)
+          {
+            anchorRb.position = anchorTransform != null ? anchorTransform.position : anchorRb.position;
+            anchorRb.rotation = anchorTransform != null ? anchorTransform.rotation : Quaternion.identity;
+            anchorRb.linearVelocity = Vector3.zero;
+            anchorRb.angularVelocity = Vector3.zero;
+          }
         }
       }
     }

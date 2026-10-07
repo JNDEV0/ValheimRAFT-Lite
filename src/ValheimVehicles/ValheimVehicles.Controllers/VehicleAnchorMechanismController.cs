@@ -124,6 +124,7 @@
     /// </summary>
     public void UpdateAnchorPositionIfNotNearGround()
     {
+      if (currentState != AnchorState.Anchored) return;
       var deltaGround = GetDistanceToGround();
       if (!(deltaGround > 0.5f)) return;
       var clampedDepth = Mathf.Clamp(deltaGround, 1f, maxAnchorDistance);
@@ -136,7 +137,10 @@
         if (rb != null)
         {
           rb.transform.localPosition = newPos;
-          rb.position = anchorTransform.position;
+          if (!rb.isKinematic)
+          {
+            rb.position = anchorTransform.position;
+          }
         }
       }
       UpdateRopeVisual();
@@ -165,10 +169,13 @@
             if (rb != null)
             {
               rb.transform.localPosition = startPos;
-              rb.position = anchorTransform.position;
-              rb.rotation = anchorTransform.rotation;
-              rb.linearVelocity = Vector3.zero;
-              rb.angularVelocity = Vector3.zero;
+              if (!rb.isKinematic)
+              {
+                rb.position = anchorTransform.position;
+                rb.rotation = anchorTransform.rotation;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+              }
             }
           }
           UpdateRopeVisual();
@@ -177,7 +184,7 @@
           throw new ArgumentOutOfRangeException(nameof(newState), newState, null);
       }
 
-      if (MovementController != null && MovementController.m_nview != null && MovementController.m_nview.IsOwner())
+      if (MovementController != null && MovementController.m_nview != null && MovementController.m_nview.IsValid())
       {
         if (MovementController.vehicleAnchorState != newState)
         {
