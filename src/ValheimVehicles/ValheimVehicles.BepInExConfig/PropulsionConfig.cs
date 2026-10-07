@@ -256,28 +256,40 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
     );
 
     SailTier1Propulsion = config.BindUnique(GenericSectionName,
-      "SailTier1Propulsion", 3f,
+      "SailTier1Propulsion", 1.5f,
       ConfigHelpers.CreateConfigDescription(
         "Flat propulsion added per Raft sail (Tier 1).", true, false));
-    if (System.Math.Abs(SailTier1Propulsion.Value - 5f) < 0.01f)
+    if (System.Math.Abs(SailTier1Propulsion.Value - 5f) < 0.01f || System.Math.Abs(SailTier1Propulsion.Value - 3f) < 0.01f)
     {
-      SailTier1Propulsion.Value = 3f;
+      SailTier1Propulsion.Value = 1.5f;
     }
 
     SailTier2Propulsion = config.BindUnique(GenericSectionName,
-      "SailTier2Propulsion", 5f,
+      "SailTier2Propulsion", 2f,
       ConfigHelpers.CreateConfigDescription(
         "Flat propulsion added per Karve sail (Tier 2).", true, false));
+    if (System.Math.Abs(SailTier2Propulsion.Value - 5f) < 0.01f || System.Math.Abs(SailTier2Propulsion.Value - 4f) < 0.01f)
+    {
+      SailTier2Propulsion.Value = 2f;
+    }
 
     SailTier3Propulsion = config.BindUnique(GenericSectionName,
-      "SailTier3Propulsion", 7f,
+      "SailTier3Propulsion", 2.5f,
       ConfigHelpers.CreateConfigDescription(
         "Flat propulsion added per Longship sail (Tier 3).", true, false));
+    if (System.Math.Abs(SailTier3Propulsion.Value - 7f) < 0.01f)
+    {
+      SailTier3Propulsion.Value = 2.5f;
+    }
 
     SailTier4Propulsion = config.BindUnique(GenericSectionName,
-      "SailTier4Propulsion", 9f,
+      "SailTier4Propulsion", 3f,
       ConfigHelpers.CreateConfigDescription(
         "Flat propulsion added per Drakkar sail (Tier 4).", true, false));
+    if (System.Math.Abs(SailTier4Propulsion.Value - 9f) < 0.01f)
+    {
+      SailTier4Propulsion.Value = 3f;
+    }
 
     SailPropulsionMultiplier = config.BindUnique(GenericSectionName,
       "SailPropulsionMultiplier", 1.0f,
@@ -290,21 +302,37 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
       ConfigHelpers.CreateConfigDescription(
         "Manual sets the sail wind area of the tier 1 sail.", true, false)
     );
+    if (System.Math.Abs(SailTier1Area.Value - 5f) < 0.01f || System.Math.Abs(SailTier1Area.Value - 3f) < 0.01f)
+    {
+      SailTier1Area.Value = 1.5f;
+    }
 
     SailTier2Area = config.BindUnique(GenericSectionName,
       "SailTier2Area", SailAreaForce.Tier2,
       ConfigHelpers.CreateConfigDescription(
         "Manual sets the sail wind area of the tier 2 sail.", true, false));
+    if (System.Math.Abs(SailTier2Area.Value - 5f) < 0.01f || System.Math.Abs(SailTier2Area.Value - 4f) < 0.01f)
+    {
+      SailTier2Area.Value = 2f;
+    }
 
     SailTier3Area = config.BindUnique(GenericSectionName,
       "SailTier3Area", SailAreaForce.Tier3,
       ConfigHelpers.CreateConfigDescription(
         "Manual sets the sail wind area of the tier 3 sail.", true, false));
+    if (System.Math.Abs(SailTier3Area.Value - 7f) < 0.01f)
+    {
+      SailTier3Area.Value = 2.5f;
+    }
 
     SailTier4Area = config.BindUnique(GenericSectionName,
       "SailTier4Area", SailAreaForce.Tier4,
       ConfigHelpers.CreateConfigDescription(
         "Manual sets the sail wind area of the tier 4 sail.", true, false));
+    if (System.Math.Abs(SailTier4Area.Value - 9f) < 0.01f)
+    {
+      SailTier4Area.Value = 3f;
+    }
 
     FlightVerticalToggle = config.BindUnique<bool>(GenericSectionName,
       "FlightVerticalToggle",
