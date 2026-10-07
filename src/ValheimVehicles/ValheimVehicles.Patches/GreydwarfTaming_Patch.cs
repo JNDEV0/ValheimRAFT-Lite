@@ -198,4 +198,70 @@ public class GreydwarfTaming_Patch
     }
     return true;
   }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.UpdateMotion))]
+  [HarmonyPrefix]
+  public static bool Character_UpdateMotion_Prefix(Character __instance)
+  {
+    if (__instance != null && __instance.m_body != null && __instance.m_body.isKinematic)
+    {
+      return false;
+    }
+    return true;
+  }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.SyncVelocity))]
+  [HarmonyPrefix]
+  public static bool Character_SyncVelocity_Prefix(Character __instance)
+  {
+    if (__instance != null && __instance.m_body != null && __instance.m_body.isKinematic)
+    {
+      return false;
+    }
+    return true;
+  }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.SetVelocity))]
+  [HarmonyPrefix]
+  public static bool Character_SetVelocity_Prefix(Character __instance)
+  {
+    if (__instance != null && __instance.m_body != null && __instance.m_body.isKinematic)
+    {
+      return false;
+    }
+    return true;
+  }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.StopMovement))]
+  [HarmonyPrefix]
+  public static bool Character_StopMovement_Prefix(Character __instance)
+  {
+    if (__instance != null && __instance.m_body != null && __instance.m_body.isKinematic)
+    {
+      return false;
+    }
+    return true;
+  }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.StopMovementXZ))]
+  [HarmonyPrefix]
+  public static bool Character_StopMovementXZ_Prefix(Character __instance)
+  {
+    if (__instance != null && __instance.m_body != null && __instance.m_body.isKinematic)
+    {
+      return false;
+    }
+    return true;
+  }
+
+  [HarmonyPatch(typeof(Character), nameof(Character.UnderWorldCheck))]
+  [HarmonyPrefix]
+  public static bool Character_UnderWorldCheck_Prefix(Character __instance)
+  {
+    if (__instance != null && __instance.m_body != null && __instance.m_body.isKinematic)
+    {
+      return false;
+    }
+    return true;
+  }
 }

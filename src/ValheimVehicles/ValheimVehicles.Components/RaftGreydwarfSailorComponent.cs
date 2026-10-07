@@ -174,7 +174,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     transform.position = targetPos;
     transform.SetParent(PiecesController.transform);
 
-    if (_character != null && _character.m_body != null)
+    if (_character != null && _character.m_body != null && !_character.m_body.isKinematic)
     {
       _character.m_body.linearVelocity = Vector3.zero;
       _character.m_body.angularVelocity = Vector3.zero;
@@ -382,14 +382,18 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     // Detect if ship is moving or rotating
     bool isShipMoving = false;
     var moveCtrl = PiecesController.MovementController;
-    if (moveCtrl != null && moveCtrl.GetSpeedSetting() != Ship.Speed.Stop)
+    if (moveCtrl != null && moveCtrl.isAnchored)
+    {
+      isShipMoving = false;
+    }
+    else if (moveCtrl != null && moveCtrl.GetSpeedSetting() != Ship.Speed.Stop)
     {
       isShipMoving = true;
     }
     else
     {
       var rb = PiecesController.m_syncRigidbody != null ? PiecesController.m_syncRigidbody : PiecesController.m_localRigidbody;
-      if (rb != null && (rb.linearVelocity.sqrMagnitude > 0.04f || rb.angularVelocity.sqrMagnitude > 0.005f))
+      if (rb != null && rb.linearVelocity.sqrMagnitude > 0.25f)
       {
         isShipMoving = true;
       }
@@ -451,7 +455,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
           // Stepped over edge or foreign collider: keep rooted safely on deck
           transform.localPosition = _lastSafeLocalPos.Value;
           if (_lastSafeLocalRot.HasValue) transform.localRotation = _lastSafeLocalRot.Value;
-          if (_character.m_body != null) _character.m_body.linearVelocity = Vector3.zero;
+          if (_character.m_body != null && !_character.m_body.isKinematic) _character.m_body.linearVelocity = Vector3.zero;
         }
       }
       else if (_lastSafeLocalPos.HasValue)
@@ -459,7 +463,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
         // Stepped over open ocean: immediately snap back onto deck
         transform.localPosition = _lastSafeLocalPos.Value;
         if (_lastSafeLocalRot.HasValue) transform.localRotation = _lastSafeLocalRot.Value;
-        if (_character.m_body != null) _character.m_body.linearVelocity = Vector3.zero;
+        if (_character.m_body != null && !_character.m_body.isKinematic) _character.m_body.linearVelocity = Vector3.zero;
       }
     }
   }
@@ -505,7 +509,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
           }
           _lastSafeLocalPos = transform.localPosition;
           _lastSafeLocalRot = transform.localRotation;
-          if (_character.m_body != null) _character.m_body.linearVelocity = Vector3.zero;
+          if (_character.m_body != null && !_character.m_body.isKinematic) _character.m_body.linearVelocity = Vector3.zero;
           _waterTimer = 0f;
           return;
         }
@@ -529,7 +533,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
         }
         _lastSafeLocalPos = transform.localPosition;
         _lastSafeLocalRot = transform.localRotation;
-        if (_character.m_body != null)
+        if (_character.m_body != null && !_character.m_body.isKinematic)
         {
           _character.m_body.linearVelocity = Vector3.zero;
         }
@@ -800,20 +804,20 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       rend.enabled = true;
     }
 
-    // Rotate 90, 180, 0 degrees
-    hatVisual.transform.localRotation = Quaternion.Euler(90f, 180f, 0f);
+    // Rotate -90, 180, 0 degrees (flip X to -90)
+    hatVisual.transform.localRotation = Quaternion.Euler(-90f, 180f, 0f);
     hatVisual.transform.localPosition = Vector3.zero;
 
-    // Compensate for parent bone scale so world size is always exact
+    // Compensate for parent bone scale so world size is always exact (regular greydwarf scale 0.9f)
     Vector3 parentLossy = headBone.lossyScale;
-    float targetScale = DwarfType == GreydwarfSailorType.Brute ? 0.95f : 0.70f;
+    float targetScale = 0.90f;
     hatVisual.transform.localScale = new Vector3(
       targetScale / (Mathf.Abs(parentLossy.x) > 0.001f ? Mathf.Abs(parentLossy.x) : 1f),
       targetScale / (Mathf.Abs(parentLossy.y) > 0.001f ? Mathf.Abs(parentLossy.y) : 1f),
       targetScale / (Mathf.Abs(parentLossy.z) > 0.001f ? Mathf.Abs(parentLossy.z) : 1f)
     );
 
-    // Automatically eliminate any prefab offset by centering the hat mesh directly on the head with +0.25 Y offset
+    // Automatically eliminate any prefab offset by centering the hat mesh directly on the head with (0.25x, 0.25y, 0z) offset
     var rends = hatVisual.GetComponentsInChildren<Renderer>(true);
     Bounds meshBounds = new Bounds();
     bool hasBounds = false;
@@ -833,15 +837,16 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       }
     }
 
+    Vector3 localOffset = new Vector3(0.25f, 0.25f, 0f);
     if (hasBounds)
     {
-      Vector3 targetHeadPos = headBone.position + Vector3.up * 0.25f;
+      Vector3 targetHeadPos = headBone.TransformPoint(localOffset);
       Vector3 shift = targetHeadPos - meshBounds.center;
       hatVisual.transform.position += shift;
     }
     else
     {
-      hatVisual.transform.localPosition = new Vector3(0f, 0.25f, 0f);
+      hatVisual.transform.localPosition = localOffset;
     }
   }
 
