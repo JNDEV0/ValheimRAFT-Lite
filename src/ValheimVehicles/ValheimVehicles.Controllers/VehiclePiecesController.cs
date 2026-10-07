@@ -4318,21 +4318,20 @@
       LoggerProvider.LogInfo($"[VPC:LoadPiece] Vehicle #{PersistentZdoId}: Activated '{netView.name}' (ZDO: {zdo.m_uid}). Total loaded: {m_pieces.Count}");
 
       var pName = netView.name;
-      if (pName.IndexOf("bow_center", StringComparison.OrdinalIgnoreCase) >= 0 ||
-          pName.IndexOf("bow_tri", StringComparison.OrdinalIgnoreCase) >= 0 ||
-          pName.IndexOf("cutwater", StringComparison.OrdinalIgnoreCase) >= 0)
-      {
-        var we = netView.GetComponent<VehiclePieceWaterEffects>();
-        if (we == null) we = netView.gameObject.AddComponent<VehiclePieceWaterEffects>();
-        we.Initialize(VehicleWaterEffectType.Cutwater, Manager);
-      }
-      else if (pName.IndexOf("rudder", StringComparison.OrdinalIgnoreCase) >= 0 ||
-               pName.IndexOf("keel", StringComparison.OrdinalIgnoreCase) >= 0 ||
-               pName.IndexOf("Ship_Hull_", StringComparison.OrdinalIgnoreCase) >= 0)
+      if (pName.IndexOf("rudder", StringComparison.OrdinalIgnoreCase) >= 0)
       {
         var we = netView.GetComponent<VehiclePieceWaterEffects>();
         if (we == null) we = netView.gameObject.AddComponent<VehiclePieceWaterEffects>();
         we.Initialize(VehicleWaterEffectType.Wake, Manager);
+      }
+      else
+      {
+        // Remove any previously attached water effects from non-rudder pieces (e.g. cutwater/keel)
+        var existingWe = netView.GetComponent<VehiclePieceWaterEffects>();
+        if (existingWe != null)
+        {
+          Destroy(existingWe);
+        }
       }
     }
 

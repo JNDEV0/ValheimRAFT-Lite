@@ -7,7 +7,6 @@ namespace ValheimVehicles.Components;
 
 public enum VehicleWaterEffectType
 {
-  Cutwater,
   Wake
 }
 
@@ -22,12 +21,21 @@ public class VehiclePieceWaterEffects : MonoBehaviour
   private WaterVolume _previousWaterVolume;
   private bool _isEmitting;
 
-  public void Initialize(VehicleWaterEffectType type, VehicleManager? manager = null)
+  public void Initialize(VehicleWaterEffectType type = VehicleWaterEffectType.Wake, VehicleManager? manager = null)
   {
     EffectType = type;
     _vehicleManager = manager ?? GetComponentInParent<VehicleManager>();
     _vehicleRigidbody = _vehicleManager?.MovementControllerRigidbody ?? _vehicleManager?.PiecesController?.m_syncRigidbody ?? GetComponentInParent<Rigidbody>();
     SpawnEffect();
+  }
+
+  private void Awake()
+  {
+    var existingCutwater = transform.Find("CutwaterWaterEffect");
+    if (existingCutwater != null)
+    {
+      Destroy(existingCutwater.gameObject);
+    }
   }
 
   private void Start()
@@ -44,27 +52,15 @@ public class VehiclePieceWaterEffects : MonoBehaviour
   {
     if (_effectInstance != null) return;
 
-    GameObject? template = EffectType == VehicleWaterEffectType.Cutwater
-      ? LoadValheimAssets.CutwaterSplashTemplate
-      : LoadValheimAssets.WakeParticlesTemplate;
-
+    GameObject? template = LoadValheimAssets.WakeParticlesTemplate;
     if (template == null) return;
 
     _effectInstance = Instantiate(template, transform);
-    _effectInstance.name = EffectType == VehicleWaterEffectType.Cutwater ? "CutwaterWaterEffect" : "WakeWaterEffect";
+    _effectInstance.name = "WakeWaterEffect";
 
-    if (EffectType == VehicleWaterEffectType.Cutwater)
-    {
-      // Placed slightly forward at the cutwater waterline
-      _effectInstance.transform.localPosition = new Vector3(0f, -0.2f, 0.6f);
-      _effectInstance.transform.localRotation = Quaternion.identity;
-    }
-    else
-    {
-      // Placed slightly rearward for rudder/keel wake trailing
-      _effectInstance.transform.localPosition = new Vector3(0f, -0.2f, -0.6f);
-      _effectInstance.transform.localRotation = Quaternion.identity;
-    }
+    // Placed slightly rearward for rudder wake trailing behind the ship
+    _effectInstance.transform.localPosition = new Vector3(0f, -0.2f, -0.6f);
+    _effectInstance.transform.localRotation = Quaternion.identity;
 
     _particles = _effectInstance.GetComponentsInChildren<ParticleSystem>(true);
     _effectInstance.SetActive(true);
@@ -92,7 +88,7 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     }
 
     var speed = _vehicleRigidbody.linearVelocity.magnitude;
-    var minSpeed = EffectType == VehicleWaterEffectType.Cutwater ? 1.5f : 1.2f;
+    const float minSpeed = 1.2f;
 
     var pos = transform.position;
     var isNearWater = Floating.IsUnderWater(pos, ref _previousWaterVolume);
