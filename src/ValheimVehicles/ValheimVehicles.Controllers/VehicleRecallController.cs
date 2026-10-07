@@ -217,7 +217,14 @@ public static class VehicleRecallController
       {
         var wheelNv = wheel.GetComponent<ZNetView>();
         if (wheelNv != null && wheelNv.IsValid()) wheelZdo = wheelNv.GetZDO();
-        landingPos = wheel.transform.position - wheel.transform.forward * 0.8f + Vector3.up * 0.1f;
+        if (wheel.AttachPoint != null)
+        {
+          landingPos = wheel.AttachPoint.position;
+        }
+        else
+        {
+          landingPos = wheel.transform.position - wheel.transform.forward * 0.8f;
+        }
         landingRot = wheel.transform.rotation;
         if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselRecall] Target wheel found at {wheel.transform.position}, landing player at {landingPos}");
       }
@@ -279,7 +286,7 @@ public static class VehicleRecallController
           wheelRotOffset = wheelZdo.GetQuaternion(VehicleZdoVars.MBRotationHash, Quaternion.identity);
         }
         var wheelWorldRot = targetRot * wheelRotOffset;
-        landingPos = targetPos + targetRot * wheelOffset - wheelWorldRot * Vector3.forward * 0.8f + Vector3.up * 0.1f;
+        landingPos = targetPos + targetRot * wheelOffset - wheelWorldRot * Vector3.forward * 0.8f;
         landingRot = wheelWorldRot;
         if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselRecall] Unloaded wheel ZDO found, landing player at offset {landingPos}");
       }

@@ -126,6 +126,22 @@ public static class VesselHornChanneler
     return false;
   }
 
+  public static bool IsPlayerMovingHorizontally(Player? player)
+  {
+    if (player == null) return false;
+    if (player.m_run || player.IsRunning()) return true;
+    if (player.m_moveDir.sqrMagnitude > 0.001f) return true;
+
+    // Check horizontal velocity if not standing on a boat
+    if (player.GetStandingOnShip() == null && !WaterZoneUtils.IsOnboard(player))
+    {
+      var vel = player.m_currentVel;
+      if ((vel.x * vel.x + vel.z * vel.z) > 0.25f) return true;
+    }
+
+    return false;
+  }
+
   public static void UpdateLocalPlayer(Player player)
   {
     if (player == null || player.IsDead() || player.IsTeleporting() || player.InIntro())
@@ -150,10 +166,14 @@ public static class VesselHornChanneler
       return;
     }
 
-    // Never channel or poll horn inputs while sprinting/running
-    if (player.m_run || player.IsRunning())
+    // Never channel or poll horn inputs while moving (prevents loading bar spam while moving)
+    if (IsPlayerMovingHorizontally(player))
     {
-      if (IsChanneling) CancelAction(player);
+      if (IsChanneling)
+      {
+        _awaitingInputRelease = true;
+        CancelAction(player, "movement");
+      }
       return;
     }
 
@@ -269,10 +289,16 @@ public static class VesselHornChanneler
         return;
       }
 
-      // Check movement or damage
-      if (Vector3.Distance(player.transform.position, _startPosition) > 0.4f)
+      // Check horizontal movement only, ignoring vertical movement so wave bobbing does not cancel teleports
+      var dx = player.transform.position.x - _startPosition.x;
+      var dz = player.transform.position.z - _startPosition.z;
+      var horizontalDistSqr = dx * dx + dz * dz;
+
+      var maxHorizontalDist = (player.GetStandingOnShip() != null || WaterZoneUtils.IsOnboard(player)) ? 0.8f : 0.45f;
+      if (horizontalDistSqr > maxHorizontalDist * maxHorizontalDist || IsPlayerMovingHorizontally(player))
       {
-        CancelAction(player);
+        _awaitingInputRelease = true;
+        CancelAction(player, "movement");
         return;
       }
 

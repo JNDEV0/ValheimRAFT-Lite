@@ -4190,6 +4190,15 @@
       var zdo = netView.GetZDO();
       if (zdo == null) return;
 
+      if (Manager == null)
+      {
+        Manager = GetComponent<VehicleManager>() ?? GetComponentInParent<VehicleManager>();
+        if (Manager == null && PersistentZdoId != 0)
+        {
+          Manager = VehicleManager.GetVehicle(PersistentZdoId);
+        }
+      }
+
       if (TryBailOnSameObject(netView.gameObject))
       {
         RemoveVehicleDataFromZdo(netView.m_zdo);
@@ -4336,9 +4345,11 @@
       AddTemporaryPiece(activationPieceData.netView, shouldSkipIgnoreColliders);
     }
 
-    public bool TryBailOnSameObject(GameObject obj)
+    public bool TryBailOnSameObject(GameObject? obj)
     {
-      if (obj == gameObject || obj == Manager.gameObject) return true;
+      if (obj == null) return true;
+      if (obj == gameObject) return true;
+      if (Manager != null && obj == Manager.gameObject) return true;
       return false;
     }
 
@@ -4352,7 +4363,7 @@
       // Do not allow naturally spawned rocks/flint/branches to be parented to the vehicle
       if (netView.GetComponent<Pickable>() != null || netView.GetComponentInParent<Pickable>() != null) return;
       // do not allow adding a piece to itself
-      if (netView.transform == transform || netView.transform == Manager.transform) return;
+      if (netView.transform == transform || (Manager != null && netView.transform == Manager.transform)) return;
 
       var zdo = netView.GetZDO();
       if (zdo == null) return;

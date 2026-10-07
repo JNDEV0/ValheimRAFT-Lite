@@ -1088,6 +1088,7 @@
 
       PiecesController = _vehiclePiecesContainerInstance
         .AddComponent<VehiclePiecesController>();
+      PiecesController.Manager = this;
     }
 
   #region IVehicleConfig

@@ -1,4 +1,5 @@
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Propulsion.Rudder;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.SharedScripts;
 using ValheimVehicles.Components;
@@ -303,6 +304,9 @@ public class Teleport_Patch
       return true;
     }
 
+    try
+    {
+
     var targetZdo = ZDOMan.instance != null ? ZDOMan.instance.GetZDO(targetZdoid) : null;
     var parentId = targetZdo != null ? targetZdo.GetInt(VehicleZdoVars.MBParentId, 0) : 0;
     if (parentId == 0)
@@ -387,6 +391,11 @@ public class Teleport_Patch
       piecesController = vm.Instance.PiecesController;
     }
 
+    if (piecesController != null && piecesController.Manager == null && vm != null)
+    {
+      piecesController.Manager = vm;
+    }
+
     var isAreaReady = ZNetScene.instance != null && ZNetScene.instance.IsAreaReady(targetPos);
     var isVehicleReady = piecesController != null && piecesController.isActiveAndEnabled;
     var isPortalReady = nv != null;
@@ -433,7 +442,14 @@ public class Teleport_Patch
           }
           else if (piecesController != null && !piecesController.m_pieces.Contains(existingNv))
           {
-            piecesController.ActivatePiece(existingNv);
+            try
+            {
+              piecesController.ActivatePiece(existingNv);
+            }
+            catch (System.Exception ex)
+            {
+              Jotunn.Logger.LogWarning($"[BoatPortal] Failed to activate existing piece {existingNv.name} ({existingNv.GetZDO()?.m_uid}): {ex.Message}");
+            }
           }
         }
       }
@@ -456,7 +472,15 @@ public class Teleport_Patch
     // Floor placement: check FindFloor, fallback to targetPos on deck if missed
     if (ZoneSystem.instance != null && ZoneSystem.instance.FindFloor(targetPos, out var floorHeight))
     {
-      __instance.transform.position = new Vector3(targetPos.x, Mathf.Max(targetPos.y, floorHeight), targetPos.z);
+      // If floorHeight is close to targetPos (within 2m), use floorHeight to stand on the deck cleanly without snapping onto the wheel
+      if (Mathf.Abs(floorHeight - targetPos.y) < 2.0f)
+      {
+        __instance.transform.position = new Vector3(targetPos.x, floorHeight, targetPos.z);
+      }
+      else
+      {
+        __instance.transform.position = new Vector3(targetPos.x, Mathf.Max(targetPos.y, floorHeight), targetPos.z);
+      }
     }
     else
     {
@@ -487,6 +511,14 @@ public class Teleport_Patch
     }
 
     return false;
+    }
+    catch (System.Exception ex)
+    {
+      Jotunn.Logger.LogError($"[BoatPortal] Exception in Player_UpdateTeleport_Prefix: {ex}");
+      m_teleportTarget.Remove(__instance);
+      __instance.m_teleporting = false;
+      return true;
+    }
   }
 
   [HarmonyPatch(typeof(Player), "UpdateTeleport")]
@@ -535,15 +567,21 @@ public class Teleport_Patch
         var vehicleZdo = ZDOMan.instance.GetZDO(new ZDOID(targetZdo.m_uid.UserID, (uint)parentId))
                       ?? ZDOMan.instance.GetZDO(new ZDOID(1, (uint)parentId));
 
+        var isWheel = targetZdo.GetPrefab() == PrefabNames.ShipSteeringWheel.GetStableHashCode();
+
         if (vm != null && vm.Instance != null && vm.Instance.PiecesController != null)
         {
           var vPos = vm.transform.position;
           var vRot = vm.transform.rotation;
           var localPos = targetZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
           var localRot = Quaternion.Euler(targetZdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero));
-          var portalPos = vPos + vRot * localPos;
-          var portalRot = vRot * localRot;
-          return portalPos + portalRot * Vector3.forward * 1.6f + Vector3.up * 0.2f;
+          var piecePos = vPos + vRot * localPos;
+          var pieceRot = vRot * localRot;
+          if (isWheel)
+          {
+            return piecePos - pieceRot * Vector3.forward * 0.8f;
+          }
+          return piecePos + pieceRot * Vector3.forward * 1.6f + Vector3.up * 0.2f;
         }
         else if (vehicleZdo != null)
         {
@@ -551,9 +589,13 @@ public class Teleport_Patch
           var vRot = vehicleZdo.GetRotation();
           var localPos = targetZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
           var localRot = Quaternion.Euler(targetZdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero));
-          var portalPos = vPos + vRot * localPos;
-          var portalRot = vRot * localRot;
-          return portalPos + portalRot * Vector3.forward * 1.6f + Vector3.up * 0.2f;
+          var piecePos = vPos + vRot * localPos;
+          var pieceRot = vRot * localRot;
+          if (isWheel)
+          {
+            return piecePos - pieceRot * Vector3.forward * 0.8f;
+          }
+          return piecePos + pieceRot * Vector3.forward * 1.6f + Vector3.up * 0.2f;
         }
       }
     }
@@ -567,6 +609,16 @@ public class Teleport_Patch
 
     if ((bool)tp)
       return tp.transform.position + tp.transform.forward * 1.6f + Vector3.up * 0.2f;
+
+    var wheel = go.GetComponent<SteeringWheelComponent>() ?? go.GetComponentInChildren<SteeringWheelComponent>();
+    if (wheel != null)
+    {
+      if (wheel.AttachPoint != null)
+      {
+        return wheel.AttachPoint.position;
+      }
+      return wheel.transform.position - wheel.transform.forward * 0.8f;
+    }
 
     return go.transform.position;
   }
