@@ -2754,6 +2754,24 @@
 
 
 
+        if (IsFlightModeActive && ZoneSystem.instance != null && TargetHeight < ZoneSystem.instance.m_waterLevel)
+
+        {
+
+          var waterLvl = ZoneSystem.instance.m_waterLevel;
+
+          var currentY = m_body != null ? m_body.position.y : waterLvl;
+
+          TargetHeight = Mathf.Max(currentY, waterLvl) + 1f;
+
+          _previousTargetHeight = TargetHeight;
+
+          m_nview?.GetZDO()?.Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
+
+        }
+
+
+
         var maxVerticalOffset = GetMaxVerticalOffset();
 
 
@@ -2914,7 +2932,9 @@
 
       if (PropulsionConfig.AllowFlight.Value)
 
-        if (IsFlying() ||
+        if (IsFlightModeActive ||
+
+            IsFlying() ||
 
             OnboardCollider.bounds.max.y > ZoneSystem.instance.m_waterLevel ||
 
@@ -6933,6 +6953,10 @@
 
 
 
+      if (!IsFlightModeActive) return false;
+
+
+
       // Check physical water contact: if the bottom of the hull has reached water level, exit flight
 
       var waterLvl = ZoneSystem.instance.m_waterLevel;
@@ -6953,33 +6977,11 @@
 
 
 
-      // this allows for the check to run the first time.
+      cachedFlyingValue = _flightTakeoffImmunityTimer > 0f ||
 
-      if (lastFlyingDt is > 0f and < 2f)
+                          TargetHeight > waterLvl + GetSurfaceOffsetWaterVehicleOnly() ||
 
-      {
-
-        lastFlyingDt += Time.fixedDeltaTime;
-
-        return cachedFlyingValue;
-
-      }
-
-
-
-      if (!ZoneSystem.instance) return false;
-
-
-
-      lastFlyingDt = Time.fixedDeltaTime;
-
-
-
-      // The vehicle is out of the water.
-
-      cachedFlyingValue = IsFlightModeActive && TargetHeight > ZoneSystem.instance.m_waterLevel +
-
-        GetSurfaceOffsetWaterVehicleOnly();
+                          hullBottomY > waterLvl;
 
 
 
@@ -10204,9 +10206,29 @@
       if (active)
       {
         _flightTakeoffImmunityTimer = 6f;
-        if (ZoneSystem.instance != null && TargetHeight <= GetSurfaceOffsetWaterVehicleOnly() + 0.5f)
+        cachedFlyingValue = true;
+        lastFlyingDt = 0f;
+        if (ZoneSystem.instance != null)
         {
-          UpdateTargetHeight(GetSurfaceOffsetWaterVehicleOnly() + 2f, true);
+          var waterLvl = ZoneSystem.instance.m_waterLevel;
+          var currentY = m_body != null ? m_body.position.y : waterLvl;
+          var baseFlightY = Mathf.Max(currentY, waterLvl);
+          if (TargetHeight <= GetSurfaceOffsetWaterVehicleOnly() + 0.5f || TargetHeight < waterLvl)
+          {
+            TargetHeight = baseFlightY + 1.5f;
+            _previousTargetHeight = TargetHeight;
+            m_nview.GetZDO().Set(VehicleZdoVars.VehicleTargetHeight, TargetHeight);
+            Manager?.UpdateShipEffects();
+          }
+        }
+        if (m_body != null && !m_body.isKinematic)
+        {
+          var v = m_body.linearVelocity;
+          if (v.y < 1f)
+          {
+            v.y = 1.5f;
+            m_body.linearVelocity = v;
+          }
         }
       }
       else
