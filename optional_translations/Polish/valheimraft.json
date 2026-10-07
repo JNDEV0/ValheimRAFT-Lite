@@ -366,5 +366,6 @@
   "valheim_vehicles_anchor_alert_teleport": "Kotwicaed: Player Arriving",
   "valheim_vehicles_debug_force_anchor_title": "Debug: Wymuś kotwicę przy teleportacji",
   "valheim_vehicles_debug_force_anchor_portals": "Portale",
-  "valheim_vehicles_debug_force_anchor_beds": "Łóżka"
+  "valheim_vehicles_debug_force_anchor_beds": "Łóżka",
+  "valheim_vehicles_tame_ship_too_far": "Ship is too far"
 }

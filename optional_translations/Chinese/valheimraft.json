@@ -366,5 +366,6 @@
   "valheim_vehicles_anchor_alert_teleport": "Anchored: Player Arriving",
   "valheim_vehicles_debug_force_anchor_title": "传送调试：强制抛锚",
   "valheim_vehicles_debug_force_anchor_portals": "传送门",
-  "valheim_vehicles_debug_force_anchor_beds": "床"
+  "valheim_vehicles_debug_force_anchor_beds": "床",
+  "valheim_vehicles_tame_ship_too_far": "Ship is too far"
 }

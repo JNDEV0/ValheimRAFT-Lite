@@ -49,15 +49,23 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       }
     }
 
-    // Do NOT show hover taming text unless the player has coins in hand
+    // ONLY show the hover text if the player has 10+ coins in the action bar, not just anywhere in the inventory
     var localPlayer = Player.m_localPlayer;
     if (localPlayer == null) return "";
     var inv = localPlayer.GetInventory();
     if (inv == null) return "";
-    int coins = GetItemCount(inv, "Coins", "$item_coins");
-    if (coins <= 0)
+    int actionBarCoins = GetActionBarItemCount(inv, "Coins", "$item_coins");
+    if (actionBarCoins < 10)
     {
       return "";
+    }
+
+    var nearestShip = FindNearestShip(transform.position, 250f);
+    if (nearestShip == null)
+    {
+      // Grey out the text "Hire Sailor" and show an additional line under it "Ship is too far"
+      return Localization.instance.Localize(
+        "<color=grey>[<b>$KEY_Use</b>] $valheim_vehicles_tame_prompt\n$valheim_vehicles_tame_ship_too_far</color>");
     }
 
     // Simplified taming hover text: "[E] Hire Sailor"
@@ -94,7 +102,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     nearestShip = FindNearestShip(transform.position, 250f);
     if (nearestShip == null)
     {
-      reason = Localization.instance.Localize("$valheim_vehicles_tame_no_ship");
+      reason = ""; // No UI message when ship is too far
       return false;
     }
 
@@ -128,36 +136,25 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
 
     if (!CanHireSailor(player, out string reason, out var nearestShip))
     {
-      player.Message(MessageHud.MessageType.Center, reason);
+      if (!string.IsNullOrEmpty(reason))
+      {
+        player.Message(MessageHud.MessageType.Center, reason);
+      }
       return false;
     }
 
     var inv = player.GetInventory();
     if (inv == null) return false;
 
-    int coins = GetItemCount(inv, "Coins", "$item_coins");
-
-    // 10 Coins = 100% success
-    if (coins >= 10)
+    int actionBarCoins = GetActionBarItemCount(inv, "Coins", "$item_coins");
+    if (actionBarCoins < 10)
     {
-      RemoveItemCount(inv, "Coins", "$item_coins", 10);
-      ExecuteTaming(player, success: true, nearestShip: nearestShip);
-      return true;
+      return false;
     }
 
-    // 5 Coins = 50% success
-    if (coins >= 5)
-    {
-      RemoveItemCount(inv, "Coins", "$item_coins", 5);
-      bool success = UnityEngine.Random.value <= 0.5f;
-      ExecuteTaming(player, success, nearestShip: nearestShip);
-      return true;
-    }
-
-    // Insufficient coins
-    player.Message(MessageHud.MessageType.Center,
-      Localization.instance.Localize("$valheim_vehicles_tame_insufficient"));
-    return false;
+    RemoveActionBarItemCount(inv, "Coins", "$item_coins", 10);
+    ExecuteTaming(player, success: true, nearestShip: nearestShip);
+    return true;
   }
 
   public bool UseItem(Humanoid user, ItemDrop.ItemData item)
@@ -214,27 +211,23 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
 
     if (!CanHireSailor(player, out string reason, out var nearestShip))
     {
-      player.Message(MessageHud.MessageType.Center, reason);
-      return true; // handled, don't consume or equip item
+      if (!string.IsNullOrEmpty(reason))
+      {
+        player.Message(MessageHud.MessageType.Center, reason);
+      }
+      return true; // handled, no message if reason is empty
     }
 
-    int coinCount = GetItemCount(inv, "Coins", "$item_coins");
-    if (coinCount >= 10)
+    int actionBarCoins = GetActionBarItemCount(inv, "Coins", "$item_coins");
+    if (actionBarCoins < 10)
     {
-      RemoveItemCount(inv, "Coins", "$item_coins", 10);
-      ExecuteTaming(player, success: true, nearestShip: nearestShip);
-      return true;
-    }
-    if (coinCount >= 5)
-    {
-      RemoveItemCount(inv, "Coins", "$item_coins", 5);
-      bool success = UnityEngine.Random.value <= 0.5f;
-      ExecuteTaming(player, success, nearestShip: nearestShip);
+      player.Message(MessageHud.MessageType.Center,
+        Localization.instance.Localize("$valheim_vehicles_tame_insufficient"));
       return true;
     }
 
-    player.Message(MessageHud.MessageType.Center,
-      Localization.instance.Localize("$valheim_vehicles_tame_insufficient"));
+    RemoveActionBarItemCount(inv, "Coins", "$item_coins", 10);
+    ExecuteTaming(player, success: true, nearestShip: nearestShip);
     return true;
   }
 
@@ -329,7 +322,67 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
         nearest = move.PiecesController;
       }
     }
+    if (nearest == null && VehiclePiecesController.ActiveInstances != null)
+    {
+      foreach (var kvp in VehiclePiecesController.ActiveInstances)
+      {
+        var vpc = kvp.Value;
+        if (vpc == null) continue;
+        float d2 = (vpc.transform.position - pos).sqrMagnitude;
+        if (d2 < minDist)
+        {
+          minDist = d2;
+          nearest = vpc;
+        }
+      }
+    }
     return nearest;
+  }
+
+  private static int GetActionBarItemCount(Inventory inv, string prefabName, string token)
+  {
+    if (inv == null) return 0;
+    int count = 0;
+    int width = Math.Min(8, inv.GetWidth());
+    for (int x = 0; x < width; x++)
+    {
+      var item = inv.GetItemAt(x, 0);
+      if (item != null && IsItemMatch(item, prefabName, token))
+      {
+        count += item.m_stack;
+      }
+    }
+    return count;
+  }
+
+  private static void RemoveActionBarItemCount(Inventory inv, string prefabName, string token, int amount)
+  {
+    if (inv == null || amount <= 0) return;
+    int remaining = amount;
+    int width = Math.Min(8, inv.GetWidth());
+    for (int x = 0; x < width; x++)
+    {
+      var item = inv.GetItemAt(x, 0);
+      if (item != null && IsItemMatch(item, prefabName, token))
+      {
+        if (item.m_stack <= remaining)
+        {
+          remaining -= item.m_stack;
+          inv.RemoveItem(item);
+        }
+        else
+        {
+          item.m_stack -= remaining;
+          remaining = 0;
+          break;
+        }
+        if (remaining <= 0) break;
+      }
+    }
+    if (remaining > 0)
+    {
+      RemoveItemCount(inv, prefabName, token, remaining);
+    }
   }
 
   private static bool IsItemMatch(ItemDrop.ItemData item, string prefabName, string token)

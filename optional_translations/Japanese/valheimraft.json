@@ -366,5 +366,6 @@
   "valheim_vehicles_anchor_alert_teleport": "錨ed: Player Arriving",
   "valheim_vehicles_debug_force_anchor_title": "デバッグ: テレポート時に錨を下ろす",
   "valheim_vehicles_debug_force_anchor_portals": "ポータル",
-  "valheim_vehicles_debug_force_anchor_beds": "ベッド"
+  "valheim_vehicles_debug_force_anchor_beds": "ベッド",
+  "valheim_vehicles_tame_ship_too_far": "Ship is too far"
 }

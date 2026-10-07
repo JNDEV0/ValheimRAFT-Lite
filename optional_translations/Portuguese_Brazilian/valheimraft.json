@@ -366,5 +366,6 @@
   "valheim_vehicles_anchor_alert_teleport": "Âncoraed: Player Arriving",
   "valheim_vehicles_debug_force_anchor_title": "Depuração: Forçar âncora ao teletransportar",
   "valheim_vehicles_debug_force_anchor_portals": "Portais",
-  "valheim_vehicles_debug_force_anchor_beds": "Camas"
+  "valheim_vehicles_debug_force_anchor_beds": "Camas",
+  "valheim_vehicles_tame_ship_too_far": "Ship is too far"
 }

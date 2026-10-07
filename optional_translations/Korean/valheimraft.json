@@ -366,5 +366,6 @@
   "valheim_vehicles_anchor_alert_teleport": "닻ed: Player Arriving",
   "valheim_vehicles_debug_force_anchor_title": "디버그: 텔레포트 시 강제 닻 내림",
   "valheim_vehicles_debug_force_anchor_portals": "포탈",
-  "valheim_vehicles_debug_force_anchor_beds": "침대"
+  "valheim_vehicles_debug_force_anchor_beds": "침대",
+  "valheim_vehicles_tame_ship_too_far": "Ship is too far"
 }
