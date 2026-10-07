@@ -847,49 +847,37 @@
         if (btnObj != null) commandsPanelToggleObjects.Add(btnObj);
       }
 
-      // 2. Teleport Drops Anchor (Portals, Beds)
+      // 2. Max Water Float Height Slider
       var vehicle = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
       var vZdo = vehicle?.m_nview?.GetZDO();
-      var initialPortal = vZdo?.GetBool(VehicleZdoVars.ForceAnchorOnPortalTeleport, false)
-                          ?? CurrentSwitch?.ForceAnchorOnPortalTeleport
-                          ?? false;
-      var initialBed = vZdo?.GetBool(VehicleZdoVars.ForceAnchorOnBedTeleport, false)
-                       ?? CurrentSwitch?.ForceAnchorOnBedTeleport
-                       ?? false;
+      var currentMaxFloat = vehicle?.MovementController != null
+        ? vehicle.MovementController.GetMaxWaterFloatHeight()
+        : (vZdo?.GetFloat(VehicleZdoVars.MaxWaterFloatHeight, 0.3f) ?? 0.3f);
 
-      var anchorRow = SwivelUIHelpers.AddMultiToggleRow(
+      var floatSliderRow = SwivelUIHelpers.AddSliderRow(
         commandsWindow.transform,
         viewStyles,
-        ModTranslations.TeleportDropsAnchor ?? "Teleport Drops Anchor",
-        new[] { "Portals", "Beds" },
-        new[] { initialPortal, initialBed },
-        states =>
+        "Max Water Float Height",
+        0f, 3.0f,
+        currentMaxFloat,
+        val =>
         {
-          if (states == null || states.Length < 2) return;
-          var portalVal = states[0];
-          var bedVal = states[1];
-
-          // Auto-save to vehicle ZDO
           var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
           if (v?.m_nview?.GetZDO() != null)
           {
-            v.m_nview.GetZDO().Set(VehicleZdoVars.ForceAnchorOnPortalTeleport, portalVal);
-            v.m_nview.GetZDO().Set(VehicleZdoVars.ForceAnchorOnBedTeleport, bedVal);
+            v.m_nview.GetZDO().Set(VehicleZdoVars.MaxWaterFloatHeight, val);
           }
-
-          // Auto-save to calling switch
-          if (CurrentSwitch != null && CurrentSwitch.m_nview != null && CurrentSwitch.m_nview.GetZDO() != null)
+          if (v?.MovementController != null)
           {
-            CurrentSwitch.ForceAnchorOnPortalTeleport = portalVal;
-            CurrentSwitch.ForceAnchorOnBedTeleport = bedVal;
-            var cfg = new MechanismSwitchCustomConfig();
-            cfg.ApplyFrom(CurrentSwitch.Config);
-            cfg.ForceAnchorOnPortalTeleport = portalVal;
-            cfg.ForceAnchorOnBedTeleport = bedVal;
-            CurrentSwitch.prefabConfigSync.Request_CommitConfigChange(cfg);
+            if (!v.MovementController.IsFlightModeActive && v.MovementController.TargetHeight > val)
+            {
+              v.MovementController.UpdateTargetHeight(val);
+            }
           }
-        });
-      if (anchorRow != null) commandsPanelToggleObjects.Add(anchorRow);
+        },
+        out _,
+        panelWidth - 32f);
+      if (floatSliderRow != null) commandsPanelToggleObjects.Add(floatSliderRow);
 
       // 3. Console Debug Logs (Loop Log)
       var logRow = SwivelUIHelpers.AddToggleRow(

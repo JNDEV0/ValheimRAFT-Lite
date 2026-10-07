@@ -2018,7 +2018,7 @@
 
       m_pieces.RemoveAll(nv => !nv || !nv.gameObject);
 
-      var shouldLogSync = LoopTracker.Enabled || (Time.time - _lastPieceSyncLogTime >= 5.0f);
+      var shouldLogSync = LoopTracker.Enabled;
       if (shouldLogSync)
       {
         _lastPieceSyncLogTime = Time.time;

@@ -8337,40 +8337,26 @@
 
 
 
-    public float GetSurfaceOffsetWaterVehicleOnly()
-
+    public float GetMaxWaterFloatHeight()
     {
+      if (m_nview != null && m_nview.GetZDO() != null)
+      {
+        var customVal = m_nview.GetZDO().GetFloat(VehicleZdoVars.MaxWaterFloatHeight, -1f);
+        if (customVal >= 0f) return customVal;
+      }
 
+      var baseOffset = WaterConfig.EXPERIMENTAL_AboveSurfaceBallastUsesShipMass.Value
+        ? GetMaxAboveSurfaceFromShipWeight()
+        : (WaterConfig.WaterBallastEnabled.Value ? GetMaxAboveSurfaceFromOnboardExtents() : 0f);
+
+      return Mathf.Max(0.1f, baseOffset - 1.0f);
+    }
+
+    public float GetSurfaceOffsetWaterVehicleOnly()
+    {
       if (IsBallastAndFlightDisabled) return 0f;
 
-
-
-      if (WaterConfig.EXPERIMENTAL_AboveSurfaceBallastUsesShipMass.Value)
-
-      {
-
-        var aboveSurfaceVal = GetMaxAboveSurfaceFromShipWeight();
-
-        return aboveSurfaceVal;
-
-      }
-
-
-
-      if (WaterConfig.WaterBallastEnabled.Value)
-
-      {
-
-        var aboveSurfaceVal = GetMaxAboveSurfaceFromOnboardExtents();
-
-        return aboveSurfaceVal;
-
-      }
-
-
-
-      return 0f;
-
+      return GetMaxWaterFloatHeight();
     }
 
 
@@ -8766,15 +8752,19 @@
 
 
       if (CanDescend && isDescendKeyPressed)
-
       {
-
         Descend();
-
         ToggleAutoDescend();
-
+        return;
       }
 
+      if (!IsFlightModeActive && !isAscendKeyPressed && !isDescendKeyPressed)
+      {
+        if (Mathf.Abs(TargetHeight) > 0.01f)
+        {
+          UpdateTargetHeight(Mathf.MoveTowards(TargetHeight, 0f, Time.fixedDeltaTime * 1.5f));
+        }
+      }
     }
 
 
@@ -9671,38 +9661,16 @@
 
     public bool ShouldForceAnchorOnPortalTeleport()
     {
-      if (m_nview != null && m_nview.GetZDO() != null && m_nview.GetZDO().GetBool(VehicleZdoVars.ForceAnchorOnPortalTeleport, false))
-        return true;
-      if (PiecesController != null)
-      {
-        var switches = PiecesController.GetComponentsInChildren<MechanismSwitch>();
-        if (switches != null)
-        {
-          foreach (var s in switches)
-          {
-            if (s != null && s.ForceAnchorOnPortalTeleport) return true;
-          }
-        }
-      }
-      return false;
+      if (m_nview != null && m_nview.GetZDO() != null)
+        return m_nview.GetZDO().GetBool(VehicleZdoVars.ForceAnchorOnPortalTeleport, true);
+      return true;
     }
 
     public bool ShouldForceAnchorOnBedTeleport()
     {
-      if (m_nview != null && m_nview.GetZDO() != null && m_nview.GetZDO().GetBool(VehicleZdoVars.ForceAnchorOnBedTeleport, false))
-        return true;
-      if (PiecesController != null)
-      {
-        var switches = PiecesController.GetComponentsInChildren<MechanismSwitch>();
-        if (switches != null)
-        {
-          foreach (var s in switches)
-          {
-            if (s != null && s.ForceAnchorOnBedTeleport) return true;
-          }
-        }
-      }
-      return false;
+      if (m_nview != null && m_nview.GetZDO() != null)
+        return m_nview.GetZDO().GetBool(VehicleZdoVars.ForceAnchorOnBedTeleport, true);
+      return true;
     }
 
     public void TriggerForceAnchorTeleportAlert()
