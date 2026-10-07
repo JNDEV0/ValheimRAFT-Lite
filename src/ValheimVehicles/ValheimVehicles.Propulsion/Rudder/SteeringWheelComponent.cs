@@ -40,7 +40,7 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   public Vector3 m_rightHandPosition = new(0.5f, 0f, 0);
 
-  public float m_holdWheelTime = 0.7f;
+  public float m_holdWheelTime = 1f;
 
   public float m_wheelRotationFactor = 4f;
 
@@ -695,12 +695,8 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       Mathf.Clamp01((Time.time - m_movingLeftAlpha) / m_handIKSpeed);
     var rightHandAlpha =
       Mathf.Clamp01((Time.time - m_movingRightAlpha) / m_handIKSpeed);
-    var leftHandIKWeight =
-      Mathf.Sin(leftHandAlpha * (float)Math.PI) * (1f - m_holdWheelTime) +
-      m_holdWheelTime;
-    var rightHandIKWeight = Mathf.Sin(rightHandAlpha * (float)Math.PI) *
-                            (1f - m_holdWheelTime) +
-                            m_holdWheelTime;
+    var leftHandIKWeight = 1f;
+    var rightHandIKWeight = 1f;
     if ((bool)m_targetLeftHand && leftHandAlpha > 0.99f)
     {
       m_currentLeftHand = m_targetLeftHand;

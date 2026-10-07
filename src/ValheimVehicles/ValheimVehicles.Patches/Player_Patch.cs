@@ -664,6 +664,52 @@
       return false;
     }
 
+    [HarmonyPatch(typeof(Character), nameof(Character.UpdateMotion))]
+    [HarmonyPrefix]
+    public static bool Character_UpdateMotion_SteeringWheel_Prefix(Character __instance)
+    {
+      if (__instance is Player player && player.IsAttached() && player.m_attachPoint != null)
+      {
+        var wheel = player.m_attachPoint.GetComponentInParent<SteeringWheelComponent>();
+        if (wheel != null)
+        {
+          if (player.m_zanim != null)
+          {
+            player.m_zanim.SetFloat("forward_speed", 0f);
+            player.m_zanim.SetFloat("sideway_speed", 0f);
+            player.m_zanim.SetFloat("turn_speed", 0f);
+            player.m_zanim.SetBool("falling", false);
+          }
+          player.m_currentVel = Vector3.zero;
+          player.m_currentTurnVel = 0f;
+          return false;
+        }
+      }
+      return true;
+    }
+
+    [HarmonyPatch(typeof(Character), nameof(Character.UpdateWalking))]
+    [HarmonyPostfix]
+    public static void Character_UpdateWalking_SteeringWheel_Postfix(Character __instance)
+    {
+      if (__instance is Player player && player.IsAttached() && player.m_attachPoint != null)
+      {
+        var wheel = player.m_attachPoint.GetComponentInParent<SteeringWheelComponent>();
+        if (wheel != null)
+        {
+          if (player.m_zanim != null)
+          {
+            player.m_zanim.SetFloat("forward_speed", 0f);
+            player.m_zanim.SetFloat("sideway_speed", 0f);
+            player.m_zanim.SetFloat("turn_speed", 0f);
+            player.m_zanim.SetBool("falling", false);
+          }
+          player.m_currentVel = Vector3.zero;
+          player.m_currentTurnVel = 0f;
+        }
+      }
+    }
+
     [HarmonyPatch(typeof(Player), "UpdatePlacementGhost")]
     [HarmonyTranspiler]
     public static IEnumerable<CodeInstruction> UpdatePlacementGhost(
