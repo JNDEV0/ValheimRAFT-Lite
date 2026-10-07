@@ -65,6 +65,14 @@ public static class BoatBedSpawnController
     var bedUid = bedZdo != null ? bedZdo.m_uid : ZDOID.None;
     var localOffset = bedZdo != null ? bedZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero) : Vector3.zero;
 
+    if (localOffset == Vector3.zero)
+    {
+      if (VehicleRecallController.GetVehicleLocation(vehicleId, out var vPos, out var vRot, out _, out _))
+      {
+        localOffset = Quaternion.Inverse(vRot) * (bed.GetSpawnPoint() - vPos);
+      }
+    }
+
     if (Player.m_localPlayer.m_customData != null)
     {
       Player.m_localPlayer.m_customData[Key_BoatSpawnVehicleId] = vehicleId.ToString();
@@ -136,19 +144,29 @@ public static class BoatBedSpawnController
     if (minimap == null) return;
 
     var boundVehicleId = GetBoundVehicleId();
-    if (boundVehicleId == 0)
-    {
-      // Land bed or no bed: vanilla handles m_spawnPointPin normally at land bed
-      return;
-    }
+    if (boundVehicleId == 0) return;
 
-    // When boat spawn is active, hide vanilla's separate spawn pin so it never sits stranded in the water!
-    if (minimap.m_spawnPointPin != null && minimap.m_spawnPointPin.m_uiElement != null)
+    if (VehicleRecallController.GetVehicleLocation(boundVehicleId, out var targetPos, out var targetRot, out _, out _))
     {
-      minimap.m_spawnPointPin.m_uiElement.gameObject.SetActive(false);
-      if (minimap.m_spawnPointPin.m_NamePinData?.PinNameGameObject != null)
+      var offset = GetBoundBedOffset();
+      var bedWorldPos = targetPos + targetRot * offset;
+
+      if (Game.instance?.GetPlayerProfile() != null)
       {
-        minimap.m_spawnPointPin.m_NamePinData.PinNameGameObject.SetActive(false);
+        Game.instance.GetPlayerProfile().SetCustomSpawnPoint(bedWorldPos);
+      }
+
+      if (minimap.m_spawnPointPin != null)
+      {
+        minimap.m_spawnPointPin.m_pos = bedWorldPos;
+        if (minimap.m_spawnPointPin.m_uiElement != null)
+        {
+          minimap.m_spawnPointPin.m_uiElement.gameObject.SetActive(true);
+        }
+        if (minimap.m_spawnPointPin.m_NamePinData?.PinNameGameObject != null)
+        {
+          minimap.m_spawnPointPin.m_NamePinData.PinNameGameObject.SetActive(true);
+        }
       }
     }
   }

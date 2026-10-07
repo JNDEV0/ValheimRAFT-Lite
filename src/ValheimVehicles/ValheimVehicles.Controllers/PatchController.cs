@@ -42,6 +42,7 @@ public static class PatchController
       typeof(Character_WaterPatches),
       typeof(Fireplace_WaterPatches),
       typeof(Minimap_VehicleIcons),
+      typeof(BoatBedSpawn_Patches),
       typeof(ZDO_Patch),
 #if DEBUG
       typeof(RPCRegistryDebugger_Patches),

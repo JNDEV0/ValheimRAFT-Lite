@@ -1,6 +1,7 @@
 using System;
 using HarmonyLib;
 using UnityEngine;
+using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.Shared.Constants;
@@ -11,38 +12,101 @@ namespace ValheimVehicles.Patches;
 [HarmonyPatch]
 public static class BoatBedSpawn_Patches
 {
-  [HarmonyPatch(typeof(Bed), nameof(Bed.Interact))]
-  [HarmonyPostfix]
-  public static void Bed_Interact_Postfix(Bed __instance, Humanoid user, bool __result)
+  public static int GetBedVehicleId(Bed bed)
   {
-    if (user != Player.m_localPlayer) return;
+    if (bed == null) return 0;
+    var bedZdo = bed.m_nview != null ? bed.m_nview.GetZDO() : null;
+    int vehicleId = 0;
 
-    var bedZdo = __instance.m_nview != null ? __instance.m_nview.GetZDO() : null;
-    var vehicleId = bedZdo != null ? bedZdo.GetInt(VehicleZdoVars.MBParentId, 0) : 0;
+    if (bedZdo != null)
+    {
+      vehicleId = bedZdo.GetInt(VehicleZdoVars.MBParentId, 0);
+      if (vehicleId == 0)
+      {
+        vehicleId = VehiclePiecesController.GetParentID(bedZdo);
+      }
+    }
+
     if (vehicleId == 0)
     {
-      var vpc = __instance.GetComponentInParent<VehiclePiecesController>();
+      var vpc = bed.GetComponentInParent<VehiclePiecesController>();
       if (vpc != null) vehicleId = vpc.PersistentZdoId;
     }
+
+    if (vehicleId == 0)
+    {
+      var vm = bed.GetComponentInParent<VehicleManager>();
+      if (vm != null) vehicleId = vm.PersistentZdoId;
+    }
+
+    if (vehicleId == 0)
+    {
+      foreach (var kvp in VehiclePiecesController.ActiveInstances)
+      {
+        if (kvp.Value != null && (kvp.Value.m_bedPieces.Contains(bed) ||
+            (kvp.Value.OnboardCollider != null && kvp.Value.OnboardCollider.bounds.Contains(bed.transform.position))))
+        {
+          vehicleId = kvp.Key;
+          break;
+        }
+      }
+    }
+
+    if (vehicleId == 0 && Player.m_localPlayer != null)
+    {
+      foreach (var kvp in VehiclePiecesController.ActiveInstances)
+      {
+        if (kvp.Value != null && kvp.Value.Manager != null && kvp.Value.Manager.OnboardController != null)
+        {
+          if (kvp.Value.Manager.OnboardController.m_localPlayers.Contains(Player.m_localPlayer))
+          {
+            vehicleId = kvp.Key;
+            break;
+          }
+        }
+      }
+    }
+
+    return vehicleId;
+  }
+
+  [HarmonyPatch(typeof(Bed), nameof(Bed.Interact))]
+  [HarmonyPostfix]
+  public static void Bed_Interact_Postfix(Bed __instance, Humanoid human, bool repeat, bool alt, bool __result)
+  {
+    if (repeat) return;
+    if (human != Player.m_localPlayer) return;
+
+    var vehicleId = GetBedVehicleId(__instance);
 
     if (vehicleId != 0)
     {
       if (__instance.IsMine())
       {
+        var bedZdo = __instance.m_nview != null ? __instance.m_nview.GetZDO() : null;
+        if (bedZdo != null && bedZdo.GetInt(VehicleZdoVars.MBParentId, 0) == 0)
+        {
+          bedZdo.Set(VehicleZdoVars.MBParentId, vehicleId);
+        }
+
+        if (VehiclePiecesController.ActiveInstances.TryGetValue(vehicleId, out var vpc) && vpc != null)
+        {
+          var localPos = vpc.transform.InverseTransformPoint(__instance.GetSpawnPoint());
+          if (bedZdo != null)
+          {
+            bedZdo.Set(VehicleZdoVars.MBPositionHash, localPos);
+          }
+        }
+
         BoatBedSpawnController.SetBoatSpawn(__instance, vehicleId);
       }
     }
     else
     {
       // Interacted with an off-vehicle / land bed!
-      var profile = Game.instance?.GetPlayerProfile();
-      if (profile != null)
+      if (__instance.IsMine())
       {
-        var isLandSpawn = Vector3.Distance(profile.GetCustomSpawnPoint(), __instance.GetSpawnPoint()) < 0.2f;
-        if (isLandSpawn || __instance.IsMine())
-        {
-          BoatBedSpawnController.ClearBoatSpawn();
-        }
+        BoatBedSpawnController.ClearBoatSpawn();
       }
     }
   }
@@ -53,15 +117,7 @@ public static class BoatBedSpawn_Patches
   {
     if (!__instance.IsMine()) return true;
 
-    var bedZdo = __instance.m_nview != null ? __instance.m_nview.GetZDO() : null;
-    if (bedZdo == null) return true;
-
-    var vehicleId = bedZdo.GetInt(VehicleZdoVars.MBParentId, 0);
-    if (vehicleId == 0)
-    {
-      var vpc = __instance.GetComponentInParent<VehiclePiecesController>();
-      if (vpc != null) vehicleId = vpc.PersistentZdoId;
-    }
+    var vehicleId = GetBedVehicleId(__instance);
 
     if (vehicleId != 0 && BoatBedSpawnController.IsBoatSpawnActiveForVehicle(vehicleId))
     {
@@ -76,17 +132,7 @@ public static class BoatBedSpawn_Patches
   [HarmonyPostfix]
   public static void Bed_GetHoverText_Postfix(Bed __instance, ref string __result)
   {
-    var bedZdo = __instance.m_nview != null ? __instance.m_nview.GetZDO() : null;
-    var vehicleId = bedZdo != null ? bedZdo.GetInt(VehicleZdoVars.MBParentId, 0) : 0;
-    if (vehicleId == 0 && bedZdo != null)
-    {
-      vehicleId = VehiclePiecesController.GetParentID(bedZdo);
-    }
-    if (vehicleId == 0)
-    {
-      var vpc = __instance.GetComponentInParent<VehiclePiecesController>();
-      if (vpc != null) vehicleId = vpc.PersistentZdoId;
-    }
+    var vehicleId = GetBedVehicleId(__instance);
 
     if (vehicleId != 0)
     {
@@ -146,7 +192,7 @@ public static class BoatBedSpawn_Patches
 
   [HarmonyPatch(typeof(Game), "FindSpawnPoint")]
   [HarmonyPrefix]
-  public static bool FindSpawnPoint_Prefix(Game __instance, ref Vector3 point, ref bool inBed, float dt, ref bool __result)
+  public static bool FindSpawnPoint_Prefix(Game __instance, ref Vector3 point, ref bool usedLogoutPoint, float dt, ref bool __result)
   {
     var boundVehicleId = BoatBedSpawnController.GetBoundVehicleId();
     if (boundVehicleId == 0) return true; // Land bed / vanilla spawn
@@ -167,7 +213,7 @@ public static class BoatBedSpawn_Patches
     p?.SetCustomSpawnPoint(bedWorldPos);
 
     __instance.m_respawnWait += dt;
-    inBed = true;
+    usedLogoutPoint = false;
 
     if (ZNet.instance != null)
     {
