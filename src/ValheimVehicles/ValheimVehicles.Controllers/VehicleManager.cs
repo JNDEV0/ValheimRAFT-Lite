@@ -83,6 +83,11 @@
     public bool IsLandVehicle => m_isLandVehicle;
     public bool isCreative;
 
+    public bool IsInvalid()
+    {
+      return this == null || PiecesController == null || PiecesController.IsInvalid();
+    }
+
     private BoxCollider m_floatCollider;
     private BoxCollider m_onboardCollider;
 

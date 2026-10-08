@@ -5007,11 +5007,11 @@
       float localY = -2f;
       if (Manager.MovementController?.m_body != null)
       {
-        localY = Manager.MovementController.m_body.centerOfMass.y;
+        localY = Manager.MovementController.m_body.centerOfMass.y - 0.5f;
       }
       else if (FloatCollider != null)
       {
-        localY = FloatCollider.transform.localPosition.y - (FloatCollider.size.y * 0.5f);
+        localY = FloatCollider.transform.localPosition.y - (FloatCollider.size.y * 0.5f) - 0.5f;
       }
 
       var firstRudder = m_rudderPieces.FirstOrDefault();

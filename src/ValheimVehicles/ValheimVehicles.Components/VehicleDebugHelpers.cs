@@ -9,6 +9,7 @@ using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.ConsoleCommands;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.SharedScripts;
+using ValheimVehicles.UI;
 using Zolantris.Shared;
 
 namespace ValheimVehicles.Components;
@@ -109,7 +110,7 @@ public class VehicleDebugHelpers : MonoBehaviour
         var localPosition = vehicleChunkSizeData.position.ToVector3(); // your logic
         var size = vehicleChunkSizeData.chunkSize * Vector3.one; // your logic for size
         var listItem = hullChunkBoundaryCubes[cubeRenderChunkIndex];
-        hullChunkBoundaryCubes[cubeRenderChunkIndex] = UpdateDebugCube(listItem, localPosition, size, $"chunk_{cubeRenderChunkIndex}", BuildBoundaryColor, Vector3.zero);
+        hullChunkBoundaryCubes[cubeRenderChunkIndex] = UpdateDebugCube(listItem, localPosition, size, $"chunk_{cubeRenderChunkIndex}", BuildBoundaryColor, Vector3.zero, false);
         cubeRenderChunkIndex++;
       }
     }
@@ -151,22 +152,22 @@ public class VehicleDebugHelpers : MonoBehaviour
       {
         new()
         {
-          position = shipFloatation.Value.ShipForward,
+          position = new Vector3(shipFloatation.Value.ShipForward.x, shipFloatation.Value.WaterLevelForward, shipFloatation.Value.ShipForward.z),
           name = "water_forward"
         },
         new()
         {
-          position = shipFloatation.Value.ShipBack,
+          position = new Vector3(shipFloatation.Value.ShipBack.x, shipFloatation.Value.WaterLevelBack, shipFloatation.Value.ShipBack.z),
           name = "water_backward"
         },
         new()
         {
-          position = shipFloatation.Value.ShipRight,
+          position = new Vector3(shipFloatation.Value.ShipRight.x, shipFloatation.Value.WaterLevelRight, shipFloatation.Value.ShipRight.z),
           name = "water_right"
         },
         new()
         {
-          position = shipFloatation.Value.ShipLeft,
+          position = new Vector3(shipFloatation.Value.ShipLeft.x, shipFloatation.Value.WaterLevelLeft, shipFloatation.Value.ShipLeft.z),
           name = "water_left"
         }
       };
@@ -200,7 +201,7 @@ public class VehicleDebugHelpers : MonoBehaviour
         var waterForceCube = waterForceCubes[index];
         var waterForceCubeData = waterForceCubeDataItems[index];
         waterForceCubes[index] = UpdateDebugCube(waterForceCube, waterForceCubeData.position,
-          Vector3.one, waterForceCubeData.name, OrangeColor, Vector3.zero);
+          Vector3.one * 0.35f, waterForceCubeData.name, OrangeColor, Vector3.zero, true);
       }
 
       for (var index = 0; index < floatationCubes.Count; index++)
@@ -208,7 +209,7 @@ public class VehicleDebugHelpers : MonoBehaviour
         var floatationCube = floatationCubes[index];
         var floatationCubeData = floationCubeDataItems[index];
         floatationCubes[index] = UpdateDebugCube(floatationCube, floatationCubeData.position,
-          Vector3.one, floatationCubeData.name, OrangeColor, Vector3.zero);
+          Vector3.one * 0.35f, floatationCubeData.name, OrangeColor, Vector3.zero, true);
       }
 
       // RenderDebugCube(ref forwardCube, shipFloatation.Value.ShipForward,
@@ -232,7 +233,7 @@ public class VehicleDebugHelpers : MonoBehaviour
     RenderDebugCube(ref vehiclePieceCenterPoint, vehicleManagerInstance.PiecesController.vehicleCenter.transform.position, "piece_vehicle_center_point", Color.red, Vector3.up * 5);
   }
 
-  private GameObject? UpdateDebugCube(GameObject? cube, Vector3 position, Vector3 size, string title, Color color, Vector3 textOffset)
+  private GameObject? UpdateDebugCube(GameObject? cube, Vector3 position, Vector3 size, string title, Color color, Vector3 textOffset, bool isWorldPosition = false)
   {
     if (!autoUpdateColliders || vehicleManagerInstance.PiecesController == null || vehicleManagerInstance.MovementController == null)
     {
@@ -241,10 +242,6 @@ public class VehicleDebugHelpers : MonoBehaviour
     }
 
     var parentTransform = vehicleManagerInstance.PiecesController.transform;
-    // If position is world, use world transform; if local, use local transform
-    var isWorldPosition = false; // Set this based on your data source
-    // Example: if position.magnitude > 1000, treat as world position (customize as needed)
-    if (Mathf.Abs(position.x) > 1000 || Mathf.Abs(position.z) > 1000) isWorldPosition = true;
 
     if (cube == null)
     {
@@ -268,36 +265,40 @@ public class VehicleDebugHelpers : MonoBehaviour
       textMesh.alignment = TextAlignment.Center;
       textMesh.color = Color.yellow;
     }
+
     if (isWorldPosition)
     {
       // Treat position as world position
       cube.transform.position = position;
       cube.transform.localScale = size;
-      cube.transform.localRotation = Quaternion.identity;
-      cube.transform.SetParent(parentTransform, true); // preserve world transform
+      if (cube.transform.parent != parentTransform)
+      {
+        cube.transform.SetParent(parentTransform, true); // preserve world transform
+      }
     }
     else
     {
       // Treat position as local position
-      cube.transform.SetParent(parentTransform, false);
+      if (cube.transform.parent != parentTransform)
+      {
+        cube.transform.SetParent(parentTransform, false);
+      }
       cube.transform.localPosition = position;
       cube.transform.localScale = size;
       cube.transform.localRotation = Quaternion.identity;
     }
 
-    // same as RenderDebugCube
-
     // Ensure the text always faces the camera
     var textTransform = cube.transform.Find("CubeText");
-    if (textTransform != null && Camera.main != null)
+    var cam = GameCamera.instance != null && GameCamera.instance.m_camera != null ? GameCamera.instance.m_camera : Camera.main;
+    if (textTransform != null && cam != null)
     {
-      textTransform.LookAt(Camera.main.transform);
+      textTransform.LookAt(cam.transform);
       textTransform.rotation =
         QuaternionExtensions.LookRotationSafe(textTransform.forward *
                                               -1); // Flip to face correctly
     }
 
-    // Update text, etc.
     return cube;
   }
 
@@ -462,7 +463,7 @@ public class VehicleDebugHelpers : MonoBehaviour
   {
     if (!Player.m_localPlayer) return null;
 
-    var vehicleInstance = VehicleCommands.GetNearestVehicleManager();
+    var vehicleInstance = VehicleGui.CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
 
     if (vehicleInstance == null) return null;
 

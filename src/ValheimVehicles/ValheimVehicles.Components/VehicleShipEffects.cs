@@ -204,7 +204,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
         var waterY = Floating.GetWaterLevel(speedWakePos, ref m_previousWaterVolume);
         if (waterY > -1000f)
         {
-          speedWakePos.y = waterY;
+          speedWakePos.y = waterY - 0.5f;
           m_speedWakeRoot.transform.position = speedWakePos;
         }
       }

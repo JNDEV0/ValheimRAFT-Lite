@@ -69,7 +69,7 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     _effectInstance.name = "WakeWaterEffect";
 
     // Placed slightly rearward for rudder wake trailing behind the ship
-    _effectInstance.transform.localPosition = new Vector3(0f, -0.2f, -0.6f);
+    _effectInstance.transform.localPosition = new Vector3(0f, -0.7f, -0.6f);
     _effectInstance.transform.localRotation = Quaternion.identity;
 
     var allPs = _effectInstance.GetComponentsInChildren<ParticleSystem>(true);
@@ -132,7 +132,7 @@ public class VehiclePieceWaterEffects : MonoBehaviour
       var waterY = Floating.GetWaterLevel(effPos, ref _previousWaterVolume);
       if (waterY > -1000f)
       {
-        effPos.y = waterY;
+        effPos.y = waterY - 0.5f;
         _effectInstance.transform.position = effPos;
         _effectInstance.transform.rotation = transform.rotation;
       }

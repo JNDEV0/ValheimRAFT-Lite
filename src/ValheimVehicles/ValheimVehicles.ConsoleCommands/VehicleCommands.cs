@@ -1398,48 +1398,91 @@ public class VehicleCommands : ConsoleCommand
   /// <returns></returns>
   public static VehicleManager? GetNearestVehicleManager()
   {
-    if (!GameCamera.instance || !GameCamera.instance) return null;
     if (!Player.m_localPlayer) return null;
 
-    var playerDistanceToCamera = Mathf.Abs(Vector3.Distance(Player.m_localPlayer.transform.position, GameCamera.instance.transform.position));
-    var maxDistance = Mathf.Min(50f + playerDistanceToCamera, 200f);
-    var cameraTransform = GameCamera.instance.m_camera.transform;
-    var cameraPos = cameraTransform.position;
-    var cameraDir = cameraTransform.forward;
+    // 1. Prioritize currently selected vehicle in GUI
+    if (VehicleGui.CurrentSelectedVehicle != null && !VehicleGui.CurrentSelectedVehicle.IsInvalid())
+    {
+      return VehicleGui.CurrentSelectedVehicle;
+    }
 
-    var localCast = Physics.Raycast(
-      cameraPos,
-      cameraDir,
-      out var hitinfo, maxDistance,
-      LayerHelpers.PieceAndCustomVehicleMask);
+    // 2. Prioritize vehicle player is currently onboard
+    if (VehicleManager.VehicleInstances != null && VehicleManager.VehicleInstances.Count > 0)
+    {
+      foreach (var vm in VehicleManager.VehicleInstances.Values)
+      {
+        if (vm == null || vm.IsInvalid()) continue;
+        if (vm.OnboardController != null && vm.OnboardController.m_localPlayers.Contains(Player.m_localPlayer))
+        {
+          return vm;
+        }
+      }
+    }
+
+    // 3. Fallback to camera raycast
     VehicleManager? vehicleManager = null;
-
-    if (localCast && TryGetVehicleManager(hitinfo.collider, out vehicleManager))
+    if (GameCamera.instance != null && GameCamera.instance.m_camera != null)
     {
-      return vehicleManager;
+      var playerDistanceToCamera = Mathf.Abs(Vector3.Distance(Player.m_localPlayer.transform.position, GameCamera.instance.transform.position));
+      var maxDistance = Mathf.Min(50f + playerDistanceToCamera, 200f);
+      var cameraTransform = GameCamera.instance.m_camera.transform;
+      var cameraPos = cameraTransform.position;
+      var cameraDir = cameraTransform.forward;
+
+      var localCast = Physics.Raycast(
+        cameraPos,
+        cameraDir,
+        out var hitinfo, maxDistance,
+        LayerHelpers.PieceAndCustomVehicleMask);
+
+      if (localCast && TryGetVehicleManager(hitinfo.collider, out vehicleManager))
+      {
+        return vehicleManager;
+      }
+
+      // continue with heavier check if failed.
+      var hits = Physics.RaycastNonAlloc(cameraPos, cameraDir, AllocatedRaycast, maxDistance, LayerHelpers.PieceAndCustomVehicleMask);
+      for (var index = 0; index < hits; index++)
+      {
+        var raycastHit = AllocatedRaycast[index];
+        if (TryGetVehicleManager(raycastHit.collider, out vehicleManager))
+        {
+          return vehicleManager;
+        }
+      }
     }
 
-    // continue with heavier check if failed.
-    var hits = Physics.RaycastNonAlloc(cameraPos, cameraDir, AllocatedRaycast, maxDistance, LayerHelpers.PieceAndCustomVehicleMask);
-    if (hits == 0)
+    // 4. Fallback to closest vehicle to player within 30m
+    if (VehicleManager.VehicleInstances != null && VehicleManager.VehicleInstances.Count > 0)
     {
-      VehicleNotDetectedMessage();
-      return null;
+      VehicleManager? closest = null;
+      var closestDist = 30f;
+      var playerPos = Player.m_localPlayer.transform.position;
+      foreach (var candidate in VehicleManager.VehicleInstances.Values)
+      {
+        if (candidate == null || candidate.IsInvalid()) continue;
+        var d = Vector3.Distance(playerPos, candidate.transform.position);
+        if (d < closestDist)
+        {
+          closestDist = d;
+          closest = candidate;
+        }
+      }
+      if (closest != null)
+      {
+        return closest;
+      }
     }
 
-    for (var index = 0; index < hits; index++)
+    // 5. Fallback to sphere check
+    var sphereManager = GetNearestVehicleManagerInSphere(Player.m_localPlayer.transform.position, 30f, null);
+    if (sphereManager != null)
     {
-      var raycastHit = AllocatedRaycast[index];
-      if (TryGetVehicleManager(raycastHit.collider, out vehicleManager)) break;
+      return sphereManager;
     }
 
-    if (!vehicleManager)
-    {
-      VehicleNotDetectedMessage();
-      return null;
-    }
-
-    return vehicleManager;
+    VehicleNotDetectedMessage();
+    return null;
   }
 
   public static string GetPlayerPathInfo()

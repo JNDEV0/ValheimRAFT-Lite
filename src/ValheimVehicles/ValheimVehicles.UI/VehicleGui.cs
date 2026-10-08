@@ -607,6 +607,12 @@
 
     public static bool TryUpdateNearestVehicle([NotNullWhen(true)] out VehicleManager? manager)
     {
+      if (CurrentSelectedVehicle != null && !CurrentSelectedVehicle.IsInvalid())
+      {
+        manager = CurrentSelectedVehicle;
+        return true;
+      }
+
       var nearestVehicle = VehicleCommands.GetNearestVehicleManager();
 
       if (nearestVehicle != null)
@@ -978,7 +984,7 @@
     {
       Logger.LogMessage(
         "Toggling convex hull debugger on the ship. This will show/hide the current convex hulls.");
-      var currentInstance = VehicleCommands.GetNearestVehicleManager();
+      var currentInstance = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
 
       if (currentInstance == null || currentInstance.PiecesController == null) return;
 
@@ -999,10 +1005,15 @@
     {
       Logger.LogMessage(
         "Collider debugger called, \nblue = BlockingCollider for collisions and keeping boat on surface, \ngreen is float collider for pushing the boat upwards, typically it needs to be below or at same level as BlockingCollider to prevent issues, \nYellow is onboardtrigger for calculating if player is onboard");
-      var currentShip = VehicleCommands.GetNearestVehicleManager();
+      var currentShip = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
       if (currentShip == null) return;
       currentShip.Instance.HasVehicleDebugger = !currentShip.Instance.HasVehicleDebugger;
-      var currentInstance = VehicleDebugHelpers.GetOnboardVehicleDebugHelper();
+      var currentInstance = currentShip.Instance.VehicleDebugHelpersInstance;
+      if (currentInstance == null)
+      {
+        currentShip.AddOrRemoveVehicleDebugger();
+        currentInstance = currentShip.Instance.VehicleDebugHelpersInstance;
+      }
       if (currentInstance == null) return;
       currentInstance.StartRenderAllCollidersLoop();
     }
@@ -1030,7 +1041,7 @@
 
       if (GUILayout.Button("activatePendingPieces"))
       {
-        var nearest = VehicleCommands.GetNearestVehicleManager();
+        var nearest = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
         if (nearest != null)
         {
           nearest.PiecesController?.StartActivatePendingPieces();

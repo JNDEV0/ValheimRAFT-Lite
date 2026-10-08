@@ -633,10 +633,57 @@ public class MechanismSwitch : AnimatedLeverMechanism, IAnimatorHandler, Interac
     if (alt)
     {
       VehicleGui.CurrentSwitch = this;
-      var vehicleManager = GetComponentInParent<VehiclePiecesController>()?.Manager ?? VehicleCommands.GetNearestVehicleManager();
+      var vehicleManager = GetComponentInParent<VehiclePiecesController>()?.Manager
+        ?? GetComponentInParent<VehicleManager>();
+
+      if (vehicleManager == null && m_nview != null && m_nview.GetZDO() != null)
+      {
+        var parentId = VehiclePiecesController.GetParentID(m_nview.GetZDO());
+        if (parentId != 0)
+        {
+          if (VehicleManager.VehicleInstances != null && VehicleManager.VehicleInstances.TryGetValue(parentId, out var foundVm))
+          {
+            vehicleManager = foundVm;
+          }
+          else if (VehiclePiecesController.ActiveInstances != null && VehiclePiecesController.ActiveInstances.TryGetValue(parentId, out var foundVpc))
+          {
+            vehicleManager = foundVpc.Manager;
+          }
+        }
+      }
+
+      // Proximity fallback to the switch position
+      if (vehicleManager == null && VehicleManager.VehicleInstances != null && VehicleManager.VehicleInstances.Count > 0)
+      {
+        VehicleManager closest = null;
+        var closestDist = 15f;
+        var switchPos = transform.position;
+        foreach (var candidate in VehicleManager.VehicleInstances.Values)
+        {
+          if (candidate == null || candidate.IsInvalid()) continue;
+          var d = Vector3.Distance(switchPos, candidate.transform.position);
+          if (d < closestDist)
+          {
+            closestDist = d;
+            closest = candidate;
+          }
+        }
+        vehicleManager = closest;
+      }
+
+      if (vehicleManager == null)
+      {
+        vehicleManager = VehicleCommands.GetNearestVehicleManager();
+      }
+
       if (vehicleManager != null)
       {
         VehicleGui.CurrentSelectedVehicle = vehicleManager;
+        if (m_nview != null && m_nview.GetZDO() != null && m_nview.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0) == 0 && vehicleManager.PersistentZdoId != 0)
+        {
+          m_nview.GetZDO().Set(VehicleZdoVars.MBParentId, vehicleManager.PersistentZdoId);
+          m_nview.GetZDO().Set(VehicleZdoVars.IsVehiclePieceHash, 1);
+        }
       }
       VehicleCommands.ToggleVehicleCommandsHud();
       return true;
