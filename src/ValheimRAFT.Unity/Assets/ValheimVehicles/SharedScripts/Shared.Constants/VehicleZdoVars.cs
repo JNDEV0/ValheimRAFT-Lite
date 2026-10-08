@@ -29,6 +29,8 @@ namespace ValheimVehicles.Shared.Constants
     public const string VehicleFloatationHeight = "ValheimVehicles_VehicleFloatationHeight";
     public const string VehicleFloatationCustomModeEnabled = "ValheimVehicles_VehicleFloatationCustomModeEnabled";
     public const string MaxWaterFloatHeight = "ValheimVehicles_MaxWaterFloatHeight";
+    public const string BaseWaterFloatHeight = "ValheimVehicles_BaseWaterFloatHeight";
+    public const string MinWaterFloatHeight = "ValheimVehicles_MinWaterFloatHeight";
 
     public const string ToggleSwitchAction = "ValheimVehicles_ToggleSwitchAction";
     public const string ForceAnchorOnPortalTeleport = "ValheimVehicles_ForceAnchorOnPortalTeleport";

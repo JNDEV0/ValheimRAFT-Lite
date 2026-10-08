@@ -5663,11 +5663,10 @@
 
 
 
-      // min does not matter but max does as the ship when attempting to reach flight mode will start bouncing badly.
+      var minFloat = IsFlightModeActive ? cachedMaxDepthOffset : GetMinWaterFloatHeight();
+      var maxFloat = GetSurfaceOffsetWaterVehicleOnly();
 
-      var clampedTargetHeight = Mathf.Clamp(TargetHeight, cachedMaxDepthOffset,
-
-        GetSurfaceOffsetWaterVehicleOnly());
+      var clampedTargetHeight = Mathf.Clamp(TargetHeight, minFloat, maxFloat);
 
 
 
@@ -8350,8 +8349,8 @@
     {
       if (m_nview != null && m_nview.GetZDO() != null)
       {
-        var customVal = m_nview.GetZDO().GetFloat(VehicleZdoVars.MaxWaterFloatHeight, -1f);
-        if (customVal >= 0f) return customVal;
+        var customVal = m_nview.GetZDO().GetFloat(VehicleZdoVars.MaxWaterFloatHeight, -999f);
+        if (customVal > -900f) return customVal;
       }
 
       var baseOffset = WaterConfig.EXPERIMENTAL_AboveSurfaceBallastUsesShipMass.Value
@@ -8359,6 +8358,24 @@
         : (WaterConfig.WaterBallastEnabled.Value ? GetMaxAboveSurfaceFromOnboardExtents() : 0f);
 
       return Mathf.Max(0.1f, baseOffset - 1.0f);
+    }
+
+    public float GetBaseWaterFloatHeight()
+    {
+      if (m_nview != null && m_nview.GetZDO() != null)
+      {
+        return m_nview.GetZDO().GetFloat(VehicleZdoVars.BaseWaterFloatHeight, 0f);
+      }
+      return 0f;
+    }
+
+    public float GetMinWaterFloatHeight()
+    {
+      if (m_nview != null && m_nview.GetZDO() != null)
+      {
+        return m_nview.GetZDO().GetFloat(VehicleZdoVars.MinWaterFloatHeight, -0.5f);
+      }
+      return -0.5f;
     }
 
     public float GetSurfaceOffsetWaterVehicleOnly()
@@ -8454,7 +8471,7 @@
 
       var maxSurfaceLevelOffset = GetSurfaceOffset();
 
-      var maxDepthOffset = GetMaxDepthOffset();
+      var minDepthOffset = IsFlightModeActive ? GetMaxDepthOffset() : GetMinWaterFloatHeight();
 
 
 
@@ -8462,7 +8479,7 @@
 
         rawValue,
 
-        maxDepthOffset, maxSurfaceLevelOffset);
+        minDepthOffset, maxSurfaceLevelOffset);
 
 
 
@@ -8769,9 +8786,10 @@
 
       if (!IsFlightModeActive && !isAscendKeyPressed && !isDescendKeyPressed)
       {
-        if (Mathf.Abs(TargetHeight) > 0.01f)
+        var baseHeight = GetBaseWaterFloatHeight();
+        if (Mathf.Abs(TargetHeight - baseHeight) > 0.01f)
         {
-          UpdateTargetHeight(Mathf.MoveTowards(TargetHeight, 0f, Time.fixedDeltaTime * 1.5f));
+          UpdateTargetHeight(Mathf.MoveTowards(TargetHeight, baseHeight, Time.fixedDeltaTime * 1.5f));
         }
       }
     }

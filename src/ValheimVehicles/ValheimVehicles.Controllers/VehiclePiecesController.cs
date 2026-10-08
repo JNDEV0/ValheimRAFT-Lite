@@ -1904,16 +1904,19 @@
       }
 
       // todo might need to do some freezing of positions if these pieces are rigidbodies/physics related such as animals and npcs.
-      for (var index = 0; index < m_tempPieces.Count; index++)
+      if (gameObject.activeInHierarchy && Game.instance != null && ZNet.instance != null)
       {
-        if (!m_tempPieces.TryGetValidElement(ref index, ["m_zdo"], out var tempPiece))
+        for (var index = 0; index < m_tempPieces.Count; index++)
         {
-          continue;
+          if (!m_tempPieces.TryGetValidElement(ref index, ["m_zdo"], out var tempPiece))
+          {
+            continue;
+          }
+          if (tempPiece != null && tempPiece.gameObject != null && tempPiece.gameObject.activeInHierarchy)
+          {
+            tempPiece.transform.SetParent(null);
+          }
         }
-        // we must update the position as these pieces/characters can move while on Vehicles.
-        // todo we may wan to not update any values for temp pieces as this removeall process could be inaccurate and set a location way outside expected range.
-        // tempPiece.m_zdo.Set(VehicleZdoVars.MBPositionHash, tempPiece.transform.localPosition);
-        tempPiece.transform.SetParent(null);
       }
     }
 
@@ -2917,16 +2920,22 @@
 
     public void RemovePlayersFromBoat()
     {
+      // If game/scene is tearing down or this container is deactivating/inactive, do not attempt to reparent
+      if (Game.instance == null || ZNet.instance == null || !gameObject.activeInHierarchy) return;
+
       try
       {
         var players = Player.GetAllPlayers();
-        foreach (var t in players.Where(t =>
-                   (bool)t && t.transform.parent == transform))
-          t.transform.SetParent(null);
+        foreach (var t in players)
+        {
+          if ((bool)t && t.transform != null && t.transform.parent == transform && t.gameObject.activeInHierarchy)
+          {
+            t.transform.SetParent(null);
+          }
+        }
       }
-      catch (Exception e)
+      catch (Exception)
       {
-        LoggerProvider.LogError("Error while removing player from boat.");
       }
     }
 

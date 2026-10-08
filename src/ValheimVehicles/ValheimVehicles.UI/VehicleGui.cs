@@ -853,14 +853,21 @@
         if (btnObj != null) commandsPanelToggleObjects.Add(btnObj);
       }
 
-      // 2. Max Water Float Height Slider
+      // 2. Water Float Height Sliders (Max, Base, Min)
       var vehicle = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
       var vZdo = vehicle?.m_nview?.GetZDO();
       var currentMaxFloat = vehicle?.MovementController != null
         ? vehicle.MovementController.GetMaxWaterFloatHeight()
         : (vZdo?.GetFloat(VehicleZdoVars.MaxWaterFloatHeight, 0.3f) ?? 0.3f);
+      var currentBaseFloat = vehicle?.MovementController != null
+        ? vehicle.MovementController.GetBaseWaterFloatHeight()
+        : (vZdo?.GetFloat(VehicleZdoVars.BaseWaterFloatHeight, 0f) ?? 0f);
+      var currentMinFloat = vehicle?.MovementController != null
+        ? vehicle.MovementController.GetMinWaterFloatHeight()
+        : (vZdo?.GetFloat(VehicleZdoVars.MinWaterFloatHeight, -0.5f) ?? -0.5f);
 
-      var floatSliderRow = SwivelUIHelpers.AddSliderRow(
+      // Max Water Float Height Slider
+      var maxFloatSliderRow = SwivelUIHelpers.AddSliderRow(
         commandsWindow.transform,
         viewStyles,
         "Max Water Float Height",
@@ -873,17 +880,66 @@
           {
             v.m_nview.GetZDO().Set(VehicleZdoVars.MaxWaterFloatHeight, val);
           }
-          if (v?.MovementController != null)
+          if (v?.MovementController != null && !v.MovementController.IsFlightModeActive)
           {
-            if (!v.MovementController.IsFlightModeActive && v.MovementController.TargetHeight > val)
+            if (v.MovementController.TargetHeight > val)
             {
-              v.MovementController.UpdateTargetHeight(val);
+              v.MovementController.UpdateTargetHeight(val, true);
             }
           }
         },
         out _,
         panelWidth - 32f);
-      if (floatSliderRow != null) commandsPanelToggleObjects.Add(floatSliderRow);
+      if (maxFloatSliderRow != null) commandsPanelToggleObjects.Add(maxFloatSliderRow);
+
+      // Base Water Float Height Slider
+      var baseFloatSliderRow = SwivelUIHelpers.AddSliderRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Base Water Float Height",
+        -2.0f, 2.0f,
+        currentBaseFloat,
+        val =>
+        {
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null)
+          {
+            v.m_nview.GetZDO().Set(VehicleZdoVars.BaseWaterFloatHeight, val);
+          }
+          if (v?.MovementController != null && !v.MovementController.IsFlightModeActive)
+          {
+            v.MovementController.UpdateTargetHeight(val, true);
+          }
+        },
+        out _,
+        panelWidth - 32f);
+      if (baseFloatSliderRow != null) commandsPanelToggleObjects.Add(baseFloatSliderRow);
+
+      // Min Water Float Height Slider
+      var minFloatSliderRow = SwivelUIHelpers.AddSliderRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Min Water Float Height",
+        -3.0f, 0.0f,
+        currentMinFloat,
+        val =>
+        {
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null)
+          {
+            v.m_nview.GetZDO().Set(VehicleZdoVars.MinWaterFloatHeight, val);
+          }
+          if (v?.MovementController != null && !v.MovementController.IsFlightModeActive)
+          {
+            if (v.MovementController.TargetHeight < val)
+            {
+              v.MovementController.UpdateTargetHeight(val, true);
+            }
+          }
+        },
+        out _,
+        panelWidth - 32f);
+      if (minFloatSliderRow != null) commandsPanelToggleObjects.Add(minFloatSliderRow);
 
       // 3. Console Debug Logs (Loop Log)
       var logRow = SwivelUIHelpers.AddToggleRow(

@@ -118,6 +118,8 @@ public class Character_Patch
   [HarmonyPostfix]
   private static void UpdateGroundContact(Character __instance)
   {
+    if (Game.instance == null || ZNet.instance == null || __instance == null || !__instance.gameObject.activeInHierarchy) return;
+
     if (__instance is Player { m_debugFly: not false })
     {
       if (__instance.transform.parent != null)
@@ -131,7 +133,7 @@ public class Character_Patch
     {
       bvc = __instance.m_lastGroundBody
         .GetComponentInParent<VehiclePiecesController>();
-      if ((bool)bvc && __instance.transform.parent != bvc.transform)
+      if ((bool)bvc && bvc.gameObject.activeInHierarchy && __instance.transform.parent != bvc.transform)
       {
         __instance.transform.SetParent(bvc.transform);
       }
@@ -140,7 +142,13 @@ public class Character_Patch
     }
 
     if (!bvc && __instance.transform.parent != null)
-      __instance.transform.SetParent(null);
+    {
+      var currentParent = __instance.transform.parent.gameObject;
+      if (currentParent != null && currentParent.activeInHierarchy)
+      {
+        __instance.transform.SetParent(null);
+      }
+    }
   }
 
   /// <summary>
