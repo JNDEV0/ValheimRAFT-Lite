@@ -858,20 +858,20 @@
       var vZdo = vehicle?.m_nview?.GetZDO();
       var currentMaxFloat = vehicle?.MovementController != null
         ? vehicle.MovementController.GetMaxWaterFloatHeight()
-        : (vZdo?.GetFloat(VehicleZdoVars.MaxWaterFloatHeight, 0.3f) ?? 0.3f);
+        : (vZdo?.GetFloat(VehicleZdoVars.MaxWaterFloatHeight, 3.0f) ?? 3.0f);
       var currentBaseFloat = vehicle?.MovementController != null
         ? vehicle.MovementController.GetBaseWaterFloatHeight()
-        : (vZdo?.GetFloat(VehicleZdoVars.BaseWaterFloatHeight, 0f) ?? 0f);
+        : (vZdo?.GetFloat(VehicleZdoVars.BaseWaterFloatHeight, 0.5f) ?? 0.5f);
       var currentMinFloat = vehicle?.MovementController != null
         ? vehicle.MovementController.GetMinWaterFloatHeight()
-        : (vZdo?.GetFloat(VehicleZdoVars.MinWaterFloatHeight, -0.5f) ?? -0.5f);
+        : (vZdo?.GetFloat(VehicleZdoVars.MinWaterFloatHeight, -1.0f) ?? -1.0f);
 
       // Max Water Float Height Slider
       var maxFloatSliderRow = SwivelUIHelpers.AddSliderRow(
         commandsWindow.transform,
         viewStyles,
         "Max Water Float Height",
-        0f, 3.0f,
+        0f, 6.0f,
         currentMaxFloat,
         val =>
         {
@@ -897,7 +897,7 @@
         commandsWindow.transform,
         viewStyles,
         "Base Water Float Height",
-        -2.0f, 2.0f,
+        -2.0f, 4.0f,
         currentBaseFloat,
         val =>
         {
@@ -920,7 +920,7 @@
         commandsWindow.transform,
         viewStyles,
         "Min Water Float Height",
-        -3.0f, 0.0f,
+        -4.0f, 1.0f,
         currentMinFloat,
         val =>
         {

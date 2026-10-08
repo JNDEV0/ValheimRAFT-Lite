@@ -1,4 +1,4 @@
-#region
+﻿#region
 
 
 
@@ -2460,7 +2460,7 @@
 
       if (m_nview == null) return;
 
-      // Do not claim ownership or write ZDO while a teleport is in progress —
+      // Do not claim ownership or write ZDO while a teleport is in progress â€”
 
       // the teleporting owner must not be interrupted by another client.
 
@@ -6164,7 +6164,7 @@
 
 
 
-      // Calculate direction based on pivot’s forward
+      // Calculate direction based on pivotâ€™s forward
 
       var position = m_body.position;
 
@@ -6362,7 +6362,7 @@
 
 
 
-      // Adjust rotation to align with the pivot’s forward
+      // Adjust rotation to align with the pivotâ€™s forward
 
       var adjustedRotation = Quaternion.Euler(0, targetRotation.eulerAngles.y - ShipDirection.rotation.eulerAngles.y, 0);
 
@@ -6867,7 +6867,7 @@
         var normalizedClamp = maxTotalAngle > 0f ? (maxTotalAngle / 89f) : 1f;
         var turnFraction = normalizedClamp > 0f ? Mathf.Clamp(GetRudderValue() / normalizedClamp, -1f, 1f) : 0f;
 
-        // Realistic visual steering deflection: clamp rudder to a maximum of 45° deflection
+        // Realistic visual steering deflection: clamp rudder to a maximum of 45Â° deflection
         var visualMaxAngle = Mathf.Min(maxAngle * 0.5f, 45f);
 
         var newRotation = Quaternion.Slerp(
@@ -7333,7 +7333,7 @@
 
       var yawAccelCmd = YawAccelPerError * (desiredYaw - yawNow);
 
-      var torqueNeeded = Ieff * yawAccelCmd; // τ = I * α
+      var torqueNeeded = Ieff * yawAccelCmd; // Ï„ = I * Î±
 
       m_body.AddTorque(Vector3.up * torqueNeeded, ForceMode.Force);
 
@@ -7963,7 +7963,7 @@
 
 
 
-      // teleport state — blocks physics and ownership claims during far-zone moves
+      // teleport state â€” blocks physics and ownership claims during far-zone moves
 
       m_nview.Register<bool>(nameof(RPC_SetIsTeleporting), RPC_SetIsTeleporting);
 
@@ -8143,9 +8143,16 @@
 
     {
 
-      if (m_nview == null) return;
+      if (m_nview == null)
+      {
+        if (VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false)
+          LoggerProvider.LogInfo("[MovementController:SendRequestControl] Failed: m_nview is null.");
+        return;
+      }
 
       CancelDebounceTakeoverControls();
+      if (VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false)
+        LoggerProvider.LogInfo($"[MovementController:SendRequestControl] Invoking RPC_RequestControl for player {playerId} (isOwner={m_nview.IsOwner()}).");
 
       m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestControl),
 
@@ -8175,7 +8182,12 @@
 
     {
 
-      if (m_nview == null || ZNet.instance == null) return;
+      bool debugLog = VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false;
+      if (m_nview == null || ZNet.instance == null)
+      {
+        if (debugLog) LoggerProvider.LogInfo("[MovementController:RPC_RequestControl] m_nview or ZNet is null.");
+        return;
+      }
 
       CancelDebounceTakeoverControls();
 
@@ -8187,9 +8199,20 @@
 
 
 
+      var targetPlayer = Player.GetPlayer(targetPlayerId);
       var previousUserId = GetUser();
 
-      var isInBoat = WaterZoneUtils.IsOnboard(Player.GetPlayer(targetPlayerId));
+      var isStandingOnShip = targetPlayer != null && (targetPlayer.GetStandingOnShip() != null || targetPlayer.IsAttachedToShip());
+      var isNearWheel = lastUsedWheelComponent != null && targetPlayer != null &&
+                        Vector3.Distance(targetPlayer.transform.position, lastUsedWheelComponent.transform.position) <= 10f;
+      var isNearVehicle = targetPlayer != null && Vector3.Distance(targetPlayer.transform.position, transform.position) <= 30f;
+      var isWaterZoneOnboard = targetPlayer != null && WaterZoneUtils.IsOnboard(targetPlayer);
+      var isInBoat = isStandingOnShip || isNearWheel || isWaterZoneOnboard || isNearVehicle;
+
+      if (debugLog)
+      {
+        LoggerProvider.LogInfo($"[MovementController:RPC_RequestControl] targetPlayer={targetPlayerId} ('{targetPlayer?.GetPlayerName()}'): isOwner={m_nview.IsOwner()}, isInBoat={isInBoat} (standingOnShip={isStandingOnShip}, nearWheel={isNearWheel}, nearVehicle={isNearVehicle}, waterZone={isWaterZoneOnboard})");
+      }
 
 
 
@@ -8197,7 +8220,7 @@
 
       {
 
-        if (ModEnvironment.IsDebug) Logger.LogDebug("Not zdo owner, skipping...");
+        if (debugLog) LoggerProvider.LogInfo("[MovementController:RPC_RequestControl] Not zdo owner, awaiting owner response.");
 
 
 
@@ -8207,22 +8230,17 @@
 
 
 
-      if (ModEnvironment.IsDebug)
-
-        if (!isInBoat)
-
-          Logger.LogDebug(
-
-            "RPC_RequestControl requested the owner to give control but they are not within the boat.");
-
-
-
-      if (!isInBoat) return;
+      if (!isInBoat)
+      {
+        if (debugLog) LoggerProvider.LogInfo("[MovementController:RPC_RequestControl] Rejected: Player is not in boat or near wheel.");
+        return;
+      }
 
 
 
       // the previous user could be invalid so always makes the current user valid if so.
 
+      if (debugLog) LoggerProvider.LogInfo($"[MovementController:RPC_RequestControl] Owner granting control to player {targetPlayerId}. Invoking RPC_RequestResponse.");
       m_nview.InvokeRPC(ZRoutedRpc.Everybody, nameof(RPC_RequestResponse),
 
         true, targetPlayerId, previousUserId);
@@ -8353,29 +8371,27 @@
         if (customVal > -900f) return customVal;
       }
 
-      var baseOffset = WaterConfig.EXPERIMENTAL_AboveSurfaceBallastUsesShipMass.Value
-        ? GetMaxAboveSurfaceFromShipWeight()
-        : (WaterConfig.WaterBallastEnabled.Value ? GetMaxAboveSurfaceFromOnboardExtents() : 0f);
-
-      return Mathf.Max(0.1f, baseOffset - 1.0f);
+      return 3.0f;
     }
 
     public float GetBaseWaterFloatHeight()
     {
       if (m_nview != null && m_nview.GetZDO() != null)
       {
-        return m_nview.GetZDO().GetFloat(VehicleZdoVars.BaseWaterFloatHeight, 0f);
+        var customVal = m_nview.GetZDO().GetFloat(VehicleZdoVars.BaseWaterFloatHeight, -999f);
+        if (customVal > -900f) return customVal;
       }
-      return 0f;
+      return 0.5f;
     }
 
     public float GetMinWaterFloatHeight()
     {
       if (m_nview != null && m_nview.GetZDO() != null)
       {
-        return m_nview.GetZDO().GetFloat(VehicleZdoVars.MinWaterFloatHeight, -0.5f);
+        var customVal = m_nview.GetZDO().GetFloat(VehicleZdoVars.MinWaterFloatHeight, -999f);
+        if (customVal > -900f) return customVal;
       }
-      return -0.5f;
+      return -1.0f;
     }
 
     public float GetSurfaceOffsetWaterVehicleOnly()
@@ -9326,7 +9342,7 @@
       {
         m_body.isKinematic = false;
 
-        // Teleport finished normally — stop the watchdog so it doesn't fire
+        // Teleport finished normally â€” stop the watchdog so it doesn't fire
 
         // late and null the ref so GuardedFixedUpdate can start a fresh one
 
@@ -9368,11 +9384,11 @@
 
     /// Recovery strategy when the timeout fires:
 
-    ///   • Owner still alive  → call SetIsTeleporting(false), broadcast to all.
+    ///   â€¢ Owner still alive  â†’ call SetIsTeleporting(false), broadcast to all.
 
-    ///   • Owner disconnected → claim ownership first, then broadcast.
+    ///   â€¢ Owner disconnected â†’ claim ownership first, then broadcast.
 
-    ///   • Non-owner, owner still connected → unfreeze body locally only; the
+    ///   â€¢ Non-owner, owner still connected â†’ unfreeze body locally only; the
 
     ///     owner's watchdog will broadcast the authoritative ZDO clear.
 
@@ -9396,7 +9412,7 @@
 
 
 
-        // Teleport cleared normally before timeout — nothing to do.
+        // Teleport cleared normally before timeout â€” nothing to do.
 
         if (!IsTeleporting)
 
@@ -9410,7 +9426,7 @@
 
 
 
-      // --- Timeout reached — flag is stuck ---
+      // --- Timeout reached â€” flag is stuck ---
 
 
 
@@ -9438,13 +9454,13 @@
 
       {
 
-        // Owner is alive — just unfreeze locally and let the owner clear the ZDO.
+        // Owner is alive â€” just unfreeze locally and let the owner clear the ZDO.
 
         LoggerProvider.LogWarning(
 
           $"[TeleportStuckWatchdog] VehicleId={Manager?.PersistentZdoId}: " +
 
-          "stuck but owner still connected — unfreezing body locally only.");
+          "stuck but owner still connected â€” unfreezing body locally only.");
 
 
 
@@ -9474,7 +9490,7 @@
 
             $"[TeleportStuckWatchdog] VehicleId={Manager?.PersistentZdoId}: " +
 
-            "original teleport owner disconnected — claiming ownership to clear stuck flag.");
+            "original teleport owner disconnected â€” claiming ownership to clear stuck flag.");
 
           m_nview.ClaimOwnership();
 
@@ -9488,7 +9504,7 @@
 
             $"[TeleportStuckWatchdog] VehicleId={Manager?.PersistentZdoId}: " +
 
-            $"stuck for {TeleportStuckTimeoutSeconds}s as owner — forcing clear.");
+            $"stuck for {TeleportStuckTimeoutSeconds}s as owner â€” forcing clear.");
 
         }
 
@@ -9886,13 +9902,28 @@
 
       }
 
-      if (lastUsedWheelComponent == null) return;
+      if (lastUsedWheelComponent == null)
+      {
+        lastUsedWheelComponent = PiecesController?._steeringWheelPiece;
+      }
+
+      if (lastUsedWheelComponent == null)
+      {
+        if (VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false)
+          LoggerProvider.LogWarning("[MovementController:OnControlsHandOff] Failed: lastUsedWheelComponent is null and no _steeringWheelPiece found.");
+        return;
+      }
 
 
 
       // local player only.
 
-      if (isLocalPlayer) targetPlayer.StartDoodadControl(lastUsedWheelComponent);
+      if (isLocalPlayer)
+      {
+        if (VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false)
+          LoggerProvider.LogInfo($"[MovementController:OnControlsHandOff] Calling StartDoodadControl for local player on wheel '{lastUsedWheelComponent.name}'.");
+        targetPlayer.StartDoodadControl(lastUsedWheelComponent);
+      }
 
 
 

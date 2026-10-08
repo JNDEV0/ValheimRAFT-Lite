@@ -1,4 +1,4 @@
-#region
+﻿#region
 
   using System;
   using System.Collections;
@@ -1107,6 +1107,9 @@
             }
 
             m_rudderPieces.Add(rudder);
+            var we = netView.GetComponent<VehiclePieceWaterEffects>();
+            if (we == null) we = netView.gameObject.AddComponent<VehiclePieceWaterEffects>();
+            we.Initialize(VehicleWaterEffectType.Wake, Manager);
             SetShipWakeBounds();
             break;
           }
@@ -1245,6 +1248,8 @@
             break;
           case RudderComponent rudder:
           {
+            var we = netView.GetComponent<VehiclePieceWaterEffects>();
+            if (we != null) Destroy(we);
             m_rudderPieces.Remove(rudder);
             m_rudderPieces.RemoveAll(r => r == null || !r);
             if (m_rudderPieces.Count == 0 && Manager != null && Manager.MovementController != null)
@@ -4094,7 +4099,7 @@
 
     /// <summary>
     /// Moves ALL ZDOs that belong to a vehicle to a new world position purely via ZDO
-    /// calls — no live transforms required. Safe to call even if the vehicle GameObject
+    /// calls â€” no live transforms required. Safe to call even if the vehicle GameObject
     /// has been unloaded/GC'd during an async zone-load wait.
     ///
     /// Also freezes every onboard character (kinematic + zero velocity) and returns a
@@ -4103,22 +4108,22 @@
     /// moving those bodies and unfreezing them once the zone is ready.
     ///
     /// OFFSET CONVENTIONS:
-    ///   Persistent pieces  — MBPositionHash is localPosition relative to vehicle origin.
+    ///   Persistent pieces  â€” MBPositionHash is localPosition relative to vehicle origin.
     ///                        destPos = newVehiclePos + localOffset.
-    ///   Dynamic objects    — MBPositionHash is (worldPos - worldCenterOfMass), set by
+    ///   Dynamic objects    â€” MBPositionHash is (worldPos - worldCenterOfMass), set by
     ///                        AddTempPieceProperties and refreshed in ForceUpdateAllPiecePositions.
     ///                        We re-compute from the live transform here for accuracy, falling
     ///                        back to the stored value if the netview is no longer alive.
-    ///   Players            — NOT in m_dynamicObjects (AddTemporaryPiece skips properties for
+    ///   Players            â€” NOT in m_dynamicObjects (AddTemporaryPiece skips properties for
     ///                        players). They are only in the instance m_tempPieces list, which
     ///                        is passed in directly.
     /// </summary>
     /// <param name="persistentId">Vehicle persistent ZDO id.</param>
     /// <param name="newVehiclePos">New world position for the vehicle origin.</param>
     /// <param name="vehicleBodyPos">Current world position of the vehicle rigidbody (before move).</param>
-    /// <param name="liveTempPieces">Instance m_tempPieces list — covers players and any objects
+    /// <param name="liveTempPieces">Instance m_tempPieces list â€” covers players and any objects
     ///   that were added without going through InitZdo (e.g. local player).</param>
-    /// <returns>Map of ZNetView → destination world position for every onboard character,
+    /// <returns>Map of ZNetView â†’ destination world position for every onboard character,
     ///   to be applied to physics bodies after the zone loads.</returns>
     /// <summary>
     /// Updates all piece ZDOs and character positions when teleporting a vehicle.
@@ -4221,7 +4226,7 @@
       }
 
       // -----------------------------------------------------------------------
-      // 3. Live temp pieces — covers players (who skip AddTempPieceProperties)
+      // 3. Live temp pieces â€” covers players (who skip AddTempPieceProperties)
       //    and any other objects that never went through InitZdo.
       //    Offset = worldPos - vehicleCurrentPos (consistent with dynamic objects).
       // -----------------------------------------------------------------------
@@ -4498,7 +4503,7 @@
       {
         var errorMessage =
           $"RemoveTempPiece: temp piece '{netView.name}' was found in m_prefabPieceDataItems. " +
-          "Temp pieces must never be added to the convex hull — this is a bug. Removing now to prevent hull inflation.";
+          "Temp pieces must never be added to the convex hull â€” this is a bug. Removing now to prevent hull inflation.";
         LoggerProvider.LogError(errorMessage);
         OnPieceRemoved(netView.gameObject);
 #if DEBUG
@@ -5036,7 +5041,7 @@
       EnsureFallbackWaterWake();
       if (Manager?.ShipEffectsObj == null) return;
 
-      float localY = -2f;
+      float localY = 0f;
       if (Manager.MovementController?.m_body != null)
       {
         localY = Manager.MovementController.m_body.centerOfMass.y - 0.5f;
@@ -5050,7 +5055,7 @@
       if (firstRudder == null)
       {
         float localX = FloatCollider != null ? FloatCollider.transform.localPosition.x : 0f;
-        float localZ = FloatCollider != null ? (FloatCollider.transform.localPosition.z - (FloatCollider.size.z * 0.5f)) : -2f;
+        float localZ = FloatCollider != null ? (FloatCollider.transform.localPosition.z - (FloatCollider.size.z * 0.5f)) : 0f;
         Manager.ShipEffectsObj.transform.localPosition =
           new Vector3(localX, localY, localZ);
         return;
@@ -5255,9 +5260,9 @@
     {
       if (Manager == null || MovementController == null) return;
 
-      // ✅ Clear before refilling to avoid stale data
+      // âœ… Clear before refilling to avoid stale data
 
-      // ✅ Fetch colliders using `List<>` (HashSet not allowed in GetComponentsInChildren)
+      // âœ… Fetch colliders using `List<>` (HashSet not allowed in GetComponentsInChildren)
       // if (_shouldUpdateVehicleColliders)
       // {
       //   tempVehicleColliders.Clear();
@@ -5447,14 +5452,14 @@
     /// WHY NOT touch rigidbody/kinematic state:
     /// This fires from OnConvexHullGenerated which can happen while sailing (player
     /// adds a piece mid-voyage). Making the body kinematic or zeroing velocity would
-    /// violently interrupt movement. Only ZDO records are updated — the transform
+    /// violently interrupt movement. Only ZDO records are updated â€” the transform
     /// hierarchy is never touched.
     ///
     /// HOW: Pieces are children of the rigidbody transform so their localPosition
     /// is always accurate relative to the body origin. We subtract the XZ geometric
     /// center offset from each localPosition to get the new MBPositionHash relative
     /// to the new center, then shift the root ZDO world position by the same amount.
-    /// Y excluded — intentional (buoyancy / terrain).
+    /// Y excluded â€” intentional (buoyancy / terrain).
     /// </summary>
     private IEnumerator RecenterVehicleOriginCoroutine()
     {
@@ -5591,7 +5596,7 @@
       // Generate the mesh collider for efficient constraint checking
       if (HullBoundaryConstraint.GenerateBoundaryMesh(transform))
       {
-        LoggerProvider.LogInfo($"✅ Ship boundary constraint mesh generated with vertices: {HullBoundaryConstraint.GetVerticesCount} and boundary objects: {HullBoundaryConstraint.GetObjectsCount}");
+        LoggerProvider.LogInfo($"âœ… Ship boundary constraint mesh generated with vertices: {HullBoundaryConstraint.GetVerticesCount} and boundary objects: {HullBoundaryConstraint.GetObjectsCount}");
       }
     }
 

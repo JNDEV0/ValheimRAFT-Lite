@@ -703,44 +703,50 @@
 
       private void CreateEncapsulationBox(Vector3 center, Vector3 size)
       {
-        // Create a new GameObject for the box
-        var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        box.name = "VehicleShip_HullUnderwaterBox";
-        box.gameObject.layer = LayerHelpers.IgnoreRaycastLayer;
-
-        // Set the box's position to the calculated center
-
-        // Scale the box to match the calculated size
-
-        // Optionally, assign it as a child of the MeshCollider's GameObject for better organization
-        box.transform.SetParent(PreviewParent);
-        box.transform.localScale = size;
-        box.transform.localPosition = center;
-        box.transform.localRotation = Quaternion.identity;
-
-        // Set a transparent material for visualization (optional)
-        var boxRenderer = box.GetComponent<Renderer>();
-        if (boxRenderer != null)
+        try
         {
-          boxRenderer.material = GetMaterial();
-          boxRenderer.shadowCastingMode = ShadowCastingMode.Off;
-          boxRenderer.receiveShadows = false;
-          boxRenderer.lightProbeUsage = LightProbeUsage.Off;
-          boxRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+          // Ensure dimensions are positive so Unity BoxCollider does not complain if size has negative/zero components
+          var safeSize = new Vector3(Mathf.Max(0.01f, Mathf.Abs(size.x)), Mathf.Max(0.01f, Mathf.Abs(size.y)), Mathf.Max(0.01f, Mathf.Abs(size.z)));
+
+          // Create a new GameObject for the box
+          var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+          box.name = "VehicleShip_HullUnderwaterBox";
+          box.gameObject.layer = LayerHelpers.IgnoreRaycastLayer;
+
+          // Prevent the box from interfering with physics and prevent BoxCollider negative scale warning
+          // by destroying the default BoxCollider BEFORE setting transform properties
+          var collider = box.GetComponent<Collider>();
+          if (collider != null)
+          {
+            Destroy(collider);
+          }
+
+          // Optionally, assign it as a child of the MeshCollider's GameObject for better organization
+          box.transform.SetParent(PreviewParent);
+          box.transform.localScale = safeSize;
+          box.transform.localPosition = center;
+          box.transform.localRotation = Quaternion.identity;
+
+          // Set a transparent material for visualization (optional)
+          var boxRenderer = box.GetComponent<Renderer>();
+          if (boxRenderer != null)
+          {
+            boxRenderer.material = GetMaterial();
+            boxRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            boxRenderer.receiveShadows = false;
+            boxRenderer.lightProbeUsage = LightProbeUsage.Off;
+            boxRenderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
+          }
+
+          convexHullPreviewMeshes.Add(box);
         }
-
-        // Prevent the box from interfering with physics by removing its collider
-        Destroy(box.GetComponent<Collider>());
-
-        convexHullPreviewMeshes.Add(box);
+        catch (Exception)
+        {
+          // Non-critical visual preview box creation error suppression
+          // Prevents hull preview errors from cluttering logs or interrupting gameplay
+        }
       }
 
-
-      /// <summary>
-      ///   Used to filter out any colliders not considered in a valid layer or a
-      ///   component that should not be included such as stairs
-      /// </summary>
-      /// <param name="colliders"></param>
       public static List<Collider> FilterColliders(List<Collider> colliders)
       {
         if (colliders is { Count: > 0 })

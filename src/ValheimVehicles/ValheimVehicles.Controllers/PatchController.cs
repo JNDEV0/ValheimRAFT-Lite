@@ -81,6 +81,7 @@ public static class PatchController
       HarmonyHelper.TryPatchAll(_harmonyInstance, typeof(StartScene_Patch));
     }
 
+    UnityLogWarningSuppressPatch.Apply(_harmonyInstance);
     TryPatchGizmoMod();
     TryPatchPlanBuild();
   }

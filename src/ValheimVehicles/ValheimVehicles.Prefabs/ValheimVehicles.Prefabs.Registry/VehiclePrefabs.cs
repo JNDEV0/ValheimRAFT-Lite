@@ -1,4 +1,4 @@
-#region
+﻿#region
 
   using Jotunn.Configs;
   using Jotunn.Entities;
@@ -59,7 +59,7 @@
         shipEffects);
       Object.Destroy(shipEffects);
 
-      vehicleShipEffects.transform.localPosition = new Vector3(0, -2, 0);
+      vehicleShipEffects.transform.localPosition = new Vector3(0, 0, 0);
       vehicleManager.ShipEffectsObj = vehicleShipEffects.gameObject;
       vehicleManager.ShipEffects = vehicleShipEffects;
 

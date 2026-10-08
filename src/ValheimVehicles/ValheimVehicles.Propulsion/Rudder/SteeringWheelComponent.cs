@@ -1,3 +1,4 @@
+﻿using Zolantris.Shared;
 #nullable enable
 
 #region
@@ -397,32 +398,53 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   public bool Interact(Humanoid user, bool hold, bool alt)
   {
-    if (!isActiveAndEnabled) return false;
-    if (!EnsureControllersInstance()) return false;
-    if (ControllersInstance == null || ControllersInstance.MovementController == null || ControllersInstance.OnboardController == null || ControllersInstance.PiecesController == null) return false;
+    bool debugLog = VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false;
+    var player = user as Player;
 
-    // prevent interacting with same wheel while already controlling wheel and leaving controls
-    if (user == m_lastAttachedHumanoid)
+    if (debugLog)
     {
-      m_lastAttachedHumanoid = null;
+      LoggerProvider.LogInfo($"[SteeringWheel:Interact] Registered attempt from '{user?.GetHoverName()}' (ID: {player?.GetPlayerID()}), hold={hold}, alt={alt}, isAttached={user?.IsAttached()}, isControlling={player != null && player.m_doodadController == (IDoodadController)this}");
+    }
+
+    if (!isActiveAndEnabled)
+    {
+      if (debugLog) LoggerProvider.LogInfo("[SteeringWheel:Interact] Rejected: Component is not active and enabled.");
       return false;
     }
-    m_lastAttachedHumanoid = user;
+    if (!EnsureControllersInstance())
+    {
+      if (debugLog) LoggerProvider.LogInfo("[SteeringWheel:Interact] Rejected: EnsureControllersInstance() returned false.");
+      return false;
+    }
+    if (ControllersInstance == null || ControllersInstance.MovementController == null || ControllersInstance.OnboardController == null || ControllersInstance.PiecesController == null)
+    {
+      if (debugLog) LoggerProvider.LogInfo("[SteeringWheel:Interact] Rejected: ControllersInstance or required subcontroller is null.");
+      return false;
+    }
+
+    // If the user is currently controlling this wheel or attached, release controls
+    bool isCurrentlyControlling = (player != null && player.m_doodadController == (IDoodadController)this) || user.IsAttached() || user.IsAttachedToShip();
+    if (isCurrentlyControlling)
+    {
+      if (debugLog) LoggerProvider.LogInfo($"[SteeringWheel:Interact] User '{user.GetHoverName()}' is currently controlling or attached, releasing controls.");
+      m_lastAttachedHumanoid = null;
+      if (user.IsAttached() || user.IsAttachedToShip()) user.AttachStop();
+      if (player != null) OnUseStop(player);
+      return true;
+    }
 
     if (alt && !hold)
     {
       ToggleTutorial();
       return true;
     }
+
     var canUse = InUseDistance(user);
-
     var HasInvalidVehicle = ControllersInstance.Manager == null;
-    if (HasInvalidVehicle || !canUse) return false;
-
-    if (user.IsAttached() || user.IsAttachedToShip())
+    if (HasInvalidVehicle || !canUse)
     {
-      user.AttachStop();
-      return true;
+      if (debugLog) LoggerProvider.LogInfo($"[SteeringWheel:Interact] Rejected: HasInvalidVehicle={HasInvalidVehicle}, canUse={canUse} (dist={Vector3.Distance(user.transform.position, AttachPoint != null ? AttachPoint.position : transform.position):F2}m, max={maxUseRange}m).");
+      return false;
     }
 
     SetLastUsedWheel();
@@ -434,63 +456,44 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
       hasTargetControlListener = true;
     }
 
-    var player = user as Player;
-
-    if (player != null)
+    if (player == null)
     {
-      player.HideHandItems(false, false);
-      player.m_moveDir = Vector3.zero;
-      player.m_run = false;
-      player.m_autoRun = false;
-      player.m_walk = false;
-      player.m_currentVel = Vector3.zero;
-      player.m_currentTurnVel = 0f;
-      if (player.m_zanim != null)
-      {
-        player.m_zanim.SetFloat("forward_speed", 0f);
-        player.m_zanim.SetFloat("sideway_speed", 0f);
-        player.m_zanim.SetFloat("turn_speed", 0f);
-      }
+      if (debugLog) LoggerProvider.LogInfo("[SteeringWheel:Interact] Rejected: user is not a Player.");
+      return false;
     }
 
-    var playerOnShipViaShipInstance =
-      ControllersInstance.PiecesController?.GetComponentsInChildren<Player>();
-    if (player != null)
-      ControllersInstance.MovementController.UpdatePlayerOnShip(player);
-
-    if (playerOnShipViaShipInstance?.Length == 0 ||
-        playerOnShipViaShipInstance == null)
-      playerOnShipViaShipInstance =
-        ControllersInstance.OnboardController.m_localPlayers.ToArray() ??
-        null;
-
-    if (player == null || player.IsEncumbered()) return false;
-    /*
-     * <note /> This logic allows for the player to just look at the Raft and see if the player is a child within it.
-     */
-    if (playerOnShipViaShipInstance != null)
+    if (player.IsEncumbered())
     {
-      foreach (var playerInstance in playerOnShipViaShipInstance)
-      {
-        if (playerInstance.GetPlayerID() != player.GetPlayerID()) continue;
-        if (ControllersInstance?.MovementController == null) continue;
-        ControllersInstance.MovementController.SendRequestControl(
-          playerInstance.GetPlayerID());
-        return true;
-      }
+      if (debugLog) LoggerProvider.LogInfo("[SteeringWheel:Interact] Rejected: player is encumbered.");
+      return false;
     }
 
-    var playerOnShip =
-      VehicleControllersCompat.InitFromUnknown(player.GetStandingOnShip());
-
-    if (playerOnShip == null && !WaterZoneUtils.IsOnboard(player))
+    player.HideHandItems(false, false);
+    player.m_moveDir = Vector3.zero;
+    player.m_run = false;
+    player.m_autoRun = false;
+    player.m_walk = false;
+    player.m_currentVel = Vector3.zero;
+    player.m_currentTurnVel = 0f;
+    if (player.m_zanim != null)
     {
-      Logger.LogDebug("Player is not on Ship via standard check, but within wheel range");
+      player.m_zanim.SetFloat("forward_speed", 0f);
+      player.m_zanim.SetFloat("sideway_speed", 0f);
+      player.m_zanim.SetFloat("turn_speed", 0f);
     }
 
+    ControllersInstance.MovementController.UpdatePlayerOnShip(player);
 
-    ControllersInstance?.MovementController.SendRequestControl(
-      player.GetPlayerID());
+    m_lastAttachedHumanoid = user;
+
+    if (debugLog)
+    {
+      bool standingOnShip = player.GetStandingOnShip() != null;
+      bool waterZoneOnboard = WaterZoneUtils.IsOnboard(player);
+      LoggerProvider.LogInfo($"[SteeringWheel:Interact] Succeeded! Sending SendRequestControl for player {player.GetPlayerID()}. standingOnShip={standingOnShip}, waterZoneOnboard={waterZoneOnboard}");
+    }
+
+    ControllersInstance.MovementController.SendRequestControl(player.GetPlayerID());
     return true;
   }
 
@@ -745,9 +748,9 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   private bool InUseDistance(Component human)
   {
-    if (AttachPoint == null) return false;
-    return Vector3.Distance(human.transform.position, AttachPoint.position) <
-           maxUseRange;
+    if (human == null) return false;
+    var targetPt = AttachPoint != null ? AttachPoint.position : transform.position;
+    return Vector3.Distance(human.transform.position, targetPt) < maxUseRange;
   }
   public ZNetView? m_nview
   {
