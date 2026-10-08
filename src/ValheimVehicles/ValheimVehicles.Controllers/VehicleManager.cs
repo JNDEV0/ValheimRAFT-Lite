@@ -1,4 +1,4 @@
-#region
+﻿#region
 
   using System;
   using System.Collections;
@@ -364,9 +364,12 @@
     {
       if (vehicleManager == null) return;
       if (vehicleManager.ShipEffects == null) return;
-      vehicleManager.ShipEffects.m_inWaterSoundRoot.SetActive(VehicleGlobalConfig.EnableShipInWaterSounds.Value);
-      vehicleManager.ShipEffects.m_wakeSoundRoot.SetActive(VehicleGlobalConfig.EnableShipWakeSounds.Value);
-      vehicleManager.ShipEffects.m_sailSound.gameObject.SetActive(VehicleGlobalConfig.EnableShipSailSounds.Value);
+      if ((bool)vehicleManager.ShipEffects.m_inWaterSoundRoot)
+        vehicleManager.ShipEffects.m_inWaterSoundRoot.SetActive(VehicleGlobalConfig.EnableShipInWaterSounds.Value);
+      if ((bool)vehicleManager.ShipEffects.m_wakeSoundRoot)
+        vehicleManager.ShipEffects.m_wakeSoundRoot.SetActive(VehicleGlobalConfig.EnableShipWakeSounds.Value);
+      if ((bool)vehicleManager.ShipEffects.m_sailSound)
+        vehicleManager.ShipEffects.m_sailSound.gameObject.SetActive(VehicleGlobalConfig.EnableShipSailSounds.Value);
     }
 
     private static void UpdateAllShipSounds()

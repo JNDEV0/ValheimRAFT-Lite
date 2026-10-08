@@ -1,4 +1,4 @@
-using ValheimVehicles.BepInExConfig;
+﻿using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs;
 
 namespace ValheimVehicles.Components;
@@ -28,7 +28,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
 
   public GameObject m_splashEffects;
 
-  private ParticleSystem[] m_wakeParticles;
+  private ParticleSystem[] m_wakeParticles = System.Array.Empty<ParticleSystem>();
 
   private float m_sailBaseVol = 1f;
 
@@ -64,6 +64,8 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
     instance.m_audioFadeDuration = shipEffects.m_audioFadeDuration;
     instance.m_sailSound = shipEffects.m_sailSound;
     instance.m_sailFadeDuration = shipEffects.m_sailFadeDuration;
+
+    instance.InitializeSounds();
   }
 
   private void Awake()
@@ -90,13 +92,20 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
     }
     m_wakeParticles = System.Array.Empty<ParticleSystem>();
 
+    // Clean up splash/cutwater particles, but NEVER destroy audio roots or any objects containing AudioSource!
     for (int i = transform.childCount - 1; i >= 0; i--)
     {
       var child = transform.GetChild(i);
+      if (child.gameObject == m_wakeSoundRoot ||
+          child.gameObject == m_inWaterSoundRoot ||
+          (m_sailSound != null && child.gameObject == m_sailSound.gameObject) ||
+          child.GetComponentInChildren<AudioSource>() != null)
+      {
+        continue;
+      }
+
       if (child.name.IndexOf("splash", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-          child.name.IndexOf("cutwater", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-          child.name.IndexOf("wake", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-          child.name.IndexOf("foam", System.StringComparison.OrdinalIgnoreCase) >= 0)
+          child.name.IndexOf("cutwater", System.StringComparison.OrdinalIgnoreCase) >= 0)
       {
         child.gameObject.SetActive(false);
         Destroy(child.gameObject);
@@ -105,12 +114,51 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
     m_body = GetComponentInParent<Rigidbody>();
     _mManager = GetComponentInParent<VehicleManager>();
 
+    // Fallback lookups for sound roots if references were not set or were lost
+    if (m_wakeSoundRoot == null)
+    {
+      for (int i = 0; i < transform.childCount; i++)
+      {
+        var child = transform.GetChild(i);
+        if (child.name.IndexOf("wake", System.StringComparison.OrdinalIgnoreCase) >= 0 &&
+            child.GetComponentInChildren<AudioSource>() != null)
+        {
+          m_wakeSoundRoot = child.gameObject;
+          break;
+        }
+      }
+    }
+    if (m_inWaterSoundRoot == null)
+    {
+      for (int i = 0; i < transform.childCount; i++)
+      {
+        var child = transform.GetChild(i);
+        if (child.name.IndexOf("water", System.StringComparison.OrdinalIgnoreCase) >= 0 &&
+            child.GetComponentInChildren<AudioSource>() != null)
+        {
+          m_inWaterSoundRoot = child.gameObject;
+          break;
+        }
+      }
+    }
+    if (m_sailSound == null)
+    {
+      m_sailSound = GetComponentInChildren<AudioSource>();
+    }
+
+    InitializeSounds();
+  }
+
+  public void InitializeSounds()
+  {
+    m_wakeSounds.Clear();
     if ((bool)m_wakeSoundRoot)
     {
       var componentsInChildren =
         m_wakeSoundRoot.GetComponentsInChildren<AudioSource>();
       foreach (var audioSource in componentsInChildren)
       {
+        if (audioSource == null || !(bool)audioSource) continue;
         audioSource.pitch = Random.Range(0.9f, 1.1f);
         m_wakeSounds.Add(
           new KeyValuePair<AudioSource, float>(audioSource,
@@ -118,12 +166,14 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
       }
     }
 
+    m_inWaterSounds.Clear();
     if ((bool)m_inWaterSoundRoot)
     {
       var componentsInChildren =
         m_inWaterSoundRoot.GetComponentsInChildren<AudioSource>();
       foreach (var audioSource2 in componentsInChildren)
       {
+        if (audioSource2 == null || !(bool)audioSource2) continue;
         audioSource2.pitch = Random.Range(0.9f, 1.1f);
         m_inWaterSounds.Add(
           new KeyValuePair<AudioSource, float>(audioSource2,
@@ -162,7 +212,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
 
   public void CustomLateUpdate(float deltaTime)
   {
-    if (!_mManager.IsInitialized) return;
+    if (_mManager == null || !_mManager.IsInitialized) return;
     var checkPos = _mManager.MovementController?.m_body != null
       ? _mManager.MovementController.m_body.worldCenterOfMass
       : transform.position;
@@ -176,7 +226,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
 
     if (m_shadow != null && m_shadow.gameObject.activeSelf)
       m_shadow.gameObject.SetActive(false);
-    var flag = m_body.linearVelocity.magnitude > m_minimumWakeVel;
+    var flag = m_body != null && m_body.linearVelocity.magnitude > m_minimumWakeVel;
     FadeSounds(m_inWaterSounds, true, deltaTime);
 
     // flying and submerged states should never have a wake.
@@ -193,9 +243,9 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
       SetWake(flag, deltaTime);
     }
 
-    if (m_sailSound != null && _mManager.MovementController != null)
+    if ((bool)m_sailSound && _mManager.MovementController != null)
     {
-      var target = _mManager!.MovementController!.IsSailUp() ? m_sailBaseVol : 0f;
+      var target = _mManager.MovementController.IsSailUp() ? m_sailBaseVol : 0f;
       FadeSound(m_sailSound, target, m_sailFadeDuration, deltaTime);
     }
 
@@ -208,10 +258,15 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
   private void SetWake(bool enabled, float dt)
   {
     var wakeParticles = m_wakeParticles;
-    for (var i = 0; i < wakeParticles.Length; i++)
+    if (wakeParticles != null)
     {
-      var emission = wakeParticles[i].emission;
-      emission.enabled = enabled;
+      for (var i = 0; i < wakeParticles.Length; i++)
+      {
+        var ps = wakeParticles[i];
+        if (ps == null || !(bool)ps) continue;
+        var emission = ps.emission;
+        emission.enabled = enabled;
+      }
     }
 
     FadeSounds(m_wakeSounds, enabled, dt);
@@ -220,17 +275,29 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
   private void FadeSounds(List<KeyValuePair<AudioSource, float>> sources,
     bool enabled, float dt)
   {
-    foreach (var source in sources)
+    if (sources == null) return;
+    for (var i = sources.Count - 1; i >= 0; i--)
+    {
+      var source = sources[i];
+      if (source.Key == null || !(bool)source.Key)
+      {
+        sources.RemoveAt(i);
+        continue;
+      }
+
       if (enabled)
         FadeSound(source.Key, source.Value, m_audioFadeDuration, dt);
       else
         FadeSound(source.Key, 0f, m_audioFadeDuration, dt);
+    }
   }
 
-  private static void FadeSound(AudioSource source, float target,
+  private static void FadeSound(AudioSource? source, float target,
     float fadeDuration, float dt)
   {
-    var maxDelta = dt / fadeDuration;
+    if (source == null || !(bool)source) return;
+
+    var maxDelta = dt / Mathf.Max(0.01f, fadeDuration);
     if (target > 0f)
     {
       if (!source.isPlaying) source.Play();
