@@ -26,7 +26,7 @@
       }
 
       private const string colliderParentNameDefault = "vehicle_movement/colliders";
-      public static bool CanRenderBubble = true;
+      public static bool CanRenderBubble = false;
 
       public static bool HasInitialized = false;
       [CanBeNull] public static Material DebugMaterial;
@@ -56,7 +56,7 @@
       // shared across all instances, but not created immediately
       public PhysicsMaterial localPhysicMaterial;
 
-      public PreviewModes PreviewMode = PreviewModes.Bubble;
+      public PreviewModes PreviewMode = PreviewModes.None;
 
       [FormerlySerializedAs("sphereEncapsulationBuffer")]
       public float wrapperBuffer = 0.5f;
@@ -649,6 +649,7 @@
 
       public void GenerateUnderwaterBoxWrapper()
       {
+        if (!CanRenderBubble) return;
         foreach (var meshCollider in convexHullMeshColliders.ToList())
         {
           if (meshCollider == null)

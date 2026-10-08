@@ -135,9 +135,12 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
   public void CustomLateUpdate(float deltaTime)
   {
     if (!_mManager.IsInitialized) return;
-    if (!Floating.IsUnderWater(transform.position, ref m_previousWaterVolume))
+    var checkPos = _mManager.MovementController?.m_body != null
+      ? _mManager.MovementController.m_body.worldCenterOfMass
+      : transform.position;
+    if (!Floating.IsUnderWater(checkPos, ref m_previousWaterVolume))
     {
-      m_shadow.gameObject.SetActive(false);
+      if (m_shadow != null) m_shadow.gameObject.SetActive(false);
       SetWake(false, deltaTime);
       FadeSounds(m_inWaterSounds, false, deltaTime);
       return;

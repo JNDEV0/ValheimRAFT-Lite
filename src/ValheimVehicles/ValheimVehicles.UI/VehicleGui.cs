@@ -986,12 +986,9 @@
         .PiecesController.convexHullComponent;
 
       convexHullComponent.PreviewMode =
-        convexHullComponent.PreviewMode switch
-        {
-          ConvexHullAPI.PreviewModes.None => ConvexHullAPI.PreviewModes.Bubble,
-          ConvexHullAPI.PreviewModes.Bubble => ConvexHullAPI.PreviewModes.Debug,
-          _ => ConvexHullAPI.PreviewModes.Bubble
-        };
+        convexHullComponent.PreviewMode == ConvexHullAPI.PreviewModes.Debug
+          ? ConvexHullAPI.PreviewModes.None
+          : ConvexHullAPI.PreviewModes.Debug;
 
       currentInstance.PiecesController.convexHullComponent
         .CreatePreviewConvexHullMeshes();

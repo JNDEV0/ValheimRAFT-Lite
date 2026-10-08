@@ -40,7 +40,7 @@ public class ConvexHullComponent : ConvexHullAPI
   {
     return PhysicsConfig.convexHullDebuggerForceEnabled.Value
       ? PreviewModes.Debug
-      : WaterConfig.HasUnderwaterHullBubbleEffect.Value
+      : (WaterConfig.HasUnderwaterHullBubbleEffect.Value && CanRenderBubble)
         ? PreviewModes.Bubble
         : PreviewModes.None;
   }

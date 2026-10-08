@@ -10,6 +10,7 @@ using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.Integrations;
 using Zolantris.Shared;
 
@@ -486,7 +487,6 @@ namespace ValheimVehicles.Prefabs.Registry
     public static void EnsureRepairPieceAdded()
     {
       if (ObjectDB.instance == null) return;
-      ValheimRaftLocalization.ApplyActiveLanguage();
       var table = PieceManager.Instance.GetPieceTable(VehicleHammerTableName) ?? VehicleHammerTable?.PieceTable;
       if (table == null || table.m_pieces == null) return;
 
@@ -558,7 +558,8 @@ namespace ValheimVehicles.Prefabs.Registry
       }
 
       table.m_pieces = sortedPieces;
-      LoggerProvider.LogInfo($"[VehicleHammer] Successfully organized {table.m_pieces.Count} pieces in {VehicleHammerTableName} with repair at index 0");
+      if (LoopTracker.Enabled)
+        LoggerProvider.LogInfo($"[VehicleHammer] Successfully organized {table.m_pieces.Count} pieces in {VehicleHammerTableName} with repair at index 0");
     }
 
     public override void OnRegister()

@@ -4387,6 +4387,8 @@
 
       m_body.automaticCenterOfMass = false;
 
+      PiecesController?.SetShipWakeBounds();
+
     }
 
     public void UpdateLandVehicleStats()

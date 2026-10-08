@@ -7,6 +7,7 @@ using BepInEx;
 using Jotunn.Managers;
 using UnityEngine;
 using ValheimVehicles.BepInExConfig;
+using ValheimVehicles.Helpers;
 using ValheimVehicles.SharedScripts;
 using Zolantris.Shared;
 
@@ -234,7 +235,8 @@ public static class ValheimRaftLocalization
 
         // 3. Refresh static translation cache
         ModTranslations.ForceUpdateTranslations();
-        LoggerProvider.LogInfo($"[ValheimRAFT] Applied active language '{targetLang}' (Mode: '{configured}')");
+        if (LoopTracker.Enabled)
+          LoggerProvider.LogInfo($"[ValheimRAFT] Applied active language '{targetLang}' (Mode: '{configured}')");
       }
       catch (Exception e)
       {

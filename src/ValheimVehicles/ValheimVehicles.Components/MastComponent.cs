@@ -52,17 +52,35 @@ public class MastComponent : MonoBehaviour
   public void ApplySailLayersAndFlags()
   {
     var targetObj = m_sailObject != null ? m_sailObject : (m_vanillaSailCloth != null ? m_vanillaSailCloth.gameObject : null);
-    if (targetObj == null) return;
-
-    var transforms = targetObj.GetComponentsInChildren<Transform>(true);
-    for (int i = 0; i < transforms.Length; i++)
+    if (targetObj != null)
     {
-      transforms[i].gameObject.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
+      var transforms = targetObj.GetComponentsInChildren<Transform>(true);
+      for (int i = 0; i < transforms.Length; i++)
+      {
+        transforms[i].gameObject.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
+      }
     }
-    var renderers = targetObj.GetComponentsInChildren<Renderer>(true);
-    for (int i = 0; i < renderers.Length; i++)
+
+    var allTransforms = GetComponentsInChildren<Transform>(true);
+    for (int i = 0; i < allTransforms.Length; i++)
     {
-      renderers[i].reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+      var t = allTransforms[i];
+      if (t == transform) continue;
+      if (t.GetComponent<Collider>() == null && t.GetComponent<Piece>() == null)
+      {
+        t.gameObject.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
+      }
+    }
+
+    var allRenderers = GetComponentsInChildren<Renderer>(true);
+    for (int i = 0; i < allRenderers.Length; i++)
+    {
+      var r = allRenderers[i];
+      r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+      if (r.transform != transform && r.GetComponent<Collider>() == null)
+      {
+        r.gameObject.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
+      }
     }
   }
 

@@ -288,7 +288,7 @@ public class WaterConfig : BepInExBaseConfig<WaterConfig>
     HasUnderwaterHullBubbleEffect = config.BindUnique(
       SectionKey,
       "HasUnderwaterHullBubbleEffect",
-      true,
+      false,
       ConfigHelpers.CreateConfigDescription(
         "Adds an underwater bubble conforming around the vehicle hull. Allowing for a underwater like distortion effect without needing to use fog.",
         true, true));

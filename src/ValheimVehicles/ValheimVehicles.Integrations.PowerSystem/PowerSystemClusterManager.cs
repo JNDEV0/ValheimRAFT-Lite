@@ -35,7 +35,8 @@ namespace ValheimVehicles.Integrations
       ZdoWatchController.OnLoad += zdo => RegisterPowerData(zdo);
 
       ZdoWatchController.OnReset += zdo => RemovePowerData(zdo);
-      LoggerProvider.LogInfo("[PowerZDONetworkManager] Init complete.");
+      if (LoopTracker.Enabled)
+        LoggerProvider.LogInfo("[PowerZDONetworkManager] Init complete.");
     }
 
     private static void RegisterHashes()

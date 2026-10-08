@@ -897,7 +897,8 @@
       RemovePieceDataForComponents(netView);
       UpdatePieceCount();
 
-      LoggerProvider.LogInfo($"[VPC:UnloadPiece] Vehicle #{PersistentZdoId}: Unloaded '{netView.name}' (ZDO: {netView.GetZDO()?.m_uid}). Remaining: {m_pieces.Count}");
+      if (LoopTracker.Enabled)
+        LoggerProvider.LogInfo($"[VPC:UnloadPiece] Vehicle #{PersistentZdoId}: Unloaded '{netView.name}' (ZDO: {netView.GetZDO()?.m_uid}). Remaining: {m_pieces.Count}");
 
       if (m_prefabPieceDataItems.TryGetValue(netView.gameObject, out var pieceData))
       {
@@ -4346,7 +4347,8 @@
       if ((bool)wnt) wnt.enabled = true;
 
       AddPiece(netView);
-      LoggerProvider.LogInfo($"[VPC:LoadPiece] Vehicle #{PersistentZdoId}: Activated '{netView.name}' (ZDO: {zdo.m_uid}). Total loaded: {m_pieces.Count}");
+      if (LoopTracker.Enabled)
+        LoggerProvider.LogInfo($"[VPC:LoadPiece] Vehicle #{PersistentZdoId}: Activated '{netView.name}' (ZDO: {zdo.m_uid}). Total loaded: {m_pieces.Count}");
 
       var pName = netView.name;
       if (pName.IndexOf("rudder", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -4843,7 +4845,8 @@
 
       InitZdo(zdo);
       AddPiece(netView, true);
-      LoggerProvider.LogInfo($"[VPC:AddPiece] Vehicle #{PersistentZdoId}: Added '{netView.name}' (ZDO: {netView.m_zdo?.m_uid}). Total: {GetPieceCount()}");
+      if (LoopTracker.Enabled)
+        LoggerProvider.LogInfo($"[VPC:AddPiece] Vehicle #{PersistentZdoId}: Added '{netView.name}' (ZDO: {netView.m_zdo?.m_uid}). Total: {GetPieceCount()}");
 
       if (previousCount == 0 && GetPieceCount() == 1) SetInitComplete();
     }
@@ -4966,11 +4969,20 @@
 
 
 // for increasing ship wake size.
-    private void SetShipWakeBounds()
+    public void SetShipWakeBounds()
     {
       if (Manager?.ShipEffectsObj == null) return;
 
-      float localY = FloatCollider != null ? FloatCollider.transform.localPosition.y : -2f;
+      float localY = -2f;
+      if (Manager.MovementController?.m_body != null)
+      {
+        localY = Manager.MovementController.m_body.centerOfMass.y;
+      }
+      else if (FloatCollider != null)
+      {
+        localY = FloatCollider.transform.localPosition.y - (FloatCollider.size.y * 0.5f);
+      }
+
       var firstRudder = m_rudderPieces.FirstOrDefault();
       if (firstRudder == null)
       {
