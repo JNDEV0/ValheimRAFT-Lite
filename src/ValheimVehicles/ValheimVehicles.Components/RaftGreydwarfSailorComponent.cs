@@ -282,17 +282,6 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       {
         TriggerMutiny();
       }
-      else
-      {
-        string msg = Loyalty switch
-        {
-          SailorLoyalty.Unsatisfied => "Sailor Greydwarf is Unsatisfied! (No resin found in chests)",
-          SailorLoyalty.Hungry => "Sailor Greydwarf is Hungry! (No resin found in chests)",
-          SailorLoyalty.NearMutiny => "WARNING: Sailor Greydwarf is Near-Mutiny! Provide resin immediately!",
-          _ => "Sailor Greydwarf needs resin!"
-        };
-        MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, msg);
-      }
     }
   }
 

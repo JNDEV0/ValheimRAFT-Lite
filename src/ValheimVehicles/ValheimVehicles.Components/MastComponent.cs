@@ -41,6 +41,29 @@ public class MastComponent : MonoBehaviour
   {
     m_rotationTransform = transform.Find("rotational_yard");
     CaptureCustomSailBaseScale();
+    ApplySailLayersAndFlags();
+  }
+
+  public void Start()
+  {
+    ApplySailLayersAndFlags();
+  }
+
+  public void ApplySailLayersAndFlags()
+  {
+    var targetObj = m_sailObject != null ? m_sailObject : (m_vanillaSailCloth != null ? m_vanillaSailCloth.gameObject : null);
+    if (targetObj == null) return;
+
+    var transforms = targetObj.GetComponentsInChildren<Transform>(true);
+    for (int i = 0; i < transforms.Length; i++)
+    {
+      transforms[i].gameObject.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
+    }
+    var renderers = targetObj.GetComponentsInChildren<Renderer>(true);
+    for (int i = 0; i < renderers.Length; i++)
+    {
+      renderers[i].reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+    }
   }
 
   public void ConfigureVanillaSail(Ship sourceShip)
@@ -59,6 +82,7 @@ public class MastComponent : MonoBehaviour
     m_sailMidfurledPosition = RemapTransform(sourceRoot, sourceShip.m_sailMidfurledPosition);
     m_sailUnfurledPosition = RemapTransform(sourceRoot, sourceShip.m_sailUnfurledPosition);
     m_sailBlendWeightCurve = sourceShip.m_sailBlendWeightCurve;
+    ApplySailLayersAndFlags();
   }
 
   private Transform RemapTransform(Transform sourceRoot, Transform source)

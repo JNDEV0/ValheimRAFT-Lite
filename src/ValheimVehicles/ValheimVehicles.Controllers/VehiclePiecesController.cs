@@ -1234,7 +1234,7 @@
           case RudderComponent rudder:
           {
             m_rudderPieces.Remove(rudder);
-            if (Manager && m_rudderPieces.Count > 0)
+            if (Manager)
               SetShipWakeBounds();
             break;
           }
@@ -4970,14 +4970,14 @@
     {
       if (Manager?.ShipEffectsObj == null) return;
 
-      var firstRudder = m_rudderPieces.First();
+      float localY = FloatCollider != null ? FloatCollider.transform.localPosition.y : -2f;
+      var firstRudder = m_rudderPieces.FirstOrDefault();
       if (firstRudder == null)
       {
-        var bounds = FloatCollider.bounds;
+        float localX = FloatCollider != null ? FloatCollider.transform.localPosition.x : 0f;
+        float localZ = FloatCollider != null ? (FloatCollider.transform.localPosition.z - (FloatCollider.size.z * 0.5f)) : -2f;
         Manager.ShipEffectsObj.transform.localPosition =
-          new Vector3(FloatCollider.transform.localPosition.x,
-            bounds.center.y,
-            bounds.min.z);
+          new Vector3(localX, localY, localZ);
         return;
       }
 
@@ -4985,7 +4985,7 @@
       Manager.ShipEffectsObj.transform.localPosition =
         new Vector3(
           localPosition.x,
-          FloatCollider.bounds.center.y,
+          localY,
           localPosition.z);
     }
 

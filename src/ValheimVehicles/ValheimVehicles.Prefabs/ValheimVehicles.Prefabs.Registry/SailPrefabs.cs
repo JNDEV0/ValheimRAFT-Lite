@@ -78,6 +78,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
     PrefabRegistryHelpers.FixRopes(vikingShipMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(vikingShipMastPrefab);
+    vikingShipMastComponent.ApplySailLayersAndFlags();
 
     PrefabRegistryController.AddPiece(new CustomPiece(vikingShipMastPrefab, true,
       new PieceConfig
@@ -137,6 +138,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
     PrefabRegistryHelpers.FixRopes(prefab);
     PrefabRegistryHelpers.FixCollisionLayers(prefab);
+    mastComponent.ApplySailLayersAndFlags();
 
     PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
@@ -319,6 +321,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
     PrefabRegistryHelpers.FixRopes(mbRaftMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(mbRaftMastPrefab);
+    mastComponent.ApplySailLayersAndFlags();
     PrefabRegistryController.AddPiece(new CustomPiece(mbRaftMastPrefab, true,
       new PieceConfig
       {
@@ -386,6 +389,7 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
     PrefabRegistryHelpers.FixRopes(mbKarveMastPrefab);
     PrefabRegistryHelpers.FixCollisionLayers(mbKarveMastPrefab);
+    mast.ApplySailLayersAndFlags();
 
     PrefabRegistryController.AddPiece(new CustomPiece(mbKarveMastPrefab, true,
       new PieceConfig

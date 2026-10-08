@@ -745,6 +745,32 @@
       }
     }
 
+    [HarmonyPatch(typeof(Player), "SetupPlacementGhost")]
+    [HarmonyPostfix]
+    public static void SetupPlacementGhost_DefaultMastSnapPoint(Player __instance)
+    {
+      if (!__instance.m_placementGhost) return;
+      var mast = __instance.m_placementGhost.GetComponent<MastComponent>();
+      if (mast == null) return;
+
+      var piece = __instance.m_placementGhost.GetComponent<Piece>();
+      if (piece == null) return;
+
+      __instance.m_tempSnapPoints1.Clear();
+      piece.GetSnapPoints(__instance.m_tempSnapPoints1);
+      if (__instance.m_tempSnapPoints1.Count == 0) return;
+
+      int bottomIndex = __instance.m_tempSnapPoints1.FindIndex(t => t != null && t.name.IndexOf("bottom", System.StringComparison.OrdinalIgnoreCase) >= 0);
+      if (bottomIndex >= 0)
+      {
+        __instance.m_manualSnapPoint = bottomIndex;
+      }
+      else
+      {
+        __instance.m_manualSnapPoint = 0;
+      }
+    }
+
     [HarmonyPatch(typeof(Player), "GetControlledShip")]
     [HarmonyPrefix]
     public static bool GetControlledShip(Player __instance, object? __result)

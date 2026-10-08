@@ -51,6 +51,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
   {
     instance.m_splashEffects = shipEffects.m_splashEffects;
     instance.m_shadow = shipEffects.m_shadow;
+    if (instance.m_shadow != null) instance.m_shadow.gameObject.SetActive(false);
     instance.m_minimumWakeVel = shipEffects.m_minimumWakeVel;
     instance.m_speedWakeRoot = shipEffects.m_speedWakeRoot;
     instance.m_inWaterSoundRoot = shipEffects.m_inWaterSoundRoot;
@@ -69,6 +70,7 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
       return;
     }
 
+    if (m_shadow != null) m_shadow.gameObject.SetActive(false);
     m_body = GetComponentInParent<Rigidbody>();
     _mManager = GetComponentInParent<VehicleManager>();
     if ((bool)m_speedWakeRoot)
@@ -141,7 +143,8 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
       return;
     }
 
-    m_shadow.gameObject.SetActive(true);
+    if (m_shadow != null && m_shadow.gameObject.activeSelf)
+      m_shadow.gameObject.SetActive(false);
     var flag = m_body.linearVelocity.magnitude > m_minimumWakeVel;
     FadeSounds(m_inWaterSounds, true, deltaTime);
 
