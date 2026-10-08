@@ -36,6 +36,16 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     {
       Destroy(existingCutwater.gameObject);
     }
+    for (int i = transform.childCount - 1; i >= 0; i--)
+    {
+      var child = transform.GetChild(i);
+      if (child.name.IndexOf("splash", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          child.name.IndexOf("cutwater", StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        child.gameObject.SetActive(false);
+        Destroy(child.gameObject);
+      }
+    }
   }
 
   private void Start()
@@ -62,7 +72,23 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     _effectInstance.transform.localPosition = new Vector3(0f, -0.2f, -0.6f);
     _effectInstance.transform.localRotation = Quaternion.identity;
 
-    _particles = _effectInstance.GetComponentsInChildren<ParticleSystem>(true);
+    var allPs = _effectInstance.GetComponentsInChildren<ParticleSystem>(true);
+    var wakePsList = new System.Collections.Generic.List<ParticleSystem>();
+    foreach (var ps in allPs)
+    {
+      if (ps.name.IndexOf("splash", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          ps.name.IndexOf("cutwater", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          ps.name.IndexOf("spray", StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        ps.gameObject.SetActive(false);
+        Destroy(ps.gameObject);
+      }
+      else
+      {
+        wakePsList.Add(ps);
+      }
+    }
+    _particles = wakePsList.ToArray();
     _effectInstance.SetActive(true);
     SetEmission(false);
   }

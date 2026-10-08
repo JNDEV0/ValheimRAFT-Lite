@@ -48,6 +48,12 @@
         Object.Instantiate(LoadValheimAssets.shipWaterEffects, prefab.transform);
       waterEffects.name = PrefabNames.VehicleShipEffects;
       var shipEffects = waterEffects.GetComponent<ShipEffects>();
+      if (shipEffects.m_splashEffects != null)
+      {
+        shipEffects.m_splashEffects.SetActive(false);
+        Object.Destroy(shipEffects.m_splashEffects);
+        shipEffects.m_splashEffects = null;
+      }
       var vehicleShipEffects = waterEffects.AddComponent<VehicleShipEffects>();
       VehicleShipEffects.CloneShipEffectsToInstance(vehicleShipEffects,
         shipEffects);

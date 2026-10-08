@@ -49,7 +49,12 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
   public static void CloneShipEffectsToInstance(VehicleShipEffects instance,
     ShipEffects shipEffects)
   {
-    instance.m_splashEffects = shipEffects.m_splashEffects;
+    instance.m_splashEffects = null;
+    if (shipEffects.m_splashEffects != null)
+    {
+      shipEffects.m_splashEffects.SetActive(false);
+      Destroy(shipEffects.m_splashEffects);
+    }
     instance.m_shadow = shipEffects.m_shadow;
     if (instance.m_shadow != null) instance.m_shadow.gameObject.SetActive(false);
     instance.m_minimumWakeVel = shipEffects.m_minimumWakeVel;
@@ -71,11 +76,44 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
     }
 
     if (m_shadow != null) m_shadow.gameObject.SetActive(false);
+    if (m_splashEffects != null)
+    {
+      m_splashEffects.SetActive(false);
+      Destroy(m_splashEffects);
+      m_splashEffects = null;
+    }
+    for (int i = transform.childCount - 1; i >= 0; i--)
+    {
+      var child = transform.GetChild(i);
+      if (child.name.IndexOf("splash", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+          child.name.IndexOf("cutwater", System.StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        child.gameObject.SetActive(false);
+        Destroy(child.gameObject);
+      }
+    }
     m_body = GetComponentInParent<Rigidbody>();
     _mManager = GetComponentInParent<VehicleManager>();
     if ((bool)m_speedWakeRoot)
-      m_wakeParticles =
-        m_speedWakeRoot.GetComponentsInChildren<ParticleSystem>();
+    {
+      var allPs = m_speedWakeRoot.GetComponentsInChildren<ParticleSystem>(true);
+      var wakePsList = new List<ParticleSystem>();
+      foreach (var ps in allPs)
+      {
+        if (ps.name.IndexOf("splash", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+            ps.name.IndexOf("cutwater", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+            ps.name.IndexOf("spray", System.StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+          ps.gameObject.SetActive(false);
+          Destroy(ps.gameObject);
+        }
+        else
+        {
+          wakePsList.Add(ps);
+        }
+      }
+      m_wakeParticles = wakePsList.ToArray();
+    }
 
     if ((bool)m_wakeSoundRoot)
     {
@@ -181,8 +219,10 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
       FadeSound(m_sailSound, target, m_sailFadeDuration, deltaTime);
     }
 
-    if (m_splashEffects != null && _mManager.MovementController != null)
-      m_splashEffects.SetActive(_mManager!.OnboardController!.HasPlayersOnboard);
+    if (m_splashEffects != null)
+    {
+      m_splashEffects.SetActive(false);
+    }
   }
 
   private void SetWake(bool enabled, float dt)
