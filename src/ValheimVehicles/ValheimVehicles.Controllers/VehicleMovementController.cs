@@ -7719,6 +7719,13 @@
 
       }
 
+      var hasRudder = PiecesController != null && PiecesController.m_rudderPieces.Count > 0;
+      var hasHelm = PiecesController != null && PiecesController._steeringWheelPiece != null;
+      if ((!hasRudder || !hasHelm) && vehicleSpeed != Ship.Speed.Stop)
+      {
+        HaltVehicleSpeed();
+      }
+
 
 
       var isUncontrolledRowing = !hasControllingPlayer &&
@@ -10003,10 +10010,23 @@
 
 
 
+    public void HaltVehicleSpeed()
+    {
+      SendSpeedChange(DirectionChange.Stop);
+      vehicleSpeed = Ship.Speed.Stop;
+      m_rudderValue = 0f;
+      m_sailForce = Vector3.zero;
+      if (m_body != null)
+      {
+        m_body.linearVelocity = Vector3.zero;
+        m_body.angularVelocity = Vector3.zero;
+      }
+    }
+
     public void SendSpeedChange(DirectionChange directionChange)
     {
       if (directionChange != DirectionChange.Stop &&
-          (PiecesController == null || PiecesController.m_rudderPieces.Count == 0))
+          (PiecesController == null || PiecesController.m_rudderPieces.Count == 0 || PiecesController._steeringWheelPiece == null))
       {
         ShowWheelHoverMessage("$valheim_vehicles_rudder_required");
         return;

@@ -17,6 +17,11 @@ public static class ReflectionUpdate_Patches
     {
       excludeMask |= (1 << vehicleLayer);
     }
+    int ignoreRaycast = LayerMask.NameToLayer("Ignore Raycast");
+    if (ignoreRaycast >= 0)
+    {
+      excludeMask |= (1 << ignoreRaycast);
+    }
 
     if (instance.m_probe1 != null)
     {

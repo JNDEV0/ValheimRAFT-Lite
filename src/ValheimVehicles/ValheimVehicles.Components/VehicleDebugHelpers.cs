@@ -251,12 +251,23 @@ public class VehicleDebugHelpers : MonoBehaviour
       if (collider) Destroy(collider);
       var meshRenderer = cube.GetComponent<MeshRenderer>();
       meshRenderer.material = new Material(LoadValheimVehicleAssets.DoubleSidedTransparentMat) { color = color };
-      cube.layer = LayerMask.NameToLayer("Ignore Raycast");
+      meshRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+      meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      meshRenderer.receiveShadows = false;
+      cube.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
       // Add the text element as a child
       var textObj = new GameObject("CubeText");
+      textObj.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
       textObj.transform.SetParent(cube.transform);
       textObj.transform.localPosition = new Vector3(0, 1.2f, 0) + textOffset;
       var textMesh = textObj.AddComponent<TextMesh>();
+      var textRenderer = textObj.GetComponent<MeshRenderer>();
+      if (textRenderer != null)
+      {
+        textRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+        textRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        textRenderer.receiveShadows = false;
+      }
       var text = SplitCamelCase(title.Replace("_", " "));
       textMesh.text = text;
       textMesh.fontSize = 32;
@@ -425,14 +436,25 @@ public class VehicleDebugHelpers : MonoBehaviour
         {
           color = color
         };
-      cube.gameObject.layer = LayerMask.NameToLayer("Ignore Raycast");
+      meshRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+      meshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+      meshRenderer.receiveShadows = false;
+      cube.gameObject.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
 
       // Add the text element as a child
       var textObj = new GameObject("CubeText");
+      textObj.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
       textObj.transform.SetParent(cube.transform);
       textObj.transform.localPosition =
         new Vector3(0, 1.2f, 0) + textOffset; // Adjust height as needed
       var textMesh = textObj.AddComponent<TextMesh>();
+      var textRenderer = textObj.GetComponent<MeshRenderer>();
+      if (textRenderer != null)
+      {
+        textRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+        textRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        textRenderer.receiveShadows = false;
+      }
       var text = SplitCamelCase(cubeTitle.Replace("_", " "));
       textMesh.text = text; // Set desired text
       textMesh.fontSize = 32;
@@ -513,6 +535,10 @@ public class VehicleDebugHelpers : MonoBehaviour
       line.transform.SetParent(parent);
     }
 
+    line.gameObject.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
+    line.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+    line.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+    line.receiveShadows = false;
     line.material = material;
     line.startColor = color;
     line.endColor = color;
@@ -731,6 +757,15 @@ public class VehicleDebugHelpers : MonoBehaviour
       textMeshPro.text = textTitle;
       textMeshPro.fontSize = 10;
       textMeshPro.color = color;
+
+      textObj.layer = Zolantris.Shared.LayerHelpers.CustomRaftLayer;
+      var textMeshRenderer = textObj.GetComponent<MeshRenderer>();
+      if (textMeshRenderer != null)
+      {
+        textMeshRenderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+        textMeshRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        textMeshRenderer.receiveShadows = false;
+      }
 
       // Position the text next to the collider
       textObj.transform.position = boxCollider.transform.position;

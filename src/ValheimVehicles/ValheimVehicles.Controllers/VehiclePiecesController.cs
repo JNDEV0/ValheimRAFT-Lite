@@ -719,6 +719,7 @@
           !ActiveInstances.ContainsKey(Manager.PersistentZdoId))
         ActiveInstances.Add(Manager.PersistentZdoId, this);
 
+      EnsureFallbackWaterWake();
       StartClientServerUpdaters();
     }
 
@@ -1245,6 +1246,11 @@
           case RudderComponent rudder:
           {
             m_rudderPieces.Remove(rudder);
+            m_rudderPieces.RemoveAll(r => r == null || !r);
+            if (m_rudderPieces.Count == 0 && Manager != null && Manager.MovementController != null)
+            {
+              Manager.MovementController.HaltVehicleSpeed();
+            }
             if (Manager)
               SetShipWakeBounds();
             break;
@@ -1260,6 +1266,10 @@
             if (Manager)
             {
               VehicleMovementController.RemoveAllShipControls(Manager.MovementController);
+              if (Manager.MovementController != null)
+              {
+                Manager.MovementController.HaltVehicleSpeed();
+              }
             }
             break;
           case Bed bed:
@@ -4999,9 +5009,22 @@
     }
 
 
+    private VehiclePieceWaterEffects? _fallbackWaterWake;
+
+    public void EnsureFallbackWaterWake()
+    {
+      if (_fallbackWaterWake == null)
+      {
+        _fallbackWaterWake = gameObject.AddComponent<VehiclePieceWaterEffects>();
+        _fallbackWaterWake.IsFallbackEmitter = true;
+        _fallbackWaterWake.Initialize(VehicleWaterEffectType.Wake, Manager);
+      }
+    }
+
 // for increasing ship wake size.
     public void SetShipWakeBounds()
     {
+      EnsureFallbackWaterWake();
       if (Manager?.ShipEffectsObj == null) return;
 
       float localY = -2f;

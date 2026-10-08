@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
@@ -13,9 +14,11 @@ public enum VehicleWaterEffectType
 public class VehiclePieceWaterEffects : MonoBehaviour
 {
   public VehicleWaterEffectType EffectType = VehicleWaterEffectType.Wake;
+  public bool IsFallbackEmitter = false;
 
   private GameObject? _effectInstance;
   private ParticleSystem[] _particles = Array.Empty<ParticleSystem>();
+  private ParticleSystem.Particle[]? _particleBuffer;
   private Rigidbody? _vehicleRigidbody;
   private VehicleManager? _vehicleManager;
   private WaterVolume _previousWaterVolume;
@@ -66,27 +69,37 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     if (template == null) return;
 
     _effectInstance = Instantiate(template, transform);
-    _effectInstance.name = "WakeWaterEffect";
-
-    // Placed slightly rearward for rudder wake trailing behind the ship
-    _effectInstance.transform.localPosition = new Vector3(0f, -0.7f, -0.6f);
+    _effectInstance.name = IsFallbackEmitter ? "FallbackWakeWaterEffect" : "WakeWaterEffect";
+    _effectInstance.transform.localPosition = Vector3.zero;
     _effectInstance.transform.localRotation = Quaternion.identity;
 
     var allPs = _effectInstance.GetComponentsInChildren<ParticleSystem>(true);
-    var wakePsList = new System.Collections.Generic.List<ParticleSystem>();
+    var wakePsList = new List<ParticleSystem>();
     foreach (var ps in allPs)
     {
-      if (ps.name.IndexOf("splash", StringComparison.OrdinalIgnoreCase) >= 0 ||
-          ps.name.IndexOf("cutwater", StringComparison.OrdinalIgnoreCase) >= 0 ||
-          ps.name.IndexOf("spray", StringComparison.OrdinalIgnoreCase) >= 0)
+      var psName = ps.name;
+      var psRenderer = ps.GetComponent<ParticleSystemRenderer>();
+
+      // Filter out splashes, cutwater, sprays, drops, droplets, mist, and stretched particle streaks
+      if (psName.IndexOf("splash", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          psName.IndexOf("cutwater", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          psName.IndexOf("spray", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          psName.IndexOf("drop", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          psName.IndexOf("mist", StringComparison.OrdinalIgnoreCase) >= 0 ||
+          (psRenderer != null && (psRenderer.renderMode == ParticleSystemRenderMode.Stretch || psRenderer.renderMode == ParticleSystemRenderMode.VerticalBillboard)))
       {
         ps.gameObject.SetActive(false);
         Destroy(ps.gameObject);
+        continue;
       }
-      else
+
+      // Enforce horizontal billboard mode so wake foam lies flat on the water surface as a horizontal decal
+      if (psRenderer != null && psRenderer.renderMode == ParticleSystemRenderMode.Billboard)
       {
-        wakePsList.Add(ps);
+        psRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
       }
+
+      wakePsList.Add(ps);
     }
     _particles = wakePsList.ToArray();
     _effectInstance.SetActive(true);
@@ -114,12 +127,56 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     }
 
     var speed = _vehicleRigidbody.linearVelocity.magnitude;
-    const float minSpeed = 1.2f;
+    const float minSpeed = 1.0f;
 
-    var pos = transform.position;
-    var isNearWater = Floating.IsUnderWater(pos, ref _previousWaterVolume);
+    bool shouldEmit = false;
+    Vector3 targetEffPos = Vector3.zero;
+    float targetYaw = transform.eulerAngles.y;
 
-    var shouldEmit = speed > minSpeed && isNearWater;
+    if (IsFallbackEmitter)
+    {
+      // Fallback emitter only emits when there are NO rudders on the boat
+      var ruddersCount = _vehicleManager?.PiecesController?.m_rudderPieces?.Count ?? 0;
+      if (ruddersCount == 0 && speed > minSpeed)
+      {
+        Vector3 backPoint;
+        if (_vehicleManager?.PiecesController?.FloatCollider != null)
+        {
+          var col = _vehicleManager.PiecesController.FloatCollider;
+          var fwd = _vehicleManager.transform.forward;
+          backPoint = col.bounds.center - fwd * (col.size.z * 0.5f);
+        }
+        else
+        {
+          backPoint = transform.position - transform.forward * 2f;
+        }
+
+        float waterY = Floating.GetWaterLevel(backPoint, ref _previousWaterVolume);
+        if (waterY > -1000f)
+        {
+          shouldEmit = true;
+          backPoint.y = waterY - 0.05f;
+          targetEffPos = backPoint;
+          targetYaw = _vehicleManager != null ? _vehicleManager.transform.eulerAngles.y : transform.eulerAngles.y;
+        }
+      }
+    }
+    else
+    {
+      // Rudder wake: check where the waterline meets the vertical length of the rudder
+      var rudderPos = transform.position;
+      var waterY = Floating.GetWaterLevel(new Vector3(rudderPos.x, 0f, rudderPos.z), ref _previousWaterVolume);
+      bool isRudderInWater = (waterY > -1000f) && (waterY >= rudderPos.y - 3.5f) && (waterY <= rudderPos.y + 1.0f);
+
+      shouldEmit = speed > minSpeed && isRudderInWater;
+
+      if (shouldEmit)
+      {
+        Vector3 shipBackDir = _vehicleManager != null ? -_vehicleManager.transform.forward : -transform.forward;
+        targetEffPos = new Vector3(rudderPos.x, waterY - 0.05f, rudderPos.z) + shipBackDir * 0.2f;
+        targetYaw = _vehicleManager != null ? _vehicleManager.transform.eulerAngles.y : transform.eulerAngles.y;
+      }
+    }
 
     if (_isEmitting != shouldEmit)
     {
@@ -128,13 +185,40 @@ public class VehiclePieceWaterEffects : MonoBehaviour
 
     if (shouldEmit && _effectInstance != null)
     {
-      var effPos = transform.TransformPoint(new Vector3(0f, 0f, -0.6f));
-      var waterY = Floating.GetWaterLevel(effPos, ref _previousWaterVolume);
-      if (waterY > -1000f)
+      _effectInstance.transform.position = targetEffPos;
+      _effectInstance.transform.rotation = Quaternion.Euler(0f, targetYaw, 0f);
+    }
+
+    // Dynamic wave decal projection: update all living particles to dynamically hug undulating ocean waves
+    for (int pIdx = 0; pIdx < _particles.Length; pIdx++)
+    {
+      var ps = _particles[pIdx];
+      if (ps == null) continue;
+
+      int maxP = ps.main.maxParticles;
+      if (_particleBuffer == null || _particleBuffer.Length < maxP)
       {
-        effPos.y = waterY - 0.5f;
-        _effectInstance.transform.position = effPos;
-        _effectInstance.transform.rotation = transform.rotation;
+        _particleBuffer = new ParticleSystem.Particle[Mathf.Max(maxP, 256)];
+      }
+
+      int numParticles = ps.GetParticles(_particleBuffer);
+      if (numParticles > 0)
+      {
+        bool changed = false;
+        for (int i = 0; i < numParticles; i++)
+        {
+          Vector3 pPos = _particleBuffer[i].position;
+          float currentWaterY = Floating.GetWaterLevel(pPos, ref _previousWaterVolume);
+          if (currentWaterY > -1000f)
+          {
+            _particleBuffer[i].position = new Vector3(pPos.x, currentWaterY - 0.05f, pPos.z);
+            changed = true;
+          }
+        }
+        if (changed)
+        {
+          ps.SetParticles(_particleBuffer, numParticles);
+        }
       }
     }
   }

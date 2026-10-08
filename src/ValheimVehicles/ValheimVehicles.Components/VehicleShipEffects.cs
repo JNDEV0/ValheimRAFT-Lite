@@ -82,11 +82,21 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
       Destroy(m_splashEffects);
       m_splashEffects = null;
     }
+    if (m_speedWakeRoot != null)
+    {
+      m_speedWakeRoot.SetActive(false);
+      Destroy(m_speedWakeRoot);
+      m_speedWakeRoot = null;
+    }
+    m_wakeParticles = System.Array.Empty<ParticleSystem>();
+
     for (int i = transform.childCount - 1; i >= 0; i--)
     {
       var child = transform.GetChild(i);
       if (child.name.IndexOf("splash", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-          child.name.IndexOf("cutwater", System.StringComparison.OrdinalIgnoreCase) >= 0)
+          child.name.IndexOf("cutwater", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+          child.name.IndexOf("wake", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
+          child.name.IndexOf("foam", System.StringComparison.OrdinalIgnoreCase) >= 0)
       {
         child.gameObject.SetActive(false);
         Destroy(child.gameObject);
@@ -94,26 +104,6 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
     }
     m_body = GetComponentInParent<Rigidbody>();
     _mManager = GetComponentInParent<VehicleManager>();
-    if ((bool)m_speedWakeRoot)
-    {
-      var allPs = m_speedWakeRoot.GetComponentsInChildren<ParticleSystem>(true);
-      var wakePsList = new List<ParticleSystem>();
-      foreach (var ps in allPs)
-      {
-        if (ps.name.IndexOf("splash", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-            ps.name.IndexOf("cutwater", System.StringComparison.OrdinalIgnoreCase) >= 0 ||
-            ps.name.IndexOf("spray", System.StringComparison.OrdinalIgnoreCase) >= 0)
-        {
-          ps.gameObject.SetActive(false);
-          Destroy(ps.gameObject);
-        }
-        else
-        {
-          wakePsList.Add(ps);
-        }
-      }
-      m_wakeParticles = wakePsList.ToArray();
-    }
 
     if ((bool)m_wakeSoundRoot)
     {
@@ -194,22 +184,12 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
         (_mManager.MovementController.IsSubmerged() ||
          _mManager.MovementController.IsFlying()))
     {
-      m_speedWakeRoot.SetActive(false);
+      if (m_speedWakeRoot != null) m_speedWakeRoot.SetActive(false);
+      SetWake(false, deltaTime);
     }
     else
     {
-      if (_mManager.MovementController != null && m_speedWakeRoot != null)
-      {
-        var speedWakePos = m_speedWakeRoot.transform.position;
-        var waterY = Floating.GetWaterLevel(speedWakePos, ref m_previousWaterVolume);
-        if (waterY > -1000f)
-        {
-          speedWakePos.y = waterY - 0.5f;
-          m_speedWakeRoot.transform.position = speedWakePos;
-        }
-      }
-
-      m_speedWakeRoot.SetActive(true);
+      if (m_speedWakeRoot != null) m_speedWakeRoot.SetActive(false);
       SetWake(flag, deltaTime);
     }
 
