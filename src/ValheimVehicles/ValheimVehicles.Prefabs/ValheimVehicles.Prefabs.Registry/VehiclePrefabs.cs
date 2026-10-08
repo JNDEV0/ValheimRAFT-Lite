@@ -59,7 +59,7 @@
         shipEffects);
       Object.Destroy(shipEffects);
 
-      vehicleShipEffects.transform.localPosition = new Vector3(0, 0, 0);
+      vehicleShipEffects.transform.localPosition = new Vector3(10, 10, 10);
       vehicleManager.ShipEffectsObj = vehicleShipEffects.gameObject;
       vehicleManager.ShipEffects = vehicleShipEffects;
 

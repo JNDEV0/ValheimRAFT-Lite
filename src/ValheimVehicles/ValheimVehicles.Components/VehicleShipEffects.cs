@@ -1,5 +1,6 @@
 ﻿using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Helpers;
 
 namespace ValheimVehicles.Components;
 
@@ -113,6 +114,16 @@ public class VehicleShipEffects : MonoBehaviour, IMonoUpdater
     }
     m_body = GetComponentInParent<Rigidbody>();
     _mManager = GetComponentInParent<VehicleManager>();
+
+    if (VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false)
+    {
+      for (int i = 0; i < transform.childCount; i++)
+      {
+        var c = transform.GetChild(i);
+        var ps = c.GetComponent<ParticleSystem>();
+        Zolantris.Shared.LoggerProvider.LogInfo($"[VehicleShipEffects] Child #{i}: '{c.name}', localPos={c.localPosition}, hasPS={(ps != null)}");
+      }
+    }
 
     // Fallback lookups for sound roots if references were not set or were lost
     if (m_wakeSoundRoot == null)

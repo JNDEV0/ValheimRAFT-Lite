@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
+using ValheimVehicles.Helpers;
+using ValheimVehicles.BepInExConfig;
 
 namespace ValheimVehicles.Components;
 
@@ -88,6 +90,10 @@ public class VehiclePieceWaterEffects : MonoBehaviour
           psName.IndexOf("mist", StringComparison.OrdinalIgnoreCase) >= 0 ||
           (psRenderer != null && (psRenderer.renderMode == ParticleSystemRenderMode.Stretch || psRenderer.renderMode == ParticleSystemRenderMode.VerticalBillboard)))
       {
+        if (VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false)
+        {
+          Zolantris.Shared.LoggerProvider.LogInfo($"[PieceWaterEffects] Filtered out PS '{psName}', localPos={ps.transform.localPosition}, renderMode={psRenderer?.renderMode}");
+        }
         ps.gameObject.SetActive(false);
         Destroy(ps.gameObject);
         continue;
@@ -97,6 +103,11 @@ public class VehiclePieceWaterEffects : MonoBehaviour
       if (psRenderer != null && psRenderer.renderMode == ParticleSystemRenderMode.Billboard)
       {
         psRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
+      }
+
+      if (VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false)
+      {
+        Zolantris.Shared.LoggerProvider.LogInfo($"[PieceWaterEffects] Active wake PS '{psName}', localPos={ps.transform.localPosition}, renderMode={psRenderer?.renderMode}");
       }
 
       wakePsList.Add(ps);

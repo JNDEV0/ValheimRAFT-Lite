@@ -5061,12 +5061,8 @@
         return;
       }
 
-      var localPosition = firstRudder.transform.localPosition;
-      Manager.ShipEffectsObj.transform.localPosition =
-        new Vector3(
-          localPosition.x,
-          localY,
-          localPosition.z);
+      // Radical test offset (10, 10, 10) requested to test if water spray / wake effects are linked to ShipEffectsObj
+      Manager.ShipEffectsObj.transform.localPosition = new Vector3(10f, 10f, 10f);
     }
 
     private float GetVehicleFloatHeight()
