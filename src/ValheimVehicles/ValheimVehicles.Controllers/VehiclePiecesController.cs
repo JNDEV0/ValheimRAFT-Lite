@@ -771,7 +771,17 @@
       OnLocalOriginShiftApplied -= OnVehicleCenterShift;
 
       // hopefully it can be run otherwise it needs to be patched so it can run just before objects are being cleaned up in a zone.
-      ForceUpdateAllPiecePositions();
+      try
+      {
+        if (Game.instance != null && ZNet.instance != null && ZDOMan.instance != null)
+        {
+          ForceUpdateAllPiecePositions();
+        }
+      }
+      catch (Exception)
+      {
+        // Suppress teardown exceptions when quitting out of game or during scene teardown
+      }
 
       base.OnDisable();
 
@@ -2162,43 +2172,58 @@
     /// </summary>
     public void ForceUpdateAllPiecePositions()
     {
+      if (Game.instance == null || ZNet.instance == null || ZDOMan.instance == null) return;
       if (!m_nview) return;
-      var position = m_syncRigidbody != null ? m_syncRigidbody.position : GetVehiclePosition(m_nview.GetZDO());
-      if (!position.HasValue) return;
-      ForceUpdateAllPiecePositions(position.Value);
+      try
+      {
+        var position = m_syncRigidbody != null ? m_syncRigidbody.position : GetVehiclePosition(m_nview.GetZDO());
+        if (!position.HasValue) return;
+        ForceUpdateAllPiecePositions(position.Value);
+      }
+      catch (Exception)
+      {
+        // Suppress teardown exceptions when quitting out of game
+      }
     }
 
     public static void MigratePortalSectorInZdoMan(ZDO zdo, Vector3 targetPos)
     {
-      if (zdo == null || !zdo.IsValid() || ZDOMan.instance == null) return;
-      var oldSector = zdo.GetSectorIndex();
-      var newSector = ZoneSystem.GetSectorIndex(targetPos);
-      zdo.SetPosition(targetPos);
-      if (oldSector != newSector)
+      if (zdo == null || !zdo.IsValid() || ZDOMan.instance == null || Game.instance == null) return;
+      try
       {
-        var isPortal = Game.instance != null && Game.instance.PortalPrefabHash.Contains(zdo.GetPrefab());
-        if (isPortal && ZDOMan.instance.m_portalObjects != null)
+        var oldSector = zdo.GetSectorIndex();
+        var newSector = ZoneSystem.GetSectorIndex(targetPos);
+        zdo.SetPosition(targetPos);
+        if (oldSector != newSector)
         {
-          if (ZDOMan.instance.m_portalObjects.TryGetValue(oldSector, out var oldList))
+          var isPortal = Game.instance != null && Game.instance.PortalPrefabHash != null && Game.instance.PortalPrefabHash.Contains(zdo.GetPrefab());
+          if (isPortal && ZDOMan.instance.m_portalObjects != null)
           {
-            oldList.Remove(zdo);
+            if (ZDOMan.instance.m_portalObjects.TryGetValue(oldSector, out var oldList))
+            {
+              oldList.Remove(zdo);
+            }
+            if (!ZDOMan.instance.m_portalObjects.TryGetValue(newSector, out var newList))
+            {
+              newList = new List<ZDO>();
+              ZDOMan.instance.m_portalObjects[newSector] = newList;
+            }
+            if (!newList.Contains(zdo))
+            {
+              newList.Add(zdo);
+            }
+            ZDOMan.instance.SetDirtyPortals();
           }
-          if (!ZDOMan.instance.m_portalObjects.TryGetValue(newSector, out var newList))
-          {
-            newList = new List<ZDO>();
-            ZDOMan.instance.m_portalObjects[newSector] = newList;
-          }
-          if (!newList.Contains(zdo))
-          {
-            newList.Add(zdo);
-          }
-          ZDOMan.instance.SetDirtyPortals();
-        }
 
-        if (ZNet.instance != null && ZNet.instance.IsServer())
-        {
-          ZDOMan.instance.ZDOSectorInvalidated(zdo);
+          if (ZNet.instance != null && ZNet.instance.IsServer())
+          {
+            ZDOMan.instance.ZDOSectorInvalidated(zdo);
+          }
         }
+      }
+      catch (Exception)
+      {
+        // Suppress teardown exceptions when quitting out of game
       }
     }
 
@@ -2225,11 +2250,12 @@
     /// </summary>
     public void ForceUpdateAllPiecePositions(Vector3 vehiclePosition)
     {
-      if (!Manager.IsInitialized) return;
-      if (Manager.isCreative) return;
-      if (m_zdo == null) return;
-      if (ZDOMan.instance == null) return;
-      Physics.SyncTransforms();
+      if (Game.instance == null || ZNet.instance == null || ZDOMan.instance == null) return;
+      if (Manager == null || !Manager.IsInitialized || Manager.isCreative) return;
+      if (m_zdo == null || !m_zdo.IsValid()) return;
+      try
+      {
+        Physics.SyncTransforms();
 
       // use center of rigidbody to set position.
       m_zdo.SetPosition(vehiclePosition);
@@ -2369,6 +2395,11 @@
       }
 
       SyncVehiclePortals(vehiclePosition);
+      }
+      catch (Exception)
+      {
+        // Suppress teardown exceptions when quitting out of game
+      }
     }
 
     public void SyncVehiclePortals(Vector3 vehiclePosition)
