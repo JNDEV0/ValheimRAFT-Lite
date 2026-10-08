@@ -191,7 +191,7 @@ public static class VehicleRecallController
       return true;
     }
 
-    LoggerProvider.LogWarning($"[VesselRecall] Could not find location for vehicle #{vehicleId}");
+    if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselRecall] Could not find location for vehicle #{vehicleId}");
     return false;
   }
 

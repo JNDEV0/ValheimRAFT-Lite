@@ -13,20 +13,40 @@ namespace ValheimVehicles.Controllers;
 public static class BoatBedSpawnController
 {
   public const string Key_BoatSpawnVehicleId = "VR_BoatSpawnVehicleId";
+  public const string Key_BoatSpawnWorldUid = "VR_BoatSpawnWorldUid";
   public const string Key_BoatSpawnBedUid = "VR_BoatSpawnBedUid";
   public const string Key_BoatSpawnBedOffsetX = "VR_BoatSpawnBedOffsetX";
   public const string Key_BoatSpawnBedOffsetY = "VR_BoatSpawnBedOffsetY";
   public const string Key_BoatSpawnBedOffsetZ = "VR_BoatSpawnBedOffsetZ";
 
+  private static float _lastBedPinUpdateTime;
+
   public static int GetBoundVehicleId()
   {
     if (Player.m_localPlayer == null) return 0;
+
+    // 0. If current player profile does not have a custom spawn point in this world, they have no bed here!
+    if (Game.instance != null && Game.instance.GetPlayerProfile() != null && !Game.instance.GetPlayerProfile().HaveCustomSpawnPoint())
+    {
+      return 0;
+    }
 
     // 1. Check customData (persisted in character .fch file)
     if (Player.m_localPlayer.m_customData != null &&
         Player.m_localPlayer.m_customData.TryGetValue(Key_BoatSpawnVehicleId, out var valStr) &&
         int.TryParse(valStr, out var vId) && vId != 0)
     {
+      // If bound to a specific world, ensure current world matches
+      if (Player.m_localPlayer.m_customData.TryGetValue(Key_BoatSpawnWorldUid, out var wStr) &&
+          long.TryParse(wStr, out var wUid) && wUid != 0L &&
+          ZNet.instance != null && ZNet.instance.GetWorldUID() != 0L)
+      {
+        if (wUid != ZNet.instance.GetWorldUID())
+        {
+          return 0; // Bed was bound in a different world!
+        }
+      }
+
       return vId;
     }
 
@@ -73,9 +93,11 @@ public static class BoatBedSpawnController
       }
     }
 
+    var worldUid = ZNet.instance != null ? ZNet.instance.GetWorldUID() : 0L;
     if (Player.m_localPlayer.m_customData != null)
     {
       Player.m_localPlayer.m_customData[Key_BoatSpawnVehicleId] = vehicleId.ToString();
+      Player.m_localPlayer.m_customData[Key_BoatSpawnWorldUid] = worldUid.ToString();
       Player.m_localPlayer.m_customData[Key_BoatSpawnBedOffsetX] = localOffset.x.ToString("F3");
       Player.m_localPlayer.m_customData[Key_BoatSpawnBedOffsetY] = localOffset.y.ToString("F3");
       Player.m_localPlayer.m_customData[Key_BoatSpawnBedOffsetZ] = localOffset.z.ToString("F3");
@@ -105,6 +127,7 @@ public static class BoatBedSpawnController
       if (Player.m_localPlayer.m_customData != null)
       {
         Player.m_localPlayer.m_customData[Key_BoatSpawnVehicleId] = "0";
+        Player.m_localPlayer.m_customData[Key_BoatSpawnWorldUid] = "0";
       }
 
       var playerZdo = Player.m_localPlayer.m_nview != null ? Player.m_localPlayer.m_nview.GetZDO() : null;
@@ -143,6 +166,9 @@ public static class BoatBedSpawnController
   {
     if (minimap == null) return;
 
+    if (Time.time - _lastBedPinUpdateTime < 0.5f) return;
+    _lastBedPinUpdateTime = Time.time;
+
     var boundVehicleId = GetBoundVehicleId();
     if (boundVehicleId == 0) return;
 
@@ -167,6 +193,13 @@ public static class BoatBedSpawnController
         {
           minimap.m_spawnPointPin.m_NamePinData.PinNameGameObject.SetActive(true);
         }
+      }
+    }
+    else
+    {
+      if (!VehicleRecallController.DoesVehicleExist(boundVehicleId))
+      {
+        ClearBoatSpawn();
       }
     }
   }
