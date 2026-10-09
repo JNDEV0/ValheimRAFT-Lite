@@ -974,45 +974,6 @@
         });
       if (logRow != null) commandsPanelToggleObjects.Add(logRow);
 
-      // 4. Adjust MP Sync (1s, 3s, 5s - 3s default)
-      var curInterval = VehicleGlobalConfig.ServerRaftUpdateZoneInterval?.Value ?? 3.0f;
-      var defaultSyncIndex = 1; // 3s
-      if (Mathf.Approximately(curInterval, 1.0f) || (VehicleGlobalConfig.FastMultiplayerSync?.Value ?? false))
-      {
-        defaultSyncIndex = 0; // 1s
-      }
-      else if (Mathf.Approximately(curInterval, 5.0f))
-      {
-        defaultSyncIndex = 2; // 5s
-      }
-
-      var syncRow = SwivelUIHelpers.AddRadioToggleRow(
-        commandsWindow.transform,
-        viewStyles,
-        ModTranslations.AdjustMpSync ?? "Adjust MP Sync",
-        new[] { "1s", "3s", "5s" },
-        defaultSyncIndex,
-        selectedIndex =>
-        {
-          var interval = selectedIndex switch
-          {
-            0 => 1.0f,
-            2 => 5.0f,
-            _ => 3.0f
-          };
-          var fastSync = (selectedIndex == 0);
-
-          if (VehicleGlobalConfig.ServerRaftUpdateZoneInterval != null)
-          {
-            VehicleGlobalConfig.ServerRaftUpdateZoneInterval.Value = interval;
-          }
-          if (VehicleGlobalConfig.FastMultiplayerSync != null)
-          {
-            VehicleGlobalConfig.FastMultiplayerSync.Value = fastSync;
-          }
-        });
-      if (syncRow != null) commandsPanelToggleObjects.Add(syncRow);
-
       // 5. Boat Damage Toggles (Env, Mobs, Player)
       var damageRow = SwivelUIHelpers.AddMultiToggleRow(
         commandsWindow.transform,

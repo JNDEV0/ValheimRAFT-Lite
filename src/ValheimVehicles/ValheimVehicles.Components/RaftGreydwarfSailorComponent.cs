@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using ValheimVehicles.Controllers;
@@ -54,10 +55,11 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   private float _resinCheckTimer = 300f;
   private float _mutinyTickTimer = 60f;
 
-  // Combat cooldowns
+  // Combat cooldowns & state
   private float _nextRockThrowTime;
   private float _nextTauntTime;
   private float _nextHealTime;
+  private bool _isInCombat;
 
   // Deck rooting & safe anchoring
   private Vector3? _deckLocalPos;
@@ -65,9 +67,22 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   private bool _isAnchoredOnDeck;
   private Vector3? _lastSafeLocalPos;
   private Quaternion? _lastSafeLocalRot;
+  private bool _isShipMoving;
 
   // Overboard recovery
   private float _waterTimer;
+
+  // Top deck / Open-sky roaming
+  private readonly List<Vector3> _cachedTopDeckPositions = new();
+  private float _topDeckCacheTimer;
+  private float _underRoofTimer;
+
+  // Passive utility: Item pickup & Chest deposit
+  private ItemDrop? _targetItemDrop;
+  private ItemDrop.ItemData? _carriedItem;
+  private Container? _targetContainer;
+  private float _itemScanTimer;
+  private float _itemActionCooldown;
 
   private void Awake()
   {
@@ -98,6 +113,11 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       EnsureRandomSailorHat();
       EnsureRockWeaponEquipped();
     }
+  }
+
+  private void OnDestroy()
+  {
+    DropCarriedItem();
   }
 
   private void DetermineDwarfType()
@@ -208,10 +228,16 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       if (PiecesController == null) return;
     }
 
-    UpdateUpkeep(Time.deltaTime);
-    UpdateDeckStation(Time.deltaTime);
-    UpdateWaterAndLadderRecovery(Time.deltaTime);
-    UpdateCombatDefense();
+    float dt = Time.deltaTime;
+    UpdateUpkeep(dt);
+    UpdateDeckStation(dt);
+    UpdateWaterAndLadderRecovery(dt);
+    UpdateCombatDefense(dt);
+
+    if (!_isInCombat && !_isShipMoving)
+    {
+      UpdateItemGathering(dt);
+    }
   }
 
   private void UpdateUpkeep(float dt)
@@ -289,6 +315,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   {
     if (_character == null) return;
 
+    DropCarriedItem();
     _character.SetTamed(false);
     _character.m_faction = Character.Faction.ForestMonsters;
 
@@ -310,6 +337,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   {
     if (_character == null) return;
 
+    DropCarriedItem();
     _character.SetTamed(false);
     _character.m_faction = Character.Faction.ForestMonsters;
 
@@ -369,26 +397,26 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     }
 
     // Detect if ship is moving or rotating
-    bool isShipMoving = false;
+    _isShipMoving = false;
     var moveCtrl = PiecesController.MovementController;
     if (moveCtrl != null && moveCtrl.isAnchored)
     {
-      isShipMoving = false;
+      _isShipMoving = false;
     }
     else if (moveCtrl != null && moveCtrl.GetSpeedSetting() != Ship.Speed.Stop)
     {
-      isShipMoving = true;
+      _isShipMoving = true;
     }
     else
     {
       var rb = PiecesController.m_syncRigidbody != null ? PiecesController.m_syncRigidbody : PiecesController.m_localRigidbody;
       if (rb != null && rb.linearVelocity.sqrMagnitude > 0.25f)
       {
-        isShipMoving = true;
+        _isShipMoving = true;
       }
     }
 
-    if (isShipMoving)
+    if (_isShipMoving)
     {
       // Root firmly to deck position when ship is in motion
       if (!_isAnchoredOnDeck)
@@ -429,31 +457,185 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
         }
       }
 
-      // Hull edge guard: Raycast downwards to make sure sailor does not walk off the ship's hull
+      // 1. Edge avoidance lookahead: prevents walking off edges into open water
+      UpdateEdgeAvoidance(dt);
+
+      // 2. Hull edge guard: Raycast downwards to make sure sailor does not step off the ship's hull
       Ray ray = new Ray(transform.position + Vector3.up * 0.5f, Vector3.down);
+      bool isOverBoat = false;
       if (Physics.Raycast(ray, out var hit, 3.5f))
       {
         var hitVpc = hit.collider.GetComponentInParent<VehiclePiecesController>();
         if (hitVpc == PiecesController)
         {
+          isOverBoat = true;
           _lastSafeLocalPos = transform.localPosition;
           _lastSafeLocalRot = transform.localRotation;
         }
-        else if (_lastSafeLocalPos.HasValue)
-        {
-          // Stepped over edge or foreign collider: keep rooted safely on deck
-          transform.localPosition = _lastSafeLocalPos.Value;
-          if (_lastSafeLocalRot.HasValue) transform.localRotation = _lastSafeLocalRot.Value;
-          if (_character.m_body != null && !_character.m_body.isKinematic) _character.m_body.linearVelocity = Vector3.zero;
-        }
       }
-      else if (_lastSafeLocalPos.HasValue)
+
+      if (!isOverBoat && _lastSafeLocalPos.HasValue)
       {
-        // Stepped over open ocean: immediately snap back onto deck
+        // Stepped over edge or foreign collider: keep rooted safely on deck
         transform.localPosition = _lastSafeLocalPos.Value;
         if (_lastSafeLocalRot.HasValue) transform.localRotation = _lastSafeLocalRot.Value;
-        if (_character.m_body != null && !_character.m_body.isKinematic) _character.m_body.linearVelocity = Vector3.zero;
+        if (_character.m_body != null && !_character.m_body.isKinematic)
+        {
+          _character.m_body.linearVelocity = Vector3.zero;
+          _character.m_body.angularVelocity = Vector3.zero;
+        }
+
+        // BREAK TELEPORT/CLIPPING LOOP:
+        // Cancel forward motion and immediately command pathing inward toward vessel center
+        if (_character != null) _character.m_moveDir = Vector3.zero;
+        if (_monsterAI != null)
+        {
+          _monsterAI.StopMoving();
+          _monsterAI.SetTarget(null);
+          _monsterAI.m_targetCreature = null;
+
+          Vector3 shipCenter = PiecesController.transform.position;
+          Vector3 inwardDir = (shipCenter - transform.position);
+          inwardDir.y = 0f;
+          if (inwardDir.sqrMagnitude > 0.1f)
+          {
+            Vector3 inwardTarget = transform.position + inwardDir.normalized * 2.5f;
+            _monsterAI.MoveTo(dt, inwardTarget, 1f, false);
+          }
+        }
       }
+
+      // 3. Idle top-deck preference when calm:
+      // If indoors/under a roof inside the hull, path up to the open top deck
+      if (!_isInCombat && _carriedItem == null && _targetItemDrop == null)
+      {
+        if (IsUnderRoof(transform.position))
+        {
+          _underRoofTimer += dt;
+          if (_underRoofTimer > 2.5f)
+          {
+            Vector3 topDeckTarget = GetTopDeckPosition(GetInstanceID());
+            if (_monsterAI != null)
+            {
+              _monsterAI.MoveTo(dt, topDeckTarget, 1f, false);
+            }
+          }
+        }
+        else
+        {
+          _underRoofTimer = 0f;
+        }
+      }
+    }
+  }
+
+  private void UpdateEdgeAvoidance(float dt)
+  {
+    if (PiecesController == null || _character == null || _character.InWater()) return;
+
+    Vector3 moveDir = _character.m_moveDir;
+    if (moveDir.sqrMagnitude < 0.01f) return;
+
+    // Lookahead raycast 1.0m ahead in direction of movement
+    Vector3 lookaheadPos = transform.position + moveDir.normalized * 1.0f;
+    Ray lookRay = new Ray(lookaheadPos + Vector3.up * 0.8f, Vector3.down);
+    bool safeAhead = false;
+
+    if (Physics.Raycast(lookRay, out var hit, 3.0f, LayerMask.GetMask("piece", "Default", "static_solid")))
+    {
+      var hitVpc = hit.collider.GetComponentInParent<VehiclePiecesController>();
+      if (hitVpc == PiecesController)
+      {
+        safeAhead = true;
+      }
+    }
+
+    if (!safeAhead)
+    {
+      // Edge detected ahead! Stop moving forward immediately
+      _character.m_moveDir = Vector3.zero;
+      if (_monsterAI != null)
+      {
+        _monsterAI.StopMoving();
+      }
+
+      // Steer inward towards ship center
+      Vector3 shipCenter = PiecesController.transform.position;
+      Vector3 inwardDir = (shipCenter - transform.position);
+      inwardDir.y = 0f;
+      if (inwardDir.sqrMagnitude > 0.1f)
+      {
+        Vector3 inwardTarget = transform.position + inwardDir.normalized * 2.0f;
+        if (_monsterAI != null)
+        {
+          _monsterAI.MoveTo(dt, inwardTarget, 1f, false);
+        }
+      }
+    }
+  }
+
+  public bool IsUnderRoof(Vector3 pos)
+  {
+    return Physics.Raycast(pos + Vector3.up * 0.5f, Vector3.up, out _, 12f, LayerMask.GetMask("piece", "Default", "static_solid"));
+  }
+
+  public Vector3 GetTopDeckPosition(int sailorIndexSeed = 0)
+  {
+    if (PiecesController == null) return transform.position;
+
+    if (_cachedTopDeckPositions.Count == 0 || Time.time > _topDeckCacheTimer)
+    {
+      RefreshTopDeckPositions();
+    }
+
+    if (_cachedTopDeckPositions.Count > 0)
+    {
+      int idx = Math.Abs(sailorIndexSeed) % _cachedTopDeckPositions.Count;
+      return _cachedTopDeckPositions[idx];
+    }
+
+    return PiecesController.GetPlanterOrSafeDeckPosition();
+  }
+
+  private void RefreshTopDeckPositions()
+  {
+    _cachedTopDeckPositions.Clear();
+    _topDeckCacheTimer = Time.time + 4.0f;
+    if (PiecesController == null) return;
+
+    var candidates = new List<(Vector3 pos, float localY, bool openSky)>();
+
+    foreach (var p in PiecesController.Pieces)
+    {
+      if (p == null) continue;
+      string pName = p.gameObject.name.ToLower();
+      bool isWalkable = pName.Contains("deck") || pName.Contains("floor") || pName.Contains("platform") || pName.Contains("hull") || pName.Contains("stair") || pName.Contains("roof_top");
+      if (!isWalkable) continue;
+
+      Vector3 testPoint = p.transform.position + Vector3.up * 0.5f;
+      if (Physics.Raycast(testPoint + Vector3.up * 0.5f, Vector3.down, out var gHit, 2.5f, LayerMask.GetMask("piece", "Default")))
+      {
+        if (gHit.collider.GetComponentInParent<VehiclePiecesController>() != PiecesController) continue;
+
+        Vector3 groundPoint = gHit.point;
+        bool openSky = !Physics.Raycast(groundPoint + Vector3.up * 0.3f, Vector3.up, 12f, LayerMask.GetMask("piece", "Default", "static_solid"));
+        float localY = PiecesController.transform.InverseTransformPoint(groundPoint).y;
+        candidates.Add((groundPoint, localY, openSky));
+      }
+    }
+
+    var openSkyCandidates = candidates.Where(c => c.openSky).ToList();
+    if (openSkyCandidates.Count > 0)
+    {
+      float maxLocalY = openSkyCandidates.Max(c => c.localY);
+      var topTier = openSkyCandidates.Where(c => c.localY >= maxLocalY - 1.5f).Select(c => c.pos).ToList();
+      _cachedTopDeckPositions.AddRange(topTier);
+    }
+    else if (candidates.Count > 0)
+    {
+      float maxLocalY = candidates.Max(c => c.localY);
+      var topTier = candidates.Where(c => c.localY >= maxLocalY - 1.5f).Select(c => c.pos).ToList();
+      _cachedTopDeckPositions.AddRange(topTier);
     }
   }
 
@@ -575,12 +757,12 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     }
   }
 
-  private void UpdateCombatDefense()
+  private void UpdateCombatDefense(float dt)
   {
     if (_character == null || PiecesController == null) return;
 
-    // Scan for hostiles within 18m of ship that are actively alerted (exclamation mark)
-    var colliders = Physics.OverlapSphere(transform.position, 18f, LayerMask.GetMask("character"));
+    // Scan for hostiles within 22m of ship that are actively alerted (exclamation mark)
+    var colliders = Physics.OverlapSphere(transform.position, 22f, LayerMask.GetMask("character"));
     Character? target = null;
     foreach (var col in colliders)
     {
@@ -596,14 +778,37 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       }
     }
 
-    if (target == null) return;
+    if (target == null)
+    {
+      _isInCombat = false;
+      return;
+    }
 
+    _isInCombat = true;
+
+    // 100% PREFER TOP DECK / NO-ROOF DURING COMBAT:
+    // If under roof or inside the hull, path to top deck so rocks aren't blocked by hull ceilings
+    bool underRoof = IsUnderRoof(transform.position);
+    Vector3 topDeckTarget = GetTopDeckPosition(GetInstanceID());
+    float distToTopDeck = Vector3.Distance(transform.position, topDeckTarget);
+
+    if (underRoof || distToTopDeck > 2.5f)
+    {
+      // Run to top deck immediately!
+      if (_monsterAI != null)
+      {
+        _monsterAI.MoveTo(dt, topDeckTarget, 1f, true);
+      }
+      return; // Do not throw rocks while under roof!
+    }
+
+    // On top deck: execute combat abilities
     switch (DwarfType)
     {
       case GreydwarfSailorType.Regular:
         if (Time.time >= _nextRockThrowTime)
         {
-          _nextRockThrowTime = Time.time + 6f;
+          _nextRockThrowTime = Time.time + 5f;
           PerformRockThrow(target);
         }
         break;
@@ -611,7 +816,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       case GreydwarfSailorType.Brute:
         if (Time.time >= _nextTauntTime)
         {
-          _nextTauntTime = Time.time + 15f;
+          _nextTauntTime = Time.time + 12f;
           PerformTaunt(target);
         }
         break;
@@ -619,7 +824,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       case GreydwarfSailorType.Shaman:
         if (Time.time >= _nextHealTime)
         {
-          _nextHealTime = Time.time + 12f;
+          _nextHealTime = Time.time + 10f;
           PerformHealing();
         }
         break;
@@ -631,6 +836,25 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     if (target == null) return;
     var targetAI = target.GetBaseAI();
     if (targetAI == null || !targetAI.IsAlerted()) return;
+
+    // Line of sight check to avoid hitting boat structure
+    Vector3 eyePos = transform.position + Vector3.up * 1.2f;
+    Vector3 targetPos = target.transform.position + Vector3.up * 1.0f;
+    Vector3 aimDir = (targetPos - eyePos);
+
+    if (Physics.Raycast(eyePos, aimDir.normalized, out var losHit, aimDir.magnitude, LayerMask.GetMask("piece", "Default", "static_solid")))
+    {
+      var hitVpc = losHit.collider.GetComponentInParent<VehiclePiecesController>();
+      if (hitVpc == PiecesController)
+      {
+        // LoS blocked by ship piece: reposition toward open deck
+        if (_monsterAI != null)
+        {
+          _monsterAI.MoveTo(Time.deltaTime, GetTopDeckPosition(GetInstanceID()), 1f, true);
+        }
+        return;
+      }
+    }
 
     EnsureRockWeaponEquipped();
 
@@ -655,7 +879,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   {
     if (_animator != null)
     {
-      _animator.SetTrigger("taunt");
+      SafeTrigger(_animator, "taunt");
     }
 
     var monsterAI = target.GetComponent<MonsterAI>();
@@ -680,7 +904,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   {
     if (_animator != null)
     {
-      _animator.SetTrigger("attack");
+      SafeTrigger(_animator, "attack");
     }
 
     if (PiecesController != null)
@@ -710,6 +934,207 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       }
     }
   }
+
+  // --- PASSIVE UTILITY: ITEM PICKUP & CHEST DEPOSIT ---
+
+  private void UpdateItemGathering(float dt)
+  {
+    if (PiecesController == null || _character == null || _character.InWater()) return;
+
+    if (_itemActionCooldown > 0f)
+    {
+      _itemActionCooldown -= dt;
+      return;
+    }
+
+    // Step 1: If carrying an item, deliver to target chest
+    if (_carriedItem != null)
+    {
+      if (_targetContainer == null || !_targetContainer || _targetContainer.GetInventory() == null)
+      {
+        _targetContainer = FindChestForItem(_carriedItem);
+      }
+
+      if (_targetContainer == null)
+      {
+        DropCarriedItem();
+        return;
+      }
+
+      float distToChest = Vector3.Distance(transform.position, _targetContainer.transform.position);
+      if (distToChest > 2.2f)
+      {
+        if (_monsterAI != null)
+        {
+          _monsterAI.MoveTo(dt, _targetContainer.transform.position, 1f, false);
+        }
+      }
+      else
+      {
+        // Arrived at chest! Deposit item
+        var inv = _targetContainer.GetInventory();
+        if (inv != null && inv.CanAddItem(_carriedItem, _carriedItem.m_stack))
+        {
+          inv.AddItem(_carriedItem);
+          _targetContainer.Save();
+
+          SafeTrigger(_animator, "interact");
+          _targetContainer.m_openEffects?.Create(_targetContainer.transform.position, Quaternion.identity);
+
+          if (DamageText.instance != null)
+          {
+            DamageText.instance.ShowText(DamageText.TextType.Normal,
+              _targetContainer.transform.position + Vector3.up * 1.2f,
+              $"+{_carriedItem.m_stack} {_carriedItem.m_shared.m_name}");
+          }
+
+          _carriedItem = null;
+          _targetContainer = null;
+          _itemActionCooldown = 1.0f;
+        }
+        else
+        {
+          _targetContainer = FindChestForItem(_carriedItem);
+          if (_targetContainer == null)
+          {
+            DropCarriedItem();
+          }
+        }
+      }
+      return;
+    }
+
+    // Step 2: If moving towards a dropped item to pick up
+    if (_targetItemDrop != null)
+    {
+      if (!_targetItemDrop || _targetItemDrop.m_itemData == null || _targetItemDrop.m_nview == null || !_targetItemDrop.m_nview.IsValid())
+      {
+        _targetItemDrop = null;
+        return;
+      }
+
+      float distToItem = Vector3.Distance(transform.position, _targetItemDrop.transform.position);
+      if (distToItem > 1.8f)
+      {
+        if (_monsterAI != null)
+        {
+          _monsterAI.MoveTo(dt, _targetItemDrop.transform.position, 1f, false);
+        }
+      }
+      else
+      {
+        // Pick up item
+        if (_targetItemDrop.m_itemData != null)
+        {
+          _carriedItem = _targetItemDrop.m_itemData.Clone();
+          _targetItemDrop.m_nview.ClaimOwnership();
+          ZNetScene.instance.Destroy(_targetItemDrop.gameObject);
+
+          SafeTrigger(_animator, "interact");
+          _targetItemDrop = null;
+          _targetContainer = FindChestForItem(_carriedItem);
+          _itemActionCooldown = 0.5f;
+        }
+      }
+      return;
+    }
+
+    // Step 3: Scan for loose items on the boat every 2.5s
+    _itemScanTimer -= dt;
+    if (_itemScanTimer <= 0f)
+    {
+      _itemScanTimer = 2.5f;
+      _targetItemDrop = FindNearestLooseItemOnBoat();
+    }
+  }
+
+  private ItemDrop? FindNearestLooseItemOnBoat()
+  {
+    if (PiecesController == null) return null;
+
+    var colliders = Physics.OverlapSphere(transform.position, 14f, LayerMask.GetMask("item"));
+    ItemDrop? bestItem = null;
+    float bestDist = float.MaxValue;
+
+    foreach (var col in colliders)
+    {
+      var itemDrop = col.GetComponentInParent<ItemDrop>();
+      if (itemDrop == null || itemDrop.m_itemData == null || itemDrop.m_nview == null || !itemDrop.m_nview.IsValid()) continue;
+
+      // Ensure item is resting on THIS boat
+      Ray downRay = new Ray(itemDrop.transform.position + Vector3.up * 0.3f, Vector3.down);
+      if (Physics.Raycast(downRay, out var hit, 1.5f, LayerMask.GetMask("piece", "Default")))
+      {
+        var hitVpc = hit.collider.GetComponentInParent<VehiclePiecesController>();
+        if (hitVpc != PiecesController) continue;
+
+        if (FindChestForItem(itemDrop.m_itemData) != null)
+        {
+          float d = Vector3.Distance(transform.position, itemDrop.transform.position);
+          if (d < bestDist)
+          {
+            bestDist = d;
+            bestItem = itemDrop;
+          }
+        }
+      }
+    }
+
+    return bestItem;
+  }
+
+  private Container? FindChestForItem(ItemDrop.ItemData? item)
+  {
+    if (PiecesController == null || item == null) return null;
+
+    Container? best = null;
+    float bestDist = float.MaxValue;
+
+    foreach (var piece in PiecesController.Pieces)
+    {
+      if (piece == null) continue;
+      var container = piece.GetComponent<Container>() ?? piece.GetComponentInChildren<Container>();
+      if (container == null || container.GetInventory() == null) continue;
+
+      // Don't disturb chests in use by players
+      if (container.IsInUse()) continue;
+
+      if (container.GetInventory().CanAddItem(item, item.m_stack))
+      {
+        float d = Vector3.Distance(transform.position, container.transform.position);
+        if (d < bestDist)
+        {
+          bestDist = d;
+          best = container;
+        }
+      }
+    }
+
+    return best;
+  }
+
+  public void DropCarriedItem()
+  {
+    if (_carriedItem == null) return;
+    ItemDrop.DropItem(_carriedItem, _carriedItem.m_stack, transform.position + Vector3.up * 0.5f, transform.rotation);
+    _carriedItem = null;
+    _targetContainer = null;
+  }
+
+  private static void SafeTrigger(Animator? anim, string param)
+  {
+    if (anim == null) return;
+    foreach (var p in anim.parameters)
+    {
+      if (p.name == param)
+      {
+        anim.SetTrigger(param);
+        return;
+      }
+    }
+  }
+
+  // --- SAILOR HAT ATTACHMENT ---
 
   public void EnsureRandomSailorHat()
   {
