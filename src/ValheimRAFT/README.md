@@ -1,15 +1,15 @@
 # ValheimRAFT Lite v5.1.7
 
-**ValheimRAFT Lite (Single Player)** — Design and construct fully custom, navigable rafts, sailing ships, and movable floating bases in Valheim. Expand your vessels with building pieces, drop anchors, navigate turbulent seas, recruit Greydwarf deckhands, or take to the skies in flight!
+**ValheimRAFT Lite (Single Player)** — Fixed various issues and expanded features. Design and construct custom navigable vessels and movable bases in Valheim. ship bed, improved physics, drop anchor, recruit Greydwarf deckhands, and take to the skies in flight!
 
 > ⚠️ **Single Player Focus**: Not tested for multiplayer. For multiplayer support, please use the original [zolantris/ValheimMods](https://github.com/zolantris/ValheimMods).
 
-**ValheimRAFT Lite** is a streamlined edition of ValheimRAFT aiming to streamline progression, expand features and options, improve stability and nautical immersion, and add content missing from the original version:
-- **Build Menu & Nautical Progression**: Reorganized the Boat Hammer into clean, tiered progression tabs (**Resined**, **Nailed**, **Iron**, and **Misc**), with authentic seafaring terminology and balanced material costs.
+**ValheimRAFT Lite** is a streamlined edition of ValheimRAFT aiming to improve progression, expand on missing features, enhance simulation stability and nautical immersion.
+- **Build Menu & Nautical Progression**: Reorganized the Boat Hammer into clean, tiered progression tabs (**Resined**, **Nailed**, **Iron**, and **Misc**), with authentic seafaring terminology and balanced material costs. Removed land vehicle pieces, unrelated additional plugins packaged into the original version.
 - **Helm & Rudder Safety**: Sailing now requires a rudder, with authentic clamped turn angles. If the steering wheel or rudder is destroyed while underway, the vessel automatically halts safely instead of sailing away.
 - **Dynamic Water Wake & Waterline Controls**: Water wake foam and trailing rudder spray dynamically track the water surface, with customizable float height controls (**Max**, **Base**, and **Min** sliders) and dedicated toggles.
-- **Physics & Flight Stability**: Automatic anchoring when leaving the ship, kinematic locking (preventing vessels from drifting or falling off the map), rock impact damping physics (no bulldozing terrain with the boat), simplified sail/rowing speed scaling, responsive flight controls, and improved water physics.
-- **Quality of Life**: Bed respawn, portal and map pin tracking that accurately follow moving vessels, locked helm hand IK, automatically deploying and retracting rope ladders, and various other fixes.
+- **Physics & Flight Stability**: Automatic anchoring when leaving the ship, kinematic locking (preventing vessels from drifting or falling off the map), rock impact damping physics (no bulldozing terrain with the boat), simplified sail/rowing speed scaling, responsive flight controls, and improved ship water physics.
+- **Quality of Life**: Bed respawn, portal and map pin tracking that accurately follow moving vessels, locked wheel hand IK and activation responsiveness, automatically deploying and retracting rope ladders and anchor, various other fixes.
 - **Greydwarf Sailors**: Hire friendly Greydwarf crewmembers that throw rocks to defend your vessel against hostiles. They will mutiny if there is not enough resin within chests onboard, and have pretty bad aim, but they're there for ya.
 - **Persistent ZDOID Architecture**: Migrated vehicle piece tracking to persistent ZDOIDs, fixing disappearing parts, sector transition desyncs, and save issues.
 
