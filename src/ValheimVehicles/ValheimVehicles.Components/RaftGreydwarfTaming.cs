@@ -315,7 +315,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     }
   }
 
-  private static VehiclePiecesController? FindNearestShip(Vector3 pos, float maxDistance = 250f)
+  public static VehiclePiecesController? FindNearestShip(Vector3 pos, float maxDistance = 250f)
   {
     VehiclePiecesController? nearest = null;
     float minDist = maxDistance * maxDistance;

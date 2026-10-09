@@ -817,7 +817,7 @@
 
       var viewStyles = new SwivelUISharedStyles();
       var panelWidth = 420f;
-      var panelHeight = 350f;
+      var panelHeight = 520f;
 
       commandsWindow = GUIManager.Instance.CreateWoodpanel(
         commandsToggleButtonWindow.transform,
@@ -1013,6 +1013,22 @@
           }
         });
       if (snowRow != null) commandsPanelToggleObjects.Add(snowRow);
+
+      // 7. No Material Cost (1 Wood) Toggle
+      var noMaterialCostRow = SwivelUIHelpers.AddToggleRow(
+        commandsWindow.transform,
+        viewStyles,
+        "No Material Cost (1 Wood)",
+        VehicleGlobalConfig.NoMaterialCost?.Value ?? false,
+        val =>
+        {
+          if (VehicleGlobalConfig.NoMaterialCost != null)
+          {
+            VehicleGlobalConfig.NoMaterialCost.Value = val;
+          }
+          VehicleMaterialCostController.SetOneWoodCost(val);
+        });
+      if (noMaterialCostRow != null) commandsPanelToggleObjects.Add(noMaterialCostRow);
     }
 
     public static void ToggleConvexHullDebugger()

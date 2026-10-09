@@ -119,6 +119,10 @@
       if (buildPieces != null && buildPieces.name == VehicleHammerTableRegistry.VehicleHammerTableName)
       {
         VehicleHammerTableRegistry.EnsureRepairPieceAdded();
+        if (VehicleGlobalConfig.NoMaterialCost != null && VehicleGlobalConfig.NoMaterialCost.Value)
+        {
+          VehicleMaterialCostController.ApplyCostState();
+        }
       }
     }
 

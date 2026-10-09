@@ -41,39 +41,20 @@ public class VehicleCommands : ConsoleCommand
 {
   private static class VehicleCommandArgs
   {
-    // public const string locate = "locate";
-    // public const string rotate = "rotate";
-    public const string destroy = "destroy";
     public const string reportInfo = "report-info";
     public const string debug = "debug";
     public const string debugShort = "d";
     public const string config = "config";
-    public const string creative = "creative";
-    public const string colliderEditMode = "colliderEditMode";
     public const string help = "help";
+    public const string hiresailor = "hiresailor";
+    public const string sailor = "sailor";
+    public const string sailors = "sailors";
+
+    // Legacy / internal constants kept for internal helper methods
+    public const string creative = "creative";
     public const string recover = "recover";
-    public const string rotate = "rotate";
-    public const string moveUp = "moveUp";
-    public const string move = "move";
-    public const string toggleOceanSway = "toggleOceanSway";
-    public const string resetVehicleOwner = "resetLocalOwnership";
-    public const string clearBoundaryChunkData = "clearBoundaryChunkData";
-    public const string recenter = "recenter";
     public const string fixAllVehiclePositions = "fixAllVehiclePositions";
     public const string fixNearbyVehiclePositions = "fixNearbyVehiclePositions";
-    public const string resetterrain = "resetterrain";
-    public const string fixterrain = "fixterrain";
-    public const string watermask = "watermask";
-    public const string giveMaterials = "give-materials";
-    public const string giveMaterials1 = "give-materials-1";
-    public const string giveMaterials2 = "give-materials-2";
-    public const string mats = "mats";
-    public const string mats1 = "mats1";
-    public const string mats2 = "mats2";
-    public const string hornoftheseas = "hornoftheseas";
-    public const string horn = "horn";
-    public const string greydwarfsailors = "greydwarfsailors";
-    public const string sailors = "sailors";
   }
 
   private struct CommandInfo
@@ -110,10 +91,6 @@ public class VehicleCommands : ConsoleCommand
       VehicleCommandArgs.config,
       "Will show a config menu related to the current vehicle you are on. You can customize values specifically for your current vehicle. This menu must be reopened via command or via the power lever whenever the user changes vehicles.",
       isDebugOnly: true));
-
-    commands.Add(new CommandInfo(
-      VehicleCommandArgs.recenter,
-      "Manually re-centers the vehicle's ZDO origin to the geometric hull center. This prevents piece ZDOs from drifting into foreign zone sectors."));
 #endif
 
     commands.AddRange(new[]
@@ -124,113 +101,20 @@ public class VehicleCommands : ConsoleCommand
         true),
 
       new CommandInfo(
-        VehicleCommandArgs.destroy,
-        "Will DELETE the current raft and BREAK all pieces. This is a destructive command. You have been warned!",
-        true),
-
-      new CommandInfo(
-        VehicleCommandArgs.recover,
-        "Will recover any vehicles within range of 1000"),
-
-      new CommandInfo(
-        VehicleCommandArgs.rotate,
-        "Defaults to zeroing x and z tilt. Can also provide 3 args: x y z",
-        true),
-
-      new CommandInfo(
-        VehicleCommandArgs.move,
-        "Must provide 3 args: x y z, the movement is relative to those points",
-        true),
-
-      new CommandInfo(
-        VehicleCommandArgs.moveUp,
-        "Moves the vehicle within 50 units upwards by the value provided. Capped at 30 units to be safe. And Capped at 10 units lowest world position.",
-        true),
-
-      new CommandInfo(
-        VehicleCommandArgs.toggleOceanSway,
-        "Stops the vehicle from swaying in the water. It will stay at 0 degrees (x and z) tilt and only allow rotating on y axis"),
-
-      new CommandInfo(
         VehicleCommandArgs.reportInfo,
         "Outputs information related to the vehicle the player is on or near. This is meant for error reports"),
 
       new CommandInfo(
-        VehicleCommandArgs.colliderEditMode,
-        "Lets the player toggle collider edit mode for all vehicles allowing editing water displacement masks and other hidden items"),
+        VehicleCommandArgs.hiresailor,
+        "Directly spawns and hires a tamed Greydwarf Sailor on your vessel. Aliases: 'vehicle sailor', 'vehicle sailors'."),
 
       new CommandInfo(
-        VehicleCommandArgs.creative,
-        "Toggles creative mode for vehicle building. This will lock the player so the vehicle does not kill them while it moves into creative mode. This is not meant to be used while on a moving vehicle or in combat. Use with caution."),
-
-      new CommandInfo(
-        VehicleCommandArgs.resetVehicleOwner,
-        "Resets the vehicle ownership to the local player"),
-
-      new CommandInfo(
-        VehicleCommandArgs.clearBoundaryChunkData,
-        "Clears the boundary chunk data for the nearest vehicle. This will force a rebuild of the convex hull boundary constraint. Boundary chunk data is use to limit the extent the vehicle can grow to."),
-
-      new CommandInfo(
-        VehicleCommandArgs.fixAllVehiclePositions,
-        "Fixes the position of vehicle and all prefabs that are part of the vehicle. Applies to the entire world. Use `fixNearbyVehiclePositions` if you are not an admin or want to fix a vehicle in your area.\nOptional args: <minHeight> <maxHeight>. When provided, the vehicle Y position is clamped to [minHeight, maxHeight] before syncing pieces. Useful if vehicles have fallen through the ground or launched into the sky.\nExample: vehicle fixAllVehiclePositions -100 500\nWarning this will potentially kill players if they are mid-flight or on a vehicle that this command runs on.",
-        true),
-
-      new CommandInfo(
-        VehicleCommandArgs.fixNearbyVehiclePositions,
-        "Fixes the position of vehicle and all prefabs that are part of the vehicle. Applies only to vehicles in a radius around the player.\nOptional args: radiusX radiusZ minHeight maxHeight. Defaults to 250 250 for the radius. Example: vehicle fixNearbyVehiclePositions 250 250 -100 500"),
-
-      new CommandInfo(
-        VehicleCommandArgs.resetterrain,
-        "Resets glitched terrain spires under the boat and destroys rogue trees/rocks. Adaptively flattens to seabed in ocean or to surrounding ground level on land.\nOptional args: [radius]. Defaults to vessel bounds + 6m.\nExample: vehicle resetterrain 25"),
-
-      new CommandInfo(
-        VehicleCommandArgs.fixterrain,
-        "Alias for resetterrain.\nUsage: vehicle fixterrain [radius]"),
-
-      new CommandInfo(
-        VehicleCommandArgs.watermask,
-        "Toggles automated convex water mask generation for the closest vehicle"),
-
-      new CommandInfo(
-        VehicleCommandArgs.giveMaterials,
-        "Gives materials to unlock all boat parts. Optional args: [1|2|all].\nExamples: 'vehicle mats 1' (Part 1, 18 items), 'vehicle mats 2' (Part 2, 17 items), 'vehicle mats all' (all 35 items).\nAliases: vehicle mats, vehicle mats1, vehicle mats2"),
-
-      new CommandInfo(
-        VehicleCommandArgs.giveMaterials1,
-        "Alias for 'vehicle mats 1' (Part 1 woods & metals, 18 items)."),
-
-      new CommandInfo(
-        VehicleCommandArgs.giveMaterials2,
-        "Alias for 'vehicle mats 2' (Part 2 magic, eitr & fabrics, 17 items)."),
-
-      new CommandInfo(
-        VehicleCommandArgs.mats,
-        "Shortcut for give-materials. Usage: 'vehicle mats', 'vehicle mats 1', 'vehicle mats 2'."),
-
-      new CommandInfo(
-        VehicleCommandArgs.mats1,
-        "Shortcut for give-materials 1."),
-
-      new CommandInfo(
-        VehicleCommandArgs.mats2,
-        "Shortcut for give-materials 2."),
-
-      new CommandInfo(
-        VehicleCommandArgs.hornoftheseas,
-        "Gives the Horn of the Seas (Horn of Loki) to the player's inventory. Alias: 'vehicle horn'."),
-
-      new CommandInfo(
-        VehicleCommandArgs.horn,
-        "Shortcut for 'vehicle hornoftheseas'."),
-
-      new CommandInfo(
-        VehicleCommandArgs.greydwarfsailors,
-        "Gives a starter kit to hire and maintain Greydwarf Sailors (stack of Coins, Dandelions, and Resin). Alias: 'vehicle sailors'."),
+        VehicleCommandArgs.sailor,
+        "Shortcut for 'vehicle hiresailor'."),
 
       new CommandInfo(
         VehicleCommandArgs.sailors,
-        "Shortcut for 'vehicle greydwarfsailors'."),
+        "Shortcut for 'vehicle hiresailor'."),
 
       new CommandInfo(
         VehicleCommandArgs.help,
@@ -289,292 +173,113 @@ public class VehicleCommands : ConsoleCommand
 
     switch (commandInfo.CommandName)
     {
-      case VehicleCommandArgs.move:
-        VehicleMove(nextArgs);
-        break;
-      case VehicleCommandArgs.toggleOceanSway:
-        VehicleToggleOceanSway();
-        break;
-      case VehicleCommandArgs.rotate:
-        VehicleRotate(args);
-        break;
-      case VehicleCommandArgs.recover:
-        RecoverRaftConsoleCommand.RecoverRaftWithoutDryRun(
-          $"{Name} {VehicleCommandArgs.recover}");
-        break;
-      case VehicleCommandArgs.creative:
-        ToggleCreativeMode();
-        break;
 #if DEBUG
       case VehicleCommandArgs.debugShort:
         ToggleVehicleCommandsHud();
-        break;
-#endif
-      case VehicleCommandArgs.debug:
-        ToggleVehicleCommandsHud();
-        break;
-      case VehicleCommandArgs.destroy:
-        DestroyCurrentVehicle();
         break;
       // config is not ready - only debug for now.
       case VehicleCommandArgs.config:
         ToggleVehicleGuiConfig();
         break;
+#endif
+      case VehicleCommandArgs.debug:
+        ToggleVehicleCommandsHud();
+        break;
       case VehicleCommandArgs.reportInfo:
         OnReportInfo();
         break;
-      case VehicleCommandArgs.colliderEditMode:
-        ToggleColliderEditMode();
-        break;
-      case VehicleCommandArgs.moveUp:
-        VehicleMoveVertically(nextArgs);
-        break;
-      case VehicleCommandArgs.resetVehicleOwner:
-        VehicleOwnerReset();
+      case VehicleCommandArgs.hiresailor:
+      case VehicleCommandArgs.sailor:
+      case VehicleCommandArgs.sailors:
+        HireSailorDirectly();
         break;
       case VehicleCommandArgs.help:
         Logger.LogMessage(OnHelp());
         break;
-      case VehicleCommandArgs.clearBoundaryChunkData:
-        ClearAllVehicleBoundaryChunks();
-        break;
-      case VehicleCommandArgs.recenter:
-        VehicleRecenter();
-        break;
-      case VehicleCommandArgs.fixAllVehiclePositions:
-        RepairAllVehiclePositions(nextArgs);
-        break;
-      case VehicleCommandArgs.fixNearbyVehiclePositions:
-        FixNearbyVehiclePositions(nextArgs);
-        break;
-      case VehicleCommandArgs.resetterrain:
-      case VehicleCommandArgs.fixterrain:
-        ResetTerrainUnderVehicle(nextArgs);
-        break;
-      case VehicleCommandArgs.watermask:
-        ToggleAutomatedWaterMask();
-        break;
-      case VehicleCommandArgs.giveMaterials:
-      case VehicleCommandArgs.mats:
-        GiveAllBuildingMaterials(nextArgs);
-        break;
-      case VehicleCommandArgs.giveMaterials1:
-      case VehicleCommandArgs.mats1:
-        GiveAllBuildingMaterials(["1"]);
-        break;
-      case VehicleCommandArgs.giveMaterials2:
-      case VehicleCommandArgs.mats2:
-        GiveAllBuildingMaterials(["2"]);
-        break;
-      case VehicleCommandArgs.hornoftheseas:
-      case VehicleCommandArgs.horn:
-        GiveHornOfTheSeas();
-        break;
-      case VehicleCommandArgs.greydwarfsailors:
-      case VehicleCommandArgs.sailors:
-        GiveGreydwarfSailorKit();
-        break;
     }
   }
 
-  private void GiveAllBuildingMaterials(string[]? args = null)
+  private void HireSailorDirectly()
   {
     var player = Player.m_localPlayer;
     if (player == null)
     {
-      Logger.LogMessage("No local player found. Must be in-game to give materials.");
+      Logger.LogMessage("No local player found. Must be in-game to hire a sailor.");
       return;
     }
 
-    if (ObjectDB.instance == null)
+    if (ZNetScene.instance == null)
     {
-      Logger.LogMessage("ObjectDB not loaded.");
+      Logger.LogMessage("ZNetScene not loaded.");
       return;
     }
 
-    string mode = "all";
-    if (args != null && args.Length > 0 && !string.IsNullOrEmpty(args[0]))
+    var prefab = ZNetScene.instance.GetPrefab("Greydwarf");
+    if (prefab == null)
     {
-      mode = args[0].Trim().ToLower();
-    }
-
-    string[] batch1 =
-    [
-      // Woods & Stone
-      "Wood",
-      "RoundLog",
-      "FineWood",
-      "ElderBark",
-      "Stone",
-      "Coal",
-
-      // Metals & Ores / Precursors
-      "CopperOre",
-      "Copper",
-      "TinOre",
-      "Tin",
-      "Bronze",
-      "BronzeNails",
-      "IronScrap",
-      "Iron",
-      "IronNails",
-
-      // Basics
-      "Resin",
-      "Chain",
-      "SurtlingCore"
-    ];
-
-    string[] batch2 =
-    [
-      // Advanced Metals & Stone
-      "BlackMetalScrap",
-      "BlackMetal",
-      "BlackMarble",
-
-      // Eitr & Magic Precursors
-      "Sap",
-      "Softtissue",
-      "Eitr",
-
-      // Organics & Fibers
-      "Tar",
-      "Coins",
-      "LeatherScraps",
-      "DeerHide",
-      "WolfPelt",
-      "Flax",
-      "LinenThread",
-      "YggdrasilWood",
-      "GreydwarfEye",
-      "Dandelion",
-      "NeckTail"
-    ];
-
-    string[] materialsToGive;
-    if (mode == "1" || mode == "tier1" || mode == "part1")
-    {
-      materialsToGive = batch1;
-    }
-    else if (mode == "2" || mode == "tier2" || mode == "part2")
-    {
-      materialsToGive = batch2;
-    }
-    else
-    {
-      materialsToGive = batch1.Concat(batch2).ToArray();
-    }
-
-    int addedToInv = 0;
-    int droppedAtFeet = 0;
-    var inventory = player.GetInventory();
-
-    foreach (var itemName in materialsToGive)
-    {
-      var prefab = ObjectDB.instance.GetItemPrefab(itemName);
-      if (prefab == null)
-      {
-        Logger.LogWarning($"Material prefab '{itemName}' not found in ObjectDB.");
-        continue;
-      }
-
-      var itemDrop = prefab.GetComponent<ItemDrop>();
-      if (itemDrop == null || itemDrop.m_itemData == null)
-      {
-        Logger.LogWarning($"Prefab '{itemName}' has no ItemDrop component.");
-        continue;
-      }
-
-      if (inventory != null)
-      {
-        var itemData = itemDrop.m_itemData.Clone();
-        itemData.m_stack = 1;
-        if (inventory.AddItem(itemData))
-        {
-          addedToInv++;
-        }
-        else
-        {
-          ItemDrop.DropItem(itemData, 1, player.transform.position + Vector3.up * 0.5f, player.transform.rotation);
-          droppedAtFeet++;
-        }
-      }
-
-      player.AddKnownItem(itemDrop.m_itemData);
-    }
-
-    player.UpdateKnownRecipesList();
-
-    if (droppedAtFeet > 0)
-    {
-      Logger.LogMessage($"[Vehicle] Added {addedToInv} materials to inventory. {droppedAtFeet} materials dropped at your feet (inventory full). All {materialsToGive.Length} recipes unlocked!");
-    }
-    else
-    {
-      Logger.LogMessage($"[Vehicle] Successfully gave {addedToInv} materials to inventory! All recipes unlocked!");
-    }
-  }
-
-  private void GiveHornOfTheSeas()
-  {
-    Logger.LogMessage("Horn of the Seas has been disabled and removed from the game.");
-  }
-
-  private void GiveGreydwarfSailorKit()
-  {
-    var player = Player.m_localPlayer;
-    if (player == null)
-    {
-      Logger.LogMessage("No local player found. Must be in-game to give sailor kit.");
+      Logger.LogMessage("Greydwarf prefab not found in ZNetScene.");
       return;
     }
 
-    if (ObjectDB.instance == null)
+    Vector3 spawnPos = player.transform.position + player.transform.forward * 1.5f + Vector3.up * 0.25f;
+    Quaternion spawnRot = Quaternion.LookRotation(-player.transform.forward, Vector3.up);
+
+    var go = Object.Instantiate(prefab, spawnPos, spawnRot);
+    if (go == null)
     {
-      Logger.LogMessage("ObjectDB not loaded.");
+      Logger.LogMessage("Failed to instantiate Greydwarf.");
       return;
     }
 
-    string[] items = ["Coins", "Dandelion", "Resin"];
-    var inventory = player.GetInventory();
-    if (inventory == null) return;
-
-    foreach (var itemName in items)
+    var character = go.GetComponent<Character>();
+    if (character != null)
     {
-      var prefab = ObjectDB.instance.GetItemPrefab(itemName);
-      if (prefab == null)
-      {
-        Logger.LogWarning($"Item prefab '{itemName}' not found in ObjectDB.");
-        continue;
-      }
-
-      var itemDrop = prefab.GetComponent<ItemDrop>();
-      if (itemDrop == null || itemDrop.m_itemData == null)
-      {
-        Logger.LogWarning($"Item '{itemName}' has no ItemDrop component.");
-        continue;
-      }
-
-      var itemData = itemDrop.m_itemData.Clone();
-      int stackSize = itemData.m_shared != null ? itemData.m_shared.m_maxStackSize : 50;
-      if (stackSize <= 0) stackSize = 50;
-      itemData.m_stack = stackSize;
-
-      if (inventory.AddItem(itemData))
-      {
-        Logger.LogMessage($"Added stack of {itemName} ({stackSize}) to inventory.");
-      }
-      else
-      {
-        ItemDrop.DropItem(itemData, stackSize, player.transform.position + Vector3.up * 0.5f, player.transform.rotation);
-        Logger.LogMessage($"Inventory full. Dropped stack of {itemName} ({stackSize}) at feet.");
-      }
-
-      player.AddKnownItem(itemDrop.m_itemData);
+      character.SetTamed(true);
+      character.m_faction = Character.Faction.Players;
     }
 
-    player.Message(MessageHud.MessageType.Center, "Added Greydwarf Sailor Kit (Coins, Dandelions, Resin)");
-    player.UpdateKnownRecipesList();
+    var monsterAI = go.GetComponent<MonsterAI>();
+    if (monsterAI != null)
+    {
+      monsterAI.SetAlerted(false);
+      monsterAI.SetTarget(null);
+      monsterAI.m_targetCreature = null;
+    }
+
+    var taming = go.GetComponent<RaftGreydwarfTaming>();
+    if (taming == null)
+    {
+      taming = go.AddComponent<RaftGreydwarfTaming>();
+    }
+
+    var sailor = go.GetComponent<RaftGreydwarfSailorComponent>();
+    if (sailor == null)
+    {
+      sailor = go.AddComponent<RaftGreydwarfSailorComponent>();
+    }
+
+    sailor.EnsureRandomSailorHat();
+    sailor.EnsureRockWeaponEquipped();
+
+    var nearestShip = RaftGreydwarfTaming.FindNearestShip(player.transform.position, 100f);
+    if (nearestShip != null)
+    {
+      sailor.SetAssignedShip(nearestShip);
+      nearestShip.RegisterSailor(sailor);
+      sailor.TeleportToShipDeck();
+    }
+
+    if (ZNetScene.instance != null)
+    {
+      var vfx = ZNetScene.instance.GetPrefab("vfx_boar_love") ?? ZNetScene.instance.GetPrefab("vfx_tame");
+      if (vfx != null)
+      {
+        Object.Instantiate(vfx, go.transform.position + Vector3.up * 1.2f, Quaternion.identity);
+      }
+    }
+
+    player.Message(MessageHud.MessageType.Center, "Hired Greydwarf Sailor!");
+    Logger.LogMessage("[Vehicle] Successfully spawned and hired Greydwarf Sailor.");
   }
 
   public void VehicleOwnerReset()

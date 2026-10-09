@@ -1,3 +1,4 @@
+using ValheimVehicles.Controllers;
 using BepInEx.Configuration;
 using ValheimVehicles.Components;
 using ValheimVehicles.Helpers;
@@ -32,6 +33,10 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   private const string VehicleGlobalUpdateKey = $"{VehicleGlobalBaseKey}:Updates";
   private const string VehicleDamageKey = $"{VehicleGlobalBaseKey}:Damage";
   private const string VehicleSnowKey = $"{VehicleGlobalBaseKey}:Snow";
+  private const string VehicleMaterialKey = $"{VehicleGlobalBaseKey}:Materials";
+
+  // no material cost toggle (false by default: regular material costs)
+  public static ConfigEntry<bool> NoMaterialCost = null!;
 
   // boat damage toggles (all false by default: no damage to boat parts)
   public static ConfigEntry<bool> BoatDamageEnv = null!;
@@ -49,6 +54,7 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
     CreateHornConfig(config);
     CreateDamageConfig(config);
     CreateSnowConfig(config);
+    CreateMaterialConfig(config);
   }
 
   private static void CreateHornConfig(ConfigFile config)
@@ -143,5 +149,17 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
       ConfigHelpers.CreateConfigDescription(
         "Allow snow overlay on boat parts when at high altitude / mountain biomes. Disabled by default to prevent visual flickering during flight/movement.",
         false, false));
+  }
+  private static void CreateMaterialConfig(ConfigFile config)
+  {
+    NoMaterialCost = config.BindUnique(VehicleMaterialKey,
+      "NoMaterialCost", false,
+      ConfigHelpers.CreateConfigDescription(
+        "When enabled, all boat hammer pieces cost only 1 Wood. When disabled, standard tiered materials are required.",
+        false, false));
+    NoMaterialCost.SettingChanged += (_, _) =>
+    {
+      VehicleMaterialCostController.SetOneWoodCost(NoMaterialCost.Value);
+    };
   }
 }

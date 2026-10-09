@@ -1,3 +1,4 @@
+using ValheimVehicles.Controllers;
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
 
@@ -558,6 +559,7 @@ namespace ValheimVehicles.Prefabs.Registry
       }
 
       table.m_pieces = sortedPieces;
+      VehicleMaterialCostController.CacheOriginalRequirements(table.m_pieces);
       if (LoopTracker.Enabled)
         LoggerProvider.LogInfo($"[VehicleHammer] Successfully organized {table.m_pieces.Count} pieces in {VehicleHammerTableName} with repair at index 0");
     }
