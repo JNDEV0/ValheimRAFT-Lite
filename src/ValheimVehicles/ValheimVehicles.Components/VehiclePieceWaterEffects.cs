@@ -155,13 +155,13 @@ public class VehiclePieceWaterEffects : MonoBehaviour
           psRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
         }
 
-        // Halve the amount/frequency and lifetime/duration of flat foam decals
+        // Reduce flat foam decal amount, rate, and lifetime to 0.25 (one quarter) while keeping trailing spray at 1.0
         var main = ps.main;
-        main.startLifetimeMultiplier *= 0.5f;
+        main.startLifetimeMultiplier *= 0.25f;
 
         var emission = ps.emission;
-        emission.rateOverTimeMultiplier *= 0.5f;
-        emission.rateOverDistanceMultiplier *= 0.5f;
+        emission.rateOverTimeMultiplier *= 0.25f;
+        emission.rateOverDistanceMultiplier *= 0.25f;
 
         if (emission.burstCount > 0)
         {
@@ -169,7 +169,7 @@ public class VehiclePieceWaterEffects : MonoBehaviour
           emission.GetBursts(bursts);
           for (int b = 0; b < bursts.Length; b++)
           {
-            bursts[b].count = new ParticleSystem.MinMaxCurve(bursts[b].count.constant * 0.5f);
+            bursts[b].count = new ParticleSystem.MinMaxCurve(bursts[b].count.constant * 0.25f);
           }
           emission.SetBursts(bursts);
         }
