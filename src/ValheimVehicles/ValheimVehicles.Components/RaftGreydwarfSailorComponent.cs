@@ -78,6 +78,15 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   private Quaternion? _lastSafeLocalRot;
   private bool _isShipMoving;
 
+  // Edge avoidance pause & forced retreat
+  private float _edgeAvoidancePauseTimer;
+  private Vector3? _forcedRetreatTarget;
+  private Vector3 _lastEdgeTriggerPos;
+
+  // Idle animation pacing (3-second still timeout)
+  private float _idleCycleTimer;
+  private bool _isIdleFrozen;
+
   // Overboard recovery
   private float _waterTimer;
 
@@ -126,7 +135,13 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   private void OnDestroy()
   {
+    if (_animator != null) _animator.speed = 1f;
     DropCarriedItem();
+  }
+
+  private void OnDisable()
+  {
+    if (_animator != null) _animator.speed = 1f;
   }
 
   private void DetermineDwarfType()
@@ -549,23 +564,27 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
         }
 
         // BREAK TELEPORT/CLIPPING LOOP:
-        // Cancel forward motion and immediately command pathing inward toward vessel center
+        // Cancel forward motion, trigger 2s pause timeout and 3m inward retreat target
         if (_character != null) _character.m_moveDir = Vector3.zero;
         if (_monsterAI != null)
         {
           _monsterAI.StopMoving();
           _monsterAI.SetTarget(null);
           _monsterAI.m_targetCreature = null;
-
-          Vector3 shipCenter = PiecesController.transform.position;
-          Vector3 inwardDir = (shipCenter - transform.position);
-          inwardDir.y = 0f;
-          if (inwardDir.sqrMagnitude > 0.1f)
-          {
-            Vector3 inwardTarget = transform.position + inwardDir.normalized * 2.5f;
-            _monsterAI.MoveTo(dt, inwardTarget, 1f, false);
-          }
         }
+
+        _edgeAvoidancePauseTimer = 2.0f;
+        _lastEdgeTriggerPos = transform.position;
+
+        Vector3 shipCenter = PiecesController.transform.position;
+        Vector3 inwardDir = (shipCenter - transform.position);
+        inwardDir.y = 0f;
+        if (inwardDir.sqrMagnitude < 0.25f)
+        {
+          inwardDir = -transform.forward;
+          inwardDir.y = 0f;
+        }
+        _forcedRetreatTarget = transform.position + inwardDir.normalized * 3.0f;
       }
 
       // 3. Idle top-deck preference when calm:
@@ -590,51 +609,201 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
         }
       }
     }
+
+    // 4. Idle animation pacing control (3-second still sentry timeout)
+    UpdateIdleAnimationControl(dt);
+  }
+
+  private void UpdateIdleAnimationControl(float dt)
+  {
+    if (_animator == null || _character == null) return;
+
+    bool isMovingOrBusy = _character.m_moveDir.sqrMagnitude > 0.01f ||
+                          (_character.m_body != null && _character.m_body.linearVelocity.sqrMagnitude > 0.1f) ||
+                          _character.InAttack() ||
+                          _character.InWater() ||
+                          _isInCombat ||
+                          _carriedItem != null ||
+                          _targetItemDrop != null ||
+                          (_monsterAI != null && _monsterAI.GetTargetCreature() != null);
+
+    if (isMovingOrBusy)
+    {
+      if (_isIdleFrozen)
+      {
+        _animator.speed = 1f;
+        _isIdleFrozen = false;
+      }
+      _idleCycleTimer = 0f;
+      return;
+    }
+
+    _idleCycleTimer += dt;
+    if (_isIdleFrozen)
+    {
+      // In 3-second still timeout
+      if (_idleCycleTimer >= 3.0f)
+      {
+        _animator.speed = 1f;
+        _isIdleFrozen = false;
+        _idleCycleTimer = 0f;
+      }
+      else
+      {
+        _animator.speed = 0f;
+      }
+    }
+    else
+    {
+      // Playing idle animation for 2.5 seconds: then freeze for 3.0 seconds
+      if (_idleCycleTimer >= 2.5f)
+      {
+        _animator.speed = 0f;
+        _isIdleFrozen = true;
+        _idleCycleTimer = 0f;
+      }
+      else
+      {
+        _animator.speed = 1f;
+      }
+    }
   }
 
   private void UpdateEdgeAvoidance(float dt)
   {
     if (PiecesController == null || _character == null || _character.InWater()) return;
 
+    // A. 2-second timeout when an edge or obstacle was encountered: stand completely still
+    if (_edgeAvoidancePauseTimer > 0f)
+    {
+      _edgeAvoidancePauseTimer -= dt;
+      _character.m_moveDir = Vector3.zero;
+      if (_monsterAI != null)
+      {
+        _monsterAI.StopMoving();
+      }
+      return;
+    }
+
+    // B. Forced retreat pathing at least 2.5–3.0m away from the danger spot
+    if (_forcedRetreatTarget.HasValue)
+    {
+      Vector3 flatCur = new Vector3(transform.position.x, 0, transform.position.z);
+      Vector3 flatOrigin = new Vector3(_lastEdgeTriggerPos.x, 0, _lastEdgeTriggerPos.z);
+      Vector3 flatTarget = new Vector3(_forcedRetreatTarget.Value.x, 0, _forcedRetreatTarget.Value.z);
+
+      float distFromEdge = Vector3.Distance(flatCur, flatOrigin);
+      float distToTarget = Vector3.Distance(flatCur, flatTarget);
+
+      if (distFromEdge < 2.5f && distToTarget > 0.8f)
+      {
+        if (_monsterAI != null)
+        {
+          _monsterAI.MoveTo(dt, _forcedRetreatTarget.Value, 1f, false);
+        }
+        return;
+      }
+      else
+      {
+        _forcedRetreatTarget = null;
+      }
+    }
+
     Vector3 moveDir = _character.m_moveDir;
     if (moveDir.sqrMagnitude < 0.01f) return;
 
-    // Lookahead raycast 1.0m ahead in direction of movement
-    Vector3 lookaheadPos = transform.position + moveDir.normalized * 1.0f;
-    Ray lookRay = new Ray(lookaheadPos + Vector3.up * 0.8f, Vector3.down);
-    bool safeAhead = false;
+    Vector3 forwardDir = moveDir.normalized;
+    Vector3 lookaheadPos = transform.position + forwardDir * 1.0f;
 
-    if (Physics.Raycast(lookRay, out var hit, 3.0f, LayerMask.GetMask("piece", "Default", "static_solid")))
+    // Raise raycast origin to +2.5f and cast down 5.5f so stairs ascending ahead are detected!
+    Ray lookRay = new Ray(lookaheadPos + Vector3.up * 2.5f, Vector3.down);
+    bool safeAhead = false;
+    bool hitStair = false;
+    Collider? stairCollider = null;
+
+    if (Physics.Raycast(lookRay, out var hit, 5.5f, LayerMask.GetMask("piece", "Default", "static_solid")))
     {
       var hitVpc = hit.collider.GetComponentInParent<VehiclePiecesController>();
       if (hitVpc == PiecesController)
       {
         safeAhead = true;
+        if (IsStair(hit.collider))
+        {
+          hitStair = true;
+          stairCollider = hit.collider;
+        }
       }
+    }
+
+    // Also check horizontal forward ray at chest height (+0.8f) for direct stair collider contact
+    if (!hitStair)
+    {
+      Ray forwardRay = new Ray(transform.position + Vector3.up * 0.8f, forwardDir);
+      if (Physics.Raycast(forwardRay, out var fHit, 1.5f, LayerMask.GetMask("piece", "Default", "static_solid")))
+      {
+        var fVpc = fHit.collider.GetComponentInParent<VehiclePiecesController>();
+        if (fVpc == PiecesController && IsStair(fHit.collider))
+        {
+          safeAhead = true;
+          hitStair = true;
+          stairCollider = fHit.collider;
+        }
+      }
+    }
+
+    // If stair detected, guide pathing toward top of stairs instead of considering it an obstacle
+    if (hitStair && stairCollider != null)
+    {
+      Bounds b = stairCollider.bounds;
+      Vector3 stairTop = b.center + Vector3.up * (b.extents.y * 0.9f);
+      if (transform.position.y < stairTop.y - 0.3f)
+      {
+        if (_monsterAI != null)
+        {
+          _monsterAI.MoveTo(dt, stairTop, 1f, false);
+        }
+      }
+      return;
     }
 
     if (!safeAhead)
     {
-      // Edge detected ahead! Stop moving forward immediately
+      // Edge / drop-off detected ahead! Stop moving forward immediately
       _character.m_moveDir = Vector3.zero;
       if (_monsterAI != null)
       {
         _monsterAI.StopMoving();
       }
 
-      // Steer inward towards ship center
+      // Enter 2-second timeout and define 3.0m forced retreat path toward ship interior
+      _edgeAvoidancePauseTimer = 2.0f;
+      _lastEdgeTriggerPos = transform.position;
+
       Vector3 shipCenter = PiecesController.transform.position;
       Vector3 inwardDir = (shipCenter - transform.position);
       inwardDir.y = 0f;
-      if (inwardDir.sqrMagnitude > 0.1f)
+      if (inwardDir.sqrMagnitude < 0.25f)
       {
-        Vector3 inwardTarget = transform.position + inwardDir.normalized * 2.0f;
-        if (_monsterAI != null)
-        {
-          _monsterAI.MoveTo(dt, inwardTarget, 1f, false);
-        }
+        inwardDir = -forwardDir;
+        inwardDir.y = 0f;
       }
+
+      _forcedRetreatTarget = transform.position + inwardDir.normalized * 3.0f;
     }
+  }
+
+  private static bool IsStair(Collider col)
+  {
+    if (col == null) return false;
+    var piece = col.GetComponentInParent<Piece>();
+    if (piece != null)
+    {
+      string pName = piece.name.ToLower();
+      if (pName.Contains("stair") || pName.Contains("ladder") || pName.Contains("stepladder"))
+        return true;
+    }
+    string colName = col.name.ToLower();
+    return colName.Contains("stair") || colName.Contains("ladder") || colName.Contains("stepladder");
   }
 
   public bool IsUnderRoof(Vector3 pos)
@@ -1240,15 +1409,21 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       hatPrefabName = "HelmetHat1";
     }
 
+    // Clean up any existing hats anywhere on character hierarchy
+    if (_character != null)
+    {
+      foreach (var oldHat in _character.GetComponentsInChildren<Transform>(true))
+      {
+        if (oldHat != null && oldHat.name == "SailorHatVisual")
+        {
+          if (!forceReplace) return;
+          Destroy(oldHat.gameObject);
+        }
+      }
+    }
+
     Transform? headBone = FindHeadBone(_character);
     if (headBone == null) return;
-
-    Transform existingHat = headBone.Find("SailorHatVisual");
-    if (existingHat != null)
-    {
-      if (!forceReplace) return;
-      Destroy(existingHat.gameObject);
-    }
 
     GameObject? hatPrefab = ObjectDB.instance?.GetItemPrefab(hatPrefabName);
     if (hatPrefab == null)
@@ -1332,17 +1507,23 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       hatVisual.transform.localPosition += equipoffset.localPosition * 0.5f;
       hatVisual.transform.localRotation *= equipoffset.localRotation;
     }
+
+    ZLog.Log($"[SailorHat] Attached hat '{hatPrefabName}' to bone '{headBone.name}'. " +
+      $"Offset values -> localPosition: {hatVisual.transform.localPosition}, " +
+      $"localRotation Euler: {hatVisual.transform.localRotation.eulerAngles}, " +
+      $"localScale: {hatVisual.transform.localScale}");
   }
 
   public void RemoveSailorHat()
   {
-    Transform? headBone = FindHeadBone(_character);
-    if (headBone != null)
+    if (_character != null)
     {
-      Transform existingHat = headBone.Find("SailorHatVisual");
-      if (existingHat != null)
+      foreach (var oldHat in _character.GetComponentsInChildren<Transform>(true))
       {
-        Destroy(existingHat.gameObject);
+        if (oldHat != null && oldHat.name == "SailorHatVisual")
+        {
+          Destroy(oldHat.gameObject);
+        }
       }
     }
     if (_nview != null && _nview.IsValid())
@@ -1355,27 +1536,21 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   {
     if (character == null) return null;
 
-    var humanoid = character as Humanoid;
-    if (humanoid != null && humanoid.m_visEquipment != null && humanoid.m_visEquipment.m_helmet != null)
+    // 1. SkinnedMeshRenderer bones search (actual animated skeleton bone deformed by animations)
+    var smrs = character.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+    foreach (var smr in smrs)
     {
-      return humanoid.m_visEquipment.m_helmet;
+      if (smr.bones == null) continue;
+      foreach (var bone in smr.bones)
+      {
+        if (bone != null && bone.name.IndexOf("head", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+          return bone;
+        }
+      }
     }
 
-    if (character.m_head != null)
-    {
-      return character.m_head;
-    }
-
-    if (humanoid != null && humanoid.m_head != null)
-    {
-      return humanoid.m_head;
-    }
-
-    if (character.m_eye != null)
-    {
-      return character.m_eye;
-    }
-
+    // 2. Humanoid Animator Head bone (if avatar is humanoid)
     var anim = character.GetComponentInChildren<Animator>();
     if (anim != null && anim.isHuman)
     {
@@ -1383,13 +1558,40 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       if (b != null) return b;
     }
 
+    // 3. Fallback search through all hierarchy transforms for bone containing 'head' (excluding 'eye')
     var all = character.GetComponentsInChildren<Transform>(true);
     foreach (var t in all)
     {
-      if (t.name.IndexOf("head", StringComparison.OrdinalIgnoreCase) >= 0)
+      if (t.name.IndexOf("head", StringComparison.OrdinalIgnoreCase) >= 0 &&
+          t.name.IndexOf("eye", StringComparison.OrdinalIgnoreCase) < 0)
       {
         return t;
       }
+    }
+
+    // 4. Fallback to character.m_head or humanoid.m_head
+    if (character.m_head != null)
+    {
+      return character.m_head;
+    }
+
+    var humanoid = character as Humanoid;
+    if (humanoid != null)
+    {
+      if (humanoid.m_visEquipment != null && humanoid.m_visEquipment.m_helmet != null)
+      {
+        return humanoid.m_visEquipment.m_helmet;
+      }
+      if (humanoid.m_head != null)
+      {
+        return humanoid.m_head;
+      }
+    }
+
+    // 5. Last resort fallback to m_eye
+    if (character.m_eye != null)
+    {
+      return character.m_eye;
     }
 
     return character.transform;

@@ -41,16 +41,21 @@ public class VehicleCommands : ConsoleCommand
 {
   private static class VehicleCommandArgs
   {
-    public const string reportInfo = "report-info";
-    public const string debug = "debug";
-    public const string debugShort = "d";
-    public const string config = "config";
-    public const string help = "help";
+    public const string mechanismtoggle = "mechanismtoggle";
+    public const string debugLog = "debug-log";
     public const string hiresailor = "hiresailor";
-    public const string sailor = "sailor";
-    public const string sailors = "sailors";
+    public const string boatbed = "boatbed";
+    public const string bed = "bed";
+    public const string toggleMaterialCost = "toggle-material-cost";
+
+    // Backward compatibility aliases
+    public const string debug = "debug";
+    public const string reportInfo = "report-info";
+    public const string debugShort = "d";
 
     // Legacy / internal constants kept for internal helper methods
+    public const string config = "config";
+    public const string help = "help";
     public const string creative = "creative";
     public const string recover = "recover";
     public const string fixAllVehiclePositions = "fixAllVehiclePositions";
@@ -96,29 +101,29 @@ public class VehicleCommands : ConsoleCommand
     commands.AddRange(new[]
     {
       new CommandInfo(
-        VehicleCommandArgs.debug,
-        "Will show a menu with options like rotating or debugging vehicle colliders",
-        true),
+        VehicleCommandArgs.mechanismtoggle,
+        "Opens the mechanism toggle options menu.",
+        false),
 
       new CommandInfo(
-        VehicleCommandArgs.reportInfo,
-        "Outputs information related to the vehicle the player is on or near. This is meant for error reports"),
+        VehicleCommandArgs.debugLog,
+        "Enables debug logging for 5 seconds to collect vehicle diagnostics and outputs report."),
 
       new CommandInfo(
         VehicleCommandArgs.hiresailor,
-        "Directly spawns and hires a tamed Greydwarf Sailor on your vessel. Aliases: 'vehicle sailor', 'vehicle sailors'."),
+        "Directly spawns and hires a tamed Greydwarf Sailor on your vessel."),
 
       new CommandInfo(
-        VehicleCommandArgs.sailor,
-        "Shortcut for 'vehicle hiresailor'."),
+        VehicleCommandArgs.boatbed,
+        "Teleports player to their boat bed if built. Alias: 'vehicle bed'."),
 
       new CommandInfo(
-        VehicleCommandArgs.sailors,
-        "Shortcut for 'vehicle hiresailor'."),
+        VehicleCommandArgs.bed,
+        "Shortcut for 'vehicle boatbed'."),
 
       new CommandInfo(
-        VehicleCommandArgs.help,
-        "Shows this help message")
+        VehicleCommandArgs.toggleMaterialCost,
+        "Toggles Boat Hammer no material cost (1 Wood vs standard recipe costs).")
     });
 
     return commands;
@@ -148,22 +153,30 @@ public class VehicleCommands : ConsoleCommand
   {
     if (args.Length < 1)
     {
-      Logger.LogMessage(
-        "Must provide a argument for `vehicle` command, type vehicle help to see all commands");
+      Logger.LogMessage($"Must provide an argument for `vehicle` command. Available commands:\n{OnHelp()}");
       return;
     }
 
     var firstArg = args.First();
     if (firstArg == null)
     {
-      Logger.LogMessage("Must provide a argument for `vehicle` command");
+      Logger.LogMessage("Must provide an argument for `vehicle` command");
       return;
     }
 
     var commandInfo = VehicleCommandDefinitions.FirstOrDefault(x => string.Equals(x.CommandName, firstArg, StringComparison.OrdinalIgnoreCase));
-    if (string.IsNullOrEmpty(commandInfo.CommandName))
+    string resolvedCmd = commandInfo.CommandName;
+    if (string.IsNullOrEmpty(resolvedCmd))
     {
-      Logger.LogMessage($"Unknown vehicle command '{firstArg}'. Run 'vehicle {VehicleCommandArgs.help}' for options.");
+      if (string.Equals(firstArg, VehicleCommandArgs.debug, StringComparison.OrdinalIgnoreCase))
+        resolvedCmd = VehicleCommandArgs.mechanismtoggle;
+      else if (string.Equals(firstArg, VehicleCommandArgs.reportInfo, StringComparison.OrdinalIgnoreCase))
+        resolvedCmd = VehicleCommandArgs.debugLog;
+    }
+
+    if (string.IsNullOrEmpty(resolvedCmd))
+    {
+      Logger.LogMessage($"Unknown vehicle command '{firstArg}'. Available commands:\n{OnHelp()}");
       return;
     }
 
@@ -171,30 +184,31 @@ public class VehicleCommands : ConsoleCommand
 
     var nextArgs = args.Skip(1).ToArray();
 
-    switch (commandInfo.CommandName)
+    switch (resolvedCmd.ToLower())
     {
 #if DEBUG
       case VehicleCommandArgs.debugShort:
         ToggleVehicleCommandsHud();
         break;
-      // config is not ready - only debug for now.
       case VehicleCommandArgs.config:
         ToggleVehicleGuiConfig();
         break;
 #endif
-      case VehicleCommandArgs.debug:
+      case VehicleCommandArgs.mechanismtoggle:
         ToggleVehicleCommandsHud();
         break;
-      case VehicleCommandArgs.reportInfo:
-        OnReportInfo();
+      case VehicleCommandArgs.debugLog:
+        RunDebugLogCommand();
         break;
       case VehicleCommandArgs.hiresailor:
-      case VehicleCommandArgs.sailor:
-      case VehicleCommandArgs.sailors:
         HireSailorDirectly();
         break;
-      case VehicleCommandArgs.help:
-        Logger.LogMessage(OnHelp());
+      case VehicleCommandArgs.boatbed:
+      case VehicleCommandArgs.bed:
+        TeleportToBoatBed();
+        break;
+      case VehicleCommandArgs.toggleMaterialCost:
+        ToggleMaterialCost();
         break;
     }
   }
@@ -934,7 +948,6 @@ public class VehicleCommands : ConsoleCommand
 
   public static void ToggleVehicleCommandsHud()
   {
-    if (!CanRunCheatCommand()) return;
     if (Player.m_localPlayer == null) return;
     // must do this otherwise the commands panel will not cycle debug value if we need to enable it.
     VehicleGui.ToggleCommandsPanelState(true);
@@ -1265,6 +1278,143 @@ public class VehicleCommands : ConsoleCommand
       GetPlayerPathInfo(),
       logSeparatorEnd
     ));
+  }
+
+  private static Coroutine? _debugLogCoroutine = null;
+
+  public static void RunDebugLogCommand()
+  {
+    if (Player.m_localPlayer == null)
+    {
+      Logger.LogMessage("Must be in-game to collect debug logs.");
+      return;
+    }
+
+    if (_debugLogCoroutine != null)
+    {
+      Logger.LogMessage("[Debug Log] Debug logging collection is already running.");
+      return;
+    }
+
+    if (Game.instance == null)
+    {
+      OnReportInfo();
+      return;
+    }
+
+    _debugLogCoroutine = Game.instance.StartCoroutine(CollectDebugLogsCoroutine());
+  }
+
+  private static IEnumerator CollectDebugLogsCoroutine()
+  {
+    bool prevLoopLogging = VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false;
+    if (VehicleGuiMenuConfig.EnableLoopLogging != null)
+    {
+      VehicleGuiMenuConfig.EnableLoopLogging.Value = true;
+    }
+
+    Logger.LogMessage("[Debug Log] Enabled debug logging. Unpause the game... collecting logs for 5 seconds.");
+
+    for (int i = 1; i <= 5; i++)
+    {
+      var msg = $"[Debug Log] Enabled debug logging. Unpause the game... collecting ({i}/5)...";
+      Player.m_localPlayer?.Message(MessageHud.MessageType.Center, msg);
+      yield return new WaitForSeconds(1.0f);
+    }
+
+    if (VehicleGuiMenuConfig.EnableLoopLogging != null)
+    {
+      VehicleGuiMenuConfig.EnableLoopLogging.Value = prevLoopLogging;
+    }
+
+    OnReportInfo();
+
+    Player.m_localPlayer?.Message(MessageHud.MessageType.Center, "[Debug Log] Diagnostics collected and written to console log.");
+    _debugLogCoroutine = null;
+  }
+
+  public static void TeleportToBoatBed()
+  {
+    var player = Player.m_localPlayer;
+    if (player == null)
+    {
+      Logger.LogMessage("Must be in-game to teleport to boat bed.");
+      return;
+    }
+
+    // 1. Check bound boat bed
+    int boundVehicleId = BoatBedSpawnController.GetBoundVehicleId();
+    if (boundVehicleId != 0)
+    {
+      if (VehicleRecallController.GetVehicleLocation(boundVehicleId, out var vPos, out var vRot, out _, out _))
+      {
+        var offset = BoatBedSpawnController.GetBoundBedOffset();
+        var bedWorldPos = vPos + vRot * offset + Vector3.up * 0.5f;
+
+        // If the vehicle is loaded in scene, check if bed piece still exists
+        var vm = VehicleManager.GetVehicle(boundVehicleId);
+        if (vm != null && vm.PiecesController != null && vm.PiecesController.m_bedPieces != null && vm.PiecesController.m_bedPieces.Count > 0)
+        {
+          var bed = vm.PiecesController.m_bedPieces.FirstOrDefault(b => b != null);
+          if (bed != null)
+          {
+            bedWorldPos = bed.GetSpawnPoint();
+          }
+        }
+
+        player.TeleportTo(bedWorldPos, vRot, true);
+        Logger.LogMessage($"[BoatBed] Teleported to bound boat bed on vessel #{boundVehicleId} at {bedWorldPos}");
+        player.Message(MessageHud.MessageType.Center, "Teleported to boat bed");
+        return;
+      }
+    }
+
+    // 2. If not bound to a boat bed, check if any bed is built on current or nearest vessel
+    var nearest = GetNearestVehicleManager();
+    if (nearest != null && nearest.PiecesController != null && nearest.PiecesController.m_bedPieces != null && nearest.PiecesController.m_bedPieces.Count > 0)
+    {
+      var bed = nearest.PiecesController.m_bedPieces.FirstOrDefault(b => b != null);
+      if (bed != null)
+      {
+        var spawnPos = bed.GetSpawnPoint();
+        player.TeleportTo(spawnPos, nearest.transform.rotation, true);
+        Logger.LogMessage($"[BoatBed] Teleported to boat bed on vessel #{nearest.PersistentZdoId} at {spawnPos}");
+        player.Message(MessageHud.MessageType.Center, "Teleported to boat bed");
+        return;
+      }
+    }
+
+    // 3. Search all active vehicles in the world for a built bed
+    foreach (var move in VehicleMovementController.Instances)
+    {
+      if (move == null || move.PiecesController == null || move.PiecesController.m_bedPieces == null) continue;
+      var bed = move.PiecesController.m_bedPieces.FirstOrDefault(b => b != null);
+      if (bed != null)
+      {
+        var spawnPos = bed.GetSpawnPoint();
+        player.TeleportTo(spawnPos, move.transform.rotation, true);
+        Logger.LogMessage($"[BoatBed] Teleported to boat bed on vessel at {spawnPos}");
+        player.Message(MessageHud.MessageType.Center, "Teleported to boat bed");
+        return;
+      }
+    }
+
+    Logger.LogMessage("No boat bed found or built on a vessel.");
+    player.Message(MessageHud.MessageType.Center, "No boat bed found on any vessel");
+  }
+
+  public static void ToggleMaterialCost()
+  {
+    bool newState = !(VehicleGlobalConfig.NoMaterialCost?.Value ?? false);
+    if (VehicleGlobalConfig.NoMaterialCost != null)
+    {
+      VehicleGlobalConfig.NoMaterialCost.Value = newState;
+    }
+    VehicleMaterialCostController.SetOneWoodCost(newState);
+
+    var status = newState ? "Enabled (1 Wood per piece)" : "Disabled (Standard material costs)";
+    Logger.LogMessage($"Boat hammer no material cost: {status}");
+    Player.m_localPlayer?.Message(MessageHud.MessageType.Center, $"No material cost: {status}");
   }
   public static Stopwatch _creativeModeTimer = new();
   public static Coroutine? _creativeModeCoroutineInstance = null;

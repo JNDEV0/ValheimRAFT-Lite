@@ -269,10 +269,10 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
     PrefabRegistryController.AddPiece(new CustomPiece(prefab, true, new PieceConfig
     {
-      PieceTable = PrefabRegistryController.GetPieceTableName(),
+      PieceTable = "",
       Description = $"$mb_sail_{sailCount}_desc",
       Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Propulsion),
-      Enabled = true,
+      Enabled = false,
       Icon = sailIcon
     }));
   }

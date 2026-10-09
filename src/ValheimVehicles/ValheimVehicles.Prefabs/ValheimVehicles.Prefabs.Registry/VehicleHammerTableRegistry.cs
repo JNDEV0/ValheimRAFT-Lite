@@ -262,6 +262,20 @@ namespace ValheimVehicles.Prefabs.Registry
     private static readonly HashSet<string> RedundantPieces = new(StringComparer.OrdinalIgnoreCase)
     {
       // User requested removals:
+      // Custom Masts & Sail Creators (disabled per user request)
+      "ValheimVehicles_custom_mast_level_1",
+      "ValheimVehicles_custom_mast_level_2",
+      "ValheimVehicles_custom_mast_level_3",
+      "custom_mast_level_1",
+      "custom_mast_level_2",
+      "custom_mast_level_3",
+      "ValheimVehicles_SailCreator_3",
+      "ValheimVehicles_SailCreator_4",
+      "SailCreator_3",
+      "SailCreator_4",
+      "MBSail",
+      "mb_sail",
+      "mb_sail_4",
       // Disabled large porthole frames per user request:
       "ValheimVehicles_ShipWindow_Wall_Porthole_Wood_8x4",
       "ValheimVehicles_ShipWindow_Wall_Porthole_8x4",

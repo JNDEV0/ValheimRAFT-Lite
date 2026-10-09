@@ -42,9 +42,9 @@ public class CustomVehicleMastRegistry : RegisterPrefab<CustomVehicleMastRegistr
     PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {
-        PieceTable = PrefabRegistryController.GetPieceTableName(),
+        PieceTable = "",
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
-        Enabled = true,
+        Enabled = false,
         Requirements =
         [
           new RequirementConfig
