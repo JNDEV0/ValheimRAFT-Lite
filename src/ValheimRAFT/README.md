@@ -1,17 +1,18 @@
 # ValheimRAFT Lite v5.1.7
 
-**ValheimRAFT Lite** — Design and construct fully custom, navigable rafts, sailing ships, and movable floating bases in Valheim. Expand your vessels with building pieces, drop anchors, navigate turbulent seas, recruit Greydwarf deckhands, or take to the skies in flight!
+**ValheimRAFT Lite (Single Player)** — Design and construct fully custom, navigable rafts, sailing ships, and movable floating bases in Valheim. Expand your vessels with building pieces, drop anchors, navigate turbulent seas, recruit Greydwarf deckhands, or take to the skies in flight!
 
-> **Updated for Valheim 1.0+ (Unity 6 Engine Upgrade)**
+> ⚠️ **Single Player Focus**: Not tested for multiplayer. For multiplayer support, please use the original [zolantris/ValheimMods](https://github.com/zolantris/ValheimMods).
 
-**ValheimRAFT Lite** is a refined, streamlined, and quality-of-life focused edition of ValheimRAFT. **Lite** focuses on stability, balanced survival progression, nautical immersion, and adding content i felt was missing from the original:
-- **Build Menu & Nautical Progression**: Reorganized the Boat Hammer into clean, tiered progression tabs (**Resined**, **Nailed**, **Iron**, and **Misc**), with authentic seafaring terminology, balanced material costs.
-- **Greydwarf Sailors**: Hire friendly Greydwarf crewmembers that will throw rocks to defend your vessel against hostiles.
-- **Dynamic Water Wake & Waterline Controls**: Water wake foam and trailing rudder spray track the water surface, customizable float height controls (**Max**, **Base**, and **Min** sliders) and updated toggles.
-- **Persistent ZDOID**: Migrated vehicle piece tracking to persistent ZDOIDs, fixing disappearing parts, sector transition desyncs, and save issues.
-- **Physics & Flight Stability**: automatic Anchoring on leaving the ship, kinematic locking (preventing vessels from drifting or falling offmap), rock impact damping physics(no bulldozing terrain with the boat), simplified sail/rowing speed scaling, responsive flight controls, improved water physics.
-- **Ergonomics & Quality of Life**: Bed respawn, portal and map pin tracking that accurately follow moving vessels, locked helm hand IK, automatic retractable and extending rope ladders, and various other fixes.
-- **Helm & Rudder Safety**: Sailing now requires a rudder, with reduced turn angles. If the steering wheel or rudder is destroyed while underway, the vessel automatically halts safely instead of sailing away.
+**ValheimRAFT Lite** is a streamlined edition of ValheimRAFT aiming to streamline progression, expand features and options, improve stability and nautical immersion, and add content missing from the original version:
+- **Build Menu & Nautical Progression**: Reorganized the Boat Hammer into clean, tiered progression tabs (**Resined**, **Nailed**, **Iron**, and **Misc**), with authentic seafaring terminology and balanced material costs.
+- **Helm & Rudder Safety**: Sailing now requires a rudder, with authentic clamped turn angles. If the steering wheel or rudder is destroyed while underway, the vessel automatically halts safely instead of sailing away.
+- **Dynamic Water Wake & Waterline Controls**: Water wake foam and trailing rudder spray dynamically track the water surface, with customizable float height controls (**Max**, **Base**, and **Min** sliders) and dedicated toggles.
+- **Physics & Flight Stability**: Automatic anchoring when leaving the ship, kinematic locking (preventing vessels from drifting or falling off the map), rock impact damping physics (no bulldozing terrain with the boat), simplified sail/rowing speed scaling, responsive flight controls, and improved water physics.
+- **Quality of Life**: Bed respawn, portal and map pin tracking that accurately follow moving vessels, locked helm hand IK, automatically deploying and retracting rope ladders, and various other fixes.
+- **Greydwarf Sailors**: Hire friendly Greydwarf crewmembers that throw rocks to defend your vessel against hostiles. They will mutiny if there is not enough resin within chests onboard, and have pretty bad aim, but they're there for ya.
+- **Persistent ZDOID Architecture**: Migrated vehicle piece tracking to persistent ZDOIDs, fixing disappearing parts, sector transition desyncs, and save issues.
+
 ---
 
 ## ☕ Support
