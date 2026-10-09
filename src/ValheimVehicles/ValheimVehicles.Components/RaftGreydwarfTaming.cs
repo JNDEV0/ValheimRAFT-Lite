@@ -34,7 +34,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       string loyaltyStr = sailor != null ? sailor.GetLoyaltyHoverString() : "<color=#00FF00>Satisfied</color>";
       string dismissPrompt = Localization.instance.Localize("$valheim_vehicles_sailor_dismiss");
       return Localization.instance.Localize(
-        $"$valheim_vehicles_sailor_greydwarf\nLoyalty: {loyaltyStr}\n[<color=yellow><b>Shift+$KEY_Use</b></color>] {dismissPrompt}\n<color=grey>Keep resin available in chests</color>");
+        $"$valheim_vehicles_sailor_greydwarf\nLoyalty: {loyaltyStr}\n[<color=yellow><b>Shift+$KEY_Use</b></color>] {dismissPrompt}\n[<color=yellow><b>Ctrl+$KEY_Use</b></color>] Change Hat\n<color=grey>Keep resin available in chests</color>");
     }
 
     // Only regular Greydwarfs can be hired as sailors
@@ -118,9 +118,20 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
     var player = user as Player;
     if (player == null) return false;
 
-    // If tamed, check for Shift+E dismiss
+    // If tamed, check for Ctrl+E change hat or Shift+E dismiss
     if (_character != null && _character.IsTamed())
     {
+      bool isCtrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+      if (isCtrl)
+      {
+        var sailor = GetComponent<RaftGreydwarfSailorComponent>();
+        if (sailor != null)
+        {
+          sailor.CycleNextHat(player);
+          return true;
+        }
+      }
+
       bool isShift = alt || Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
       if (isShift)
       {

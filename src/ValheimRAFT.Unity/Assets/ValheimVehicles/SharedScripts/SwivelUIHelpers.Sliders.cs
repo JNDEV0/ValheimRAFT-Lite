@@ -41,9 +41,13 @@ namespace ValheimVehicles.SharedScripts.UI
 
     public static GameObject AddSliderRow(Transform parent, SwivelUISharedStyles viewStyles, string label, float min, float max, float initial, UnityAction<float> onChanged)
     {
-      return AddSliderRow(parent, viewStyles, label, min, max, initial, onChanged, out _, null);
+      return AddSliderRow(parent, viewStyles, label, min, max, initial, onChanged, out _, null, 0.5f);
     }
     public static GameObject AddSliderRow(Transform parent, SwivelUISharedStyles viewStyles, string label, float min, float max, float initial, UnityAction<float> onChanged, out Slider slider, float? forceExpandWidth = null)
+    {
+      return AddSliderRow(parent, viewStyles, label, min, max, initial, onChanged, out slider, forceExpandWidth, 0.5f);
+    }
+    public static GameObject AddSliderRow(Transform parent, SwivelUISharedStyles viewStyles, string label, float min, float max, float initial, UnityAction<float> onChanged, out Slider slider, float? forceExpandWidth = null, float step = 0.5f)
     {
       var container = new GameObject("Slider_Container", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
       container.transform.SetParent(parent, false);
@@ -82,6 +86,12 @@ namespace ValheimVehicles.SharedScripts.UI
       localSlider.value = initial;
       localSlider.wholeNumbers = false;
       localSlider.interactable = CanNavigatorInteractWithPanel;
+
+      var customSlider = sliderGO.GetComponent<CustomSlider>();
+      if (customSlider != null)
+      {
+        customSlider.keyboardStep = step;
+      }
 
       // === Background ===
       var backgroundGO = new GameObject("Background", typeof(RectTransform), typeof(Image));
@@ -154,22 +164,21 @@ namespace ValheimVehicles.SharedScripts.UI
       valueLabel.color = viewStyles.InputTextColor;
       valueLabel.alignment = TextAlignmentOptions.MidlineRight;
       valueLabel.enableAutoSizing = true;
-      valueLabel.text = Mathf.RoundToInt(initial).ToString();
+      valueLabel.text = step < 0.05f ? initial.ToString("F2", CultureInfo.InvariantCulture) : (step < 0.2f ? initial.ToString("F1", CultureInfo.InvariantCulture) : Mathf.RoundToInt(initial).ToString());
 
       var valueRT = valueLabelGO.GetComponent<RectTransform>();
       valueRT.anchorMin = new Vector2(1f, 0);
       valueRT.anchorMax = new Vector2(1f, 1f);
       valueRT.pivot = new Vector2(1f, 0.5f);
-      valueRT.offsetMin = new Vector2(-50, 0);
+      valueRT.offsetMin = new Vector2(-60, 0);
       valueRT.offsetMax = new Vector2(0, 0);
 
       // === Update ===
       localSlider.onValueChanged.AddListener(v =>
       {
-        // half-step IE 0.5f -> 1f -> 1.5f;
-        var rounded = Mathf.Round(v * 2f) * 0.5f;
+        var rounded = step > 0f ? (Mathf.Round(v / step) * step) : v;
         localSlider.SetValueWithoutNotify(rounded); // prevent infinite loop
-        valueLabel.text = rounded.ToString(CultureInfo.CurrentCulture);
+        valueLabel.text = step < 0.05f ? rounded.ToString("F2", CultureInfo.InvariantCulture) : (step < 0.2f ? rounded.ToString("F1", CultureInfo.InvariantCulture) : rounded.ToString(CultureInfo.CurrentCulture));
         onChanged?.Invoke(rounded);
       });
 

@@ -817,7 +817,7 @@
 
       var viewStyles = new SwivelUISharedStyles();
       var panelWidth = 420f;
-      var panelHeight = 520f;
+      var panelHeight = 600f;
 
       commandsWindow = GUIManager.Instance.CreateWoodpanel(
         commandsToggleButtonWindow.transform,
@@ -837,15 +837,43 @@
       windowVerticalGroup.childControlWidth = true;
       windowVerticalGroup.childControlHeight = false;
 
+      var scrollWidth = panelWidth - 24f;
+      var commandsScrollView = GUIManager.Instance.CreateScrollView(
+        commandsWindow.transform,
+        false,
+        true,
+        20,
+        10f,
+        GUIManager.Instance.ValheimToggleColorBlock,
+        new Color(0, 0, 0, 1),
+        scrollWidth,
+        panelHeight - 32f);
+
+      var viewport = commandsScrollView.transform.Find("Scroll View/Viewport/Content");
+      var viewportVerticalLayout = viewport.GetComponent<VerticalLayoutGroup>();
+      viewportVerticalLayout.childForceExpandHeight = false;
+      viewportVerticalLayout.childForceExpandWidth = true;
+      viewportVerticalLayout.childControlWidth = true;
+      viewportVerticalLayout.childControlHeight = false;
+      viewportVerticalLayout.spacing = 8f;
+
+      var scrollViewLayoutElement = commandsScrollView.AddComponent<LayoutElement>();
+      scrollViewLayoutElement.flexibleHeight = panelHeight;
+      scrollViewLayoutElement.minHeight = 200f;
+      scrollViewLayoutElement.minWidth = scrollWidth;
+
+      var svParent = viewportVerticalLayout.transform;
+      var contentItemWidth = panelWidth - 44f;
+
       // 1. Action Buttons (Watermask Debugger, Water Mask On/Off, Hull Debugger, Physics Debugger)
       for (var index = 0; index < VehicleGUIItems.commandButtonActions.Count; index++)
       {
         var action = VehicleGUIItems.commandButtonActions[index];
         var btnObj = SwivelUIHelpers.AddButton(
-          commandsWindow.transform,
+          svParent,
           viewStyles,
           action.title,
-          panelWidth - 32f,
+          contentItemWidth,
           40f,
           out _,
           out _,
@@ -868,7 +896,7 @@
 
       // Max Water Float Height Slider
       var maxFloatSliderRow = SwivelUIHelpers.AddSliderRow(
-        commandsWindow.transform,
+        svParent,
         viewStyles,
         "Max Water Float Height",
         0f, 6.0f,
@@ -889,12 +917,12 @@
           }
         },
         out _,
-        panelWidth - 32f);
+        contentItemWidth);
       if (maxFloatSliderRow != null) commandsPanelToggleObjects.Add(maxFloatSliderRow);
 
       // Base Water Float Height Slider
       var baseFloatSliderRow = SwivelUIHelpers.AddSliderRow(
-        commandsWindow.transform,
+        svParent,
         viewStyles,
         "Base Water Float Height",
         -2.0f, 4.0f,
@@ -912,12 +940,12 @@
           }
         },
         out _,
-        panelWidth - 32f);
+        contentItemWidth);
       if (baseFloatSliderRow != null) commandsPanelToggleObjects.Add(baseFloatSliderRow);
 
       // Min Water Float Height Slider
       var minFloatSliderRow = SwivelUIHelpers.AddSliderRow(
-        commandsWindow.transform,
+        svParent,
         viewStyles,
         "Min Water Float Height",
         -4.0f, 1.0f,
@@ -938,13 +966,13 @@
           }
         },
         out _,
-        panelWidth - 32f);
+        contentItemWidth);
       if (minFloatSliderRow != null) commandsPanelToggleObjects.Add(minFloatSliderRow);
 
       // Ship Water Wake Controls (Toggle & Positional Sliders)
       var wakeEnabled = vZdo?.GetBool(VehicleZdoVars.ShipWaterWakeEnabled, VehiclePieceWaterEffects.GlobalEnableWaterWake) ?? VehiclePieceWaterEffects.GlobalEnableWaterWake;
       var wakeToggleRow = SwivelUIHelpers.AddToggleRow(
-        commandsWindow.transform,
+        svParent,
         viewStyles,
         "Ship Water Wake Effects",
         wakeEnabled,
@@ -961,7 +989,7 @@
 
       // 4. Console Debug Logs (Loop Log)
       var logRow = SwivelUIHelpers.AddToggleRow(
-        commandsWindow.transform,
+        svParent,
         viewStyles,
         ModTranslations.ConsoleDebugLogs ?? "Console Debug Logs",
         VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false,
@@ -976,7 +1004,7 @@
 
       // 5. Boat Damage Toggles (Env, Mobs, Player)
       var damageRow = SwivelUIHelpers.AddMultiToggleRow(
-        commandsWindow.transform,
+        svParent,
         viewStyles,
         "Boat Damage",
         new[] { "Env", "Mobs", "Player" },
@@ -1000,7 +1028,7 @@
 
       // 6. Boat Snow Overlay Toggle
       var snowRow = SwivelUIHelpers.AddToggleRow(
-        commandsWindow.transform,
+        svParent,
         viewStyles,
         "Boat Snow Overlay",
         VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false,
@@ -1016,7 +1044,7 @@
 
       // 7. No Material Cost (1 Wood) Toggle
       var noMaterialCostRow = SwivelUIHelpers.AddToggleRow(
-        commandsWindow.transform,
+        svParent,
         viewStyles,
         "No Material Cost (1 Wood)",
         VehicleGlobalConfig.NoMaterialCost?.Value ?? false,
@@ -1029,6 +1057,121 @@
           VehicleMaterialCostController.SetOneWoodCost(val);
         });
       if (noMaterialCostRow != null) commandsPanelToggleObjects.Add(noMaterialCostRow);
+
+      // 8. Sailor Hat Debug Sliders (0.01 Step)
+      SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, "Sailor Hat Debug (0.01 Step)");
+
+      var hatPosXRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Hat Pos X",
+        -0.50f, 0.50f,
+        RaftGreydwarfSailorComponent.SailorHatPositionOffset.x,
+        val =>
+        {
+          RaftGreydwarfSailorComponent.SailorHatPositionOffset.x = val;
+          RaftGreydwarfSailorComponent.UpdateAllSailorHatTransforms();
+        },
+        out _,
+        contentItemWidth,
+        0.01f);
+      if (hatPosXRow != null) commandsPanelToggleObjects.Add(hatPosXRow);
+
+      var hatPosYRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Hat Pos Y",
+        -0.50f, 0.80f,
+        RaftGreydwarfSailorComponent.SailorHatPositionOffset.y,
+        val =>
+        {
+          RaftGreydwarfSailorComponent.SailorHatPositionOffset.y = val;
+          RaftGreydwarfSailorComponent.UpdateAllSailorHatTransforms();
+        },
+        out _,
+        contentItemWidth,
+        0.01f);
+      if (hatPosYRow != null) commandsPanelToggleObjects.Add(hatPosYRow);
+
+      var hatPosZRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Hat Pos Z",
+        -0.50f, 0.50f,
+        RaftGreydwarfSailorComponent.SailorHatPositionOffset.z,
+        val =>
+        {
+          RaftGreydwarfSailorComponent.SailorHatPositionOffset.z = val;
+          RaftGreydwarfSailorComponent.UpdateAllSailorHatTransforms();
+        },
+        out _,
+        contentItemWidth,
+        0.01f);
+      if (hatPosZRow != null) commandsPanelToggleObjects.Add(hatPosZRow);
+
+      var hatRotXRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Hat Rot X",
+        -180.0f, 180.0f,
+        RaftGreydwarfSailorComponent.SailorHatRotationEuler.x,
+        val =>
+        {
+          RaftGreydwarfSailorComponent.SailorHatRotationEuler.x = val;
+          RaftGreydwarfSailorComponent.UpdateAllSailorHatTransforms();
+        },
+        out _,
+        contentItemWidth,
+        0.01f);
+      if (hatRotXRow != null) commandsPanelToggleObjects.Add(hatRotXRow);
+
+      var hatRotYRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Hat Rot Y",
+        -180.0f, 180.0f,
+        RaftGreydwarfSailorComponent.SailorHatRotationEuler.y,
+        val =>
+        {
+          RaftGreydwarfSailorComponent.SailorHatRotationEuler.y = val;
+          RaftGreydwarfSailorComponent.UpdateAllSailorHatTransforms();
+        },
+        out _,
+        contentItemWidth,
+        0.01f);
+      if (hatRotYRow != null) commandsPanelToggleObjects.Add(hatRotYRow);
+
+      var hatRotZRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Hat Rot Z",
+        -180.0f, 180.0f,
+        RaftGreydwarfSailorComponent.SailorHatRotationEuler.z,
+        val =>
+        {
+          RaftGreydwarfSailorComponent.SailorHatRotationEuler.z = val;
+          RaftGreydwarfSailorComponent.UpdateAllSailorHatTransforms();
+        },
+        out _,
+        contentItemWidth,
+        0.01f);
+      if (hatRotZRow != null) commandsPanelToggleObjects.Add(hatRotZRow);
+
+      var hatScaleRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Hat Scale",
+        0.10f, 2.00f,
+        RaftGreydwarfSailorComponent.SailorHatScale,
+        val =>
+        {
+          RaftGreydwarfSailorComponent.SailorHatScale = val;
+          RaftGreydwarfSailorComponent.UpdateAllSailorHatTransforms();
+        },
+        out _,
+        contentItemWidth,
+        0.01f);
+      if (hatScaleRow != null) commandsPanelToggleObjects.Add(hatScaleRow);
     }
 
     public static void ToggleConvexHullDebugger()

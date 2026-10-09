@@ -31,6 +31,11 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     "HelmetMidsummerCrown" // Midsummer Crown
   ];
 
+  // Sailor Hat transform offset controls (for in-game slider adjustments)
+  public static Vector3 SailorHatPositionOffset = new Vector3(0.00f, 0.16f, 0.05f);
+  public static Vector3 SailorHatRotationEuler = new Vector3(-15.0f, 0.0f, 0.0f);
+  public static float SailorHatScale = 0.95f;
+
   public static bool IsSailorHat(string prefabName)
   {
     if (string.IsNullOrEmpty(prefabName)) return false;
@@ -1396,6 +1401,82 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     AttachSailorHat(hatPrefabName, forceReplace: true);
   }
 
+  public void ApplyCurrentHatTransform()
+  {
+    Transform? headBone = FindHeadBone(_character);
+    if (headBone == null) return;
+    Transform hatVisual = headBone.Find("SailorHatVisual");
+    if (hatVisual != null)
+    {
+      hatVisual.localPosition = SailorHatPositionOffset;
+      hatVisual.localRotation = Quaternion.Euler(SailorHatRotationEuler);
+      hatVisual.localScale = Vector3.one * SailorHatScale;
+
+      string currentHat = "";
+      if (_nview != null && _nview.IsValid())
+      {
+        currentHat = _nview.GetZDO().GetString("SailorHat", "");
+      }
+      if (!string.IsNullOrEmpty(currentHat))
+      {
+        GameObject? hatPrefab = ObjectDB.instance?.GetItemPrefab(currentHat) ?? ZNetScene.instance?.GetPrefab(currentHat);
+        Transform? equipoffset = hatPrefab != null ? hatPrefab.transform.Find("equipoffset") : null;
+        if (equipoffset != null)
+        {
+          hatVisual.localPosition += equipoffset.localPosition * 0.5f;
+          hatVisual.localRotation *= equipoffset.localRotation;
+        }
+      }
+    }
+  }
+
+  public static void UpdateAllSailorHatTransforms()
+  {
+    foreach (var sailor in UnityEngine.Object.FindObjectsOfType<RaftGreydwarfSailorComponent>())
+    {
+      if (sailor != null)
+      {
+        sailor.ApplyCurrentHatTransform();
+      }
+    }
+    ZLog.Log($"[SailorHat Debug] Offset -> Pos: ({SailorHatPositionOffset.x:F2}, {SailorHatPositionOffset.y:F2}, {SailorHatPositionOffset.z:F2}) | Rot: ({SailorHatRotationEuler.x:F2}, {SailorHatRotationEuler.y:F2}, {SailorHatRotationEuler.z:F2}) | Scale: {SailorHatScale:F2}");
+  }
+
+  public void CycleNextHat(Player? player = null)
+  {
+    string currentHat = "";
+    if (_nview != null && _nview.IsValid())
+    {
+      currentHat = _nview.GetZDO().GetString("SailorHat", "");
+    }
+
+    int nextIndex = 0;
+    if (!string.IsNullOrEmpty(currentHat))
+    {
+      for (int i = 0; i < SailorHats.Length; i++)
+      {
+        if (SailorHats[i].Equals(currentHat, StringComparison.OrdinalIgnoreCase))
+        {
+          nextIndex = (i + 1) % SailorHats.Length;
+          break;
+        }
+      }
+    }
+
+    string newHat = SailorHats[nextIndex];
+    if (_nview != null && _nview.IsValid())
+    {
+      _nview.GetZDO().Set("SailorHat", newHat);
+    }
+    AttachSailorHat(newHat, forceReplace: true);
+
+    if (player != null)
+    {
+      player.Message(MessageHud.MessageType.Center, $"Sailor Hat: {newHat} ({nextIndex + 1}/{SailorHats.Length})");
+    }
+    ZLog.Log($"[SailorHat] Cycled hat on Greydwarf to '{newHat}' ({nextIndex + 1}/{SailorHats.Length})");
+  }
+
   public void AttachSailorHat(string hatPrefabName, bool forceReplace = false)
   {
     if (string.IsNullOrEmpty(hatPrefabName)) return;
@@ -1498,9 +1579,9 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     // Local offset puts the cap squarely on top of the Greydwarf's head.
     Transform? equipoffset = hatPrefab.transform.Find("equipoffset");
 
-    hatVisual.transform.localPosition = new Vector3(0f, 0.16f, 0.05f);
-    hatVisual.transform.localRotation = Quaternion.Euler(-15f, 0f, 0f);
-    hatVisual.transform.localScale = Vector3.one * 0.95f;
+    hatVisual.transform.localPosition = SailorHatPositionOffset;
+    hatVisual.transform.localRotation = Quaternion.Euler(SailorHatRotationEuler);
+    hatVisual.transform.localScale = Vector3.one * SailorHatScale;
 
     if (equipoffset != null)
     {

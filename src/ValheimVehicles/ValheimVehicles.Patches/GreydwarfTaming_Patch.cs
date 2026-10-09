@@ -76,7 +76,18 @@ public class GreydwarfTaming_Patch
         }
         else
         {
-          // Tamed sailor: check for Shift+E dismiss
+          // Tamed sailor: check for Ctrl+E change hat or Shift+E dismiss
+          bool isCtrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+          if (isCtrl)
+          {
+            var sailor = target.GetComponentInParent<RaftGreydwarfSailorComponent>();
+            if (sailor != null)
+            {
+              sailor.CycleNextHat(__instance);
+              return false;
+            }
+          }
+
           bool isShift = alt || Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
           if (isShift)
           {
