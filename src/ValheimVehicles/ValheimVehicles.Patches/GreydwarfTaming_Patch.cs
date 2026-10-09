@@ -333,4 +333,93 @@ public class GreydwarfTaming_Patch
       }
     }
   }
+  // ==========================================
+  // Sailor Rock Throwing Aim Improvements
+  // ==========================================
+
+  [HarmonyPatch(typeof(Attack), nameof(Attack.Update))]
+  [HarmonyPostfix]
+  public static void Attack_Update_Postfix(Attack __instance)
+  {
+    if (__instance == null || __instance.m_character == null) return;
+    if (!__instance.m_character.InAttack()) return;
+    var sailor = __instance.m_character.GetComponent<RaftGreydwarfSailorComponent>();
+    if (sailor == null) return;
+
+    Character? target = __instance.m_baseAI != null ? __instance.m_baseAI.GetTargetCreature() : null;
+    if (target == null || target.IsDead()) return;
+
+    Vector3 dir = target.GetCenterPoint() - __instance.m_character.transform.position;
+    dir.y = 0;
+    if (dir.sqrMagnitude > 0.001f)
+    {
+      __instance.m_character.transform.rotation = Quaternion.RotateTowards(
+        __instance.m_character.transform.rotation,
+        Quaternion.LookRotation(dir),
+        360f * Time.deltaTime
+      );
+    }
+  }
+
+  [HarmonyPatch(typeof(Attack), nameof(Attack.GetProjectileSpawnPoint))]
+  [HarmonyPostfix]
+  public static void Attack_GetProjectileSpawnPoint_Postfix(Attack __instance, ref Vector3 spawnPoint, ref Vector3 aimDir)
+  {
+    if (__instance == null || __instance.m_character == null) return;
+    var sailor = __instance.m_character.GetComponent<RaftGreydwarfSailorComponent>();
+    if (sailor == null) return;
+
+    Character? target = __instance.m_baseAI != null ? __instance.m_baseAI.GetTargetCreature() : null;
+    if (target == null || target.IsDead()) return;
+
+    Vector3 targetPos = target.GetCenterPoint();
+    Vector3 targetVel = target.GetVelocity();
+
+    float dist = Vector3.Distance(spawnPoint, targetPos);
+    float speed = __instance.m_projectileVel > 1f ? __instance.m_projectileVel : 20f;
+    float time = dist / speed;
+
+    // Lead target based on velocity vector and projectile travel time
+    Vector3 predictedPos = targetPos + (targetVel * time);
+
+    // Ballistic drop compensation if launch angle is zero
+    if (__instance.m_launchAngle <= 0.001f)
+    {
+      predictedPos.y += 0.5f * 9.81f * time * time * 0.40f;
+    }
+
+    Vector3 calculatedAim = (predictedPos - spawnPoint).normalized;
+    aimDir = calculatedAim;
+
+    // Orient character towards throw release point
+    Vector3 flatLook = calculatedAim;
+    flatLook.y = 0;
+    if (flatLook.sqrMagnitude > 0.001f)
+    {
+      __instance.m_character.transform.rotation = Quaternion.LookRotation(flatLook);
+    }
+  }
+
+  [HarmonyPatch(typeof(Attack), nameof(Attack.FireProjectileBurst))]
+  [HarmonyPrefix]
+  public static void Attack_FireProjectileBurst_Prefix(Attack __instance, out float __state)
+  {
+    __state = -1f;
+    if (__instance?.m_character?.GetComponent<RaftGreydwarfSailorComponent>() != null)
+    {
+      __state = __instance.m_projectileAccuracy;
+      // High accuracy (low spread) for trained shipboard defenders
+      __instance.m_projectileAccuracy = 0.2f;
+    }
+  }
+
+  [HarmonyPatch(typeof(Attack), nameof(Attack.FireProjectileBurst))]
+  [HarmonyPostfix]
+  public static void Attack_FireProjectileBurst_Postfix(Attack __instance, float __state)
+  {
+    if (__state >= 0f && __instance != null)
+    {
+      __instance.m_projectileAccuracy = __state;
+    }
+  }
 }

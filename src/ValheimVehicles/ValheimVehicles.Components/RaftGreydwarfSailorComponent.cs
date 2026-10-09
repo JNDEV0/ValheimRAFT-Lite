@@ -19,22 +19,40 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 {
   public static readonly string[] SailorHats =
   [
-    "HelmetHat1",        // Blue Tied Headscarf
-    "HelmetHat2",        // Green Twisted Headscarf
-    "HelmetHat3",        // Fur Cap Brown
-    "HelmetHat4",        // Extravagant Cap Green
-    "HelmetHat5",        // Simple Cap Red
-    "HelmetHat6",        // Yellow Tied Headscarf
-    "HelmetHat7",        // Red Twisted Headscarf
-    "HelmetHat8",        // Fur Cap Grey
-    "HelmetFishing",     // Fishing Hat
-    "HelmetMidsummerCrown" // Midsummer Crown
+    "HelmetFishingHat",     // Fishing Hat
+    "HelmetStrawHat",       // Straw Hat
+    "HelmetPointyHat",      // Witch / Pointy Hat
+    "HelmetHat1",           // Blue Tied Headscarf
+    "HelmetHat2",           // Green Twisted Headscarf
+    "HelmetHat3",           // Fur Cap Brown
+    "HelmetHat4",           // Extravagant Cap Green
+    "HelmetHat5",           // Simple Cap Red
+    "HelmetHat6",           // Yellow Tied Headscarf
+    "HelmetHat7",           // Red Twisted Headscarf
+    "HelmetHat8",           // Fur Cap Grey
+    "HelmetHat9",           // Dark Tied Headscarf
+    "HelmetHat10",          // Striped Headscarf
+    "HelmetMidsummerCrown", // Midsummer Crown
+    "HelmetCrownOfValheim", // Crown of Valheim
+    "HelmetRootCrown",      // Root Crown
+    "HelmetYule",           // Yule Hat
+    "HelmetDverger",        // Dvergr Circlet
+    "HelmetSweatBand",      // Sweatband
+    "HelmetLeather",        // Leather Helmet
+    "HelmetTrollLeather",   // Troll Leather Hood
+    "HelmetBronze",         // Bronze Helmet
+    "HelmetIron",           // Iron Helmet
+    "HelmetRoot",           // Root Mask
+    "HelmetFenring",        // Fenris Hood
+    "HelmetPadded",         // Padded Helmet
+    "HelmetMage",           // Eitr-weave Hood
+    "HelmetAshlandsMediumHood" // Medium Ashlands Hood
   ];
 
-  // Sailor Hat transform offset controls (for in-game slider adjustments)
-  public static Vector3 SailorHatPositionOffset = new Vector3(0.000f, 0.005f, 0.000f);
+  // Sailor Hat transform offset controls (tuned ideal defaults)
+  public static Vector3 SailorHatPositionOffset = new Vector3(0.000f, 0.003f, 0.000f);
   public static Vector3 SailorHatRotationEuler = new Vector3(-90.0f, 0.0f, -180.0f);
-  public static float SailorHatScale = 0.03f;
+  public static float SailorHatScale = 0.025f;
 
   public static bool IsSailorHat(string prefabName)
   {
@@ -43,8 +61,9 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     {
       if (hat.Equals(prefabName, StringComparison.OrdinalIgnoreCase)) return true;
     }
-    if (prefabName.Equals("HelmetFishingHat", StringComparison.OrdinalIgnoreCase) ||
-        prefabName.Equals("HelmetStrawHat", StringComparison.OrdinalIgnoreCase))
+    if (prefabName.Equals("HelmetFishing", StringComparison.OrdinalIgnoreCase) ||
+        prefabName.Equals("HelmetWitchHat", StringComparison.OrdinalIgnoreCase) ||
+        prefabName.Equals("HelmetDvergr", StringComparison.OrdinalIgnoreCase))
     {
       return true;
     }
@@ -1481,13 +1500,18 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   {
     if (string.IsNullOrEmpty(hatPrefabName)) return;
 
-    if (hatPrefabName.Equals("HelmetFishingHat", StringComparison.OrdinalIgnoreCase))
+    // Normalize aliases
+    if (hatPrefabName.Equals("HelmetFishing", StringComparison.OrdinalIgnoreCase))
     {
-      hatPrefabName = "HelmetFishing";
+      hatPrefabName = "HelmetFishingHat";
     }
-    else if (hatPrefabName.Equals("HelmetStrawHat", StringComparison.OrdinalIgnoreCase))
+    else if (hatPrefabName.Equals("HelmetWitchHat", StringComparison.OrdinalIgnoreCase))
     {
-      hatPrefabName = "HelmetHat1";
+      hatPrefabName = "HelmetPointyHat";
+    }
+    else if (hatPrefabName.Equals("HelmetDvergr", StringComparison.OrdinalIgnoreCase))
+    {
+      hatPrefabName = "HelmetDverger";
     }
 
     // Clean up any existing hats anywhere on character hierarchy
@@ -1513,7 +1537,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     }
     if (hatPrefab == null)
     {
-      hatPrefab = ObjectDB.instance?.GetItemPrefab("HelmetHat1") ?? ZNetScene.instance?.GetPrefab("HelmetHat1");
+      hatPrefab = ObjectDB.instance?.GetItemPrefab("HelmetFishingHat") ?? ObjectDB.instance?.GetItemPrefab("HelmetHat1") ?? ZNetScene.instance?.GetPrefab("HelmetHat1");
     }
     if (hatPrefab == null)
     {
