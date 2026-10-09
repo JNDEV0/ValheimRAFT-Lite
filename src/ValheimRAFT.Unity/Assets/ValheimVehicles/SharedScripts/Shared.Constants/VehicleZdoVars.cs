@@ -33,12 +33,6 @@ namespace ValheimVehicles.Shared.Constants
     public const string MinWaterFloatHeight = "ValheimVehicles_MinWaterFloatHeight";
 
     public const string ShipWaterWakeEnabled = "ValheimVehicles_ShipWaterWakeEnabled";
-    public const string FlatFoamOffsetX = "ValheimVehicles_FlatFoamOffsetX";
-    public const string FlatFoamOffsetY = "ValheimVehicles_FlatFoamOffsetY";
-    public const string FlatFoamOffsetZ = "ValheimVehicles_FlatFoamOffsetZ";
-    public const string SprayOffsetX = "ValheimVehicles_SprayOffsetX";
-    public const string SprayOffsetY = "ValheimVehicles_SprayOffsetY";
-    public const string SprayOffsetZ = "ValheimVehicles_SprayOffsetZ";
 
     public const string ToggleSwitchAction = "ValheimVehicles_ToggleSwitchAction";
     public const string ForceAnchorOnPortalTeleport = "ValheimVehicles_ForceAnchorOnPortalTeleport";
