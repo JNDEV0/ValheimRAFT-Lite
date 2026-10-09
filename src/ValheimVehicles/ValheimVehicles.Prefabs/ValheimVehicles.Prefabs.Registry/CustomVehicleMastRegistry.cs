@@ -13,6 +13,21 @@ public class CustomVehicleMastRegistry : RegisterPrefab<CustomVehicleMastRegistr
   private static void RegisterMast(string mastTier)
   {
     var mastAsset = LoadValheimVehicleAssets.GetMastVariant(mastTier);
+    if (mastAsset != null)
+    {
+      foreach (var mc in mastAsset.GetComponentsInChildren<MeshCollider>(true))
+      {
+        try
+        {
+          if (mc.convex)
+          {
+            mc.convex = false;
+          }
+        }
+        catch { }
+      }
+    }
+
     var prefab = PrefabManager.Instance.CreateClonedPrefab(PrefabNames.GetMastByLevelName(mastTier), mastAsset);
 
     PrefabRegistryHelpers.HoistSnapPointsToPrefab(prefab);
@@ -24,7 +39,7 @@ public class CustomVehicleMastRegistry : RegisterPrefab<CustomVehicleMastRegistr
     {
       try
       {
-        if (mc.convex && mc.sharedMesh != null && mc.sharedMesh.vertexCount > 255)
+        if (mc.convex)
         {
           mc.convex = false;
         }
@@ -42,7 +57,7 @@ public class CustomVehicleMastRegistry : RegisterPrefab<CustomVehicleMastRegistr
     PrefabRegistryController.AddPiece(new CustomPiece(prefab, true,
       new PieceConfig
       {
-        PieceTable = "",
+        PieceTable = PrefabRegistryController.GetPieceTableName(),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = false,
         Requirements =
