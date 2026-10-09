@@ -33,8 +33,8 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   // Sailor Hat transform offset controls (for in-game slider adjustments)
   public static Vector3 SailorHatPositionOffset = new Vector3(0.00f, 0.16f, 0.05f);
-  public static Vector3 SailorHatRotationEuler = new Vector3(-15.0f, 0.0f, 0.0f);
-  public static float SailorHatScale = 0.95f;
+  public static Vector3 SailorHatRotationEuler = new Vector3(-90.0f, 0.0f, 180.0f);
+  public static float SailorHatScale = 0.05f;
 
   public static bool IsSailorHat(string prefabName)
   {

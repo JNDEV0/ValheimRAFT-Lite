@@ -1161,7 +1161,7 @@
         svParent,
         viewStyles,
         "Hat Scale",
-        0.10f, 2.00f,
+        0.01f, 0.50f,
         RaftGreydwarfSailorComponent.SailorHatScale,
         val =>
         {
