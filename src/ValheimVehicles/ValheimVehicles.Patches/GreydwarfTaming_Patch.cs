@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using HarmonyLib;
 using UnityEngine;
@@ -263,5 +264,62 @@ public class GreydwarfTaming_Patch
       return false;
     }
     return true;
+  }
+
+  [HarmonyPatch(typeof(EnemyHud), "UpdateHuds")]
+  [HarmonyPostfix]
+  public static void EnemyHud_UpdateHuds_Postfix(EnemyHud __instance, Player player)
+  {
+    if (__instance == null) return;
+    var huds = Traverse.Create(__instance).Field("m_huds").GetValue() as System.Collections.IDictionary;
+    if (huds == null) return;
+
+    Character hoverCreature = player != null ? player.GetHoverCreature() : null;
+    List<Character>? toRemove = null;
+
+    foreach (System.Collections.DictionaryEntry entry in huds)
+    {
+      var c = entry.Key as Character;
+      if (c == null) continue;
+
+      if (c.GetComponent<RaftGreydwarfSailorComponent>() != null)
+      {
+        var hudDataTraverse = Traverse.Create(entry.Value);
+        float hoverTimer = hudDataTraverse.Field<float>("m_hoverTimer").Value;
+        var gui = hudDataTraverse.Field<GameObject>("m_gui").Value;
+
+        if (c == hoverCreature)
+        {
+          hudDataTraverse.Field("m_hoverTimer").SetValue(0f);
+          if (gui != null) gui.SetActive(true);
+        }
+        else
+        {
+          if (hoverTimer > 3.0f)
+          {
+            if (gui != null) gui.SetActive(false);
+            if (hoverTimer > 6.0f)
+            {
+              toRemove ??= new List<Character>();
+              toRemove.Add(c);
+            }
+          }
+        }
+      }
+    }
+
+    if (toRemove != null)
+    {
+      foreach (var c in toRemove)
+      {
+        if (huds.Contains(c))
+        {
+          var hudObj = huds[c];
+          var gui = Traverse.Create(hudObj).Field<GameObject>("m_gui").Value;
+          if (gui != null) UnityEngine.Object.Destroy(gui);
+          huds.Remove(c);
+        }
+      }
+    }
   }
 }

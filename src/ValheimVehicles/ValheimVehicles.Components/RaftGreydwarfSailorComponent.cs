@@ -21,10 +21,14 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   [
     "HelmetHat1",        // Blue Tied Headscarf
     "HelmetHat2",        // Green Twisted Headscarf
-    "HelmetHat7",        // Red Twisted Headscarf
+    "HelmetHat3",        // Fur Cap Brown
+    "HelmetHat4",        // Extravagant Cap Green
+    "HelmetHat5",        // Simple Cap Red
     "HelmetHat6",        // Yellow Tied Headscarf
-    "HelmetStrawHat",    // Straw Hat
-    "HelmetFishingHat"   // Fishing Hat
+    "HelmetHat7",        // Red Twisted Headscarf
+    "HelmetHat8",        // Fur Cap Grey
+    "HelmetFishing",     // Fishing Hat
+    "HelmetMidsummerCrown" // Midsummer Crown
   ];
 
   public static bool IsSailorHat(string prefabName)
@@ -33,6 +37,11 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     foreach (var hat in SailorHats)
     {
       if (hat.Equals(prefabName, StringComparison.OrdinalIgnoreCase)) return true;
+    }
+    if (prefabName.Equals("HelmetFishingHat", StringComparison.OrdinalIgnoreCase) ||
+        prefabName.Equals("HelmetStrawHat", StringComparison.OrdinalIgnoreCase))
+    {
+      return true;
     }
     return false;
   }
@@ -269,18 +278,69 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     if (PiecesController == null) return;
 
     bool fed = false;
-    foreach (var piece in PiecesController.Pieces)
+    List<Container> candidateContainers = new();
+
+    if (PiecesController.Pieces != null)
     {
-      if (piece == null) continue;
-      var container = piece.GetComponent<Container>() ?? piece.GetComponentInChildren<Container>();
-      if (container != null && container.GetInventory() != null)
+      foreach (var piece in PiecesController.Pieces)
       {
-        if (container.GetInventory().CountItems("Resin") >= 1)
+        if (piece == null) continue;
+        var container = piece.GetComponent<Container>() ?? piece.GetComponentInChildren<Container>();
+        if (container != null && !candidateContainers.Contains(container))
         {
-          container.GetInventory().RemoveItem("Resin", 1);
-          fed = true;
+          candidateContainers.Add(container);
+        }
+      }
+    }
+
+    // Also scan nearby containers on or around the vessel (within 20m)
+    var colliders = Physics.OverlapSphere(transform.position, 20f);
+    foreach (var col in colliders)
+    {
+      var container = col.GetComponentInParent<Container>();
+      if (container != null && !candidateContainers.Contains(container))
+      {
+        candidateContainers.Add(container);
+      }
+    }
+
+    foreach (var container in candidateContainers)
+    {
+      if (container == null) continue;
+      var inv = container.GetInventory();
+      if (inv == null) continue;
+
+      ItemDrop.ItemData? resinItem = null;
+      foreach (var item in inv.GetAllItems())
+      {
+        if (item == null) continue;
+        string sName = item.m_shared != null ? item.m_shared.m_name : "";
+        string pName = item.m_dropPrefab != null ? item.m_dropPrefab.name : "";
+
+        if (sName.Equals("$item_resin", StringComparison.OrdinalIgnoreCase) ||
+            sName.Equals("Resin", StringComparison.OrdinalIgnoreCase) ||
+            pName.Equals("Resin", StringComparison.OrdinalIgnoreCase))
+        {
+          resinItem = item;
           break;
         }
+      }
+
+      if (resinItem != null)
+      {
+        inv.RemoveOneItem(resinItem);
+        container.Save();
+        container.m_openEffects?.Create(container.transform.position, Quaternion.identity);
+
+        if (DamageText.instance != null)
+        {
+          DamageText.instance.ShowText(DamageText.TextType.Normal,
+            container.transform.position + Vector3.up * 1f,
+            "-1 Resin (Fed Greydwarf Sailor)");
+        }
+
+        fed = true;
+        break;
       }
     }
 
@@ -302,6 +362,9 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
         {
           _nview.GetZDO().Set("SailorLoyalty", (int)Loyalty);
         }
+
+        MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center,
+          Localization.instance.Localize("$valheim_vehicles_sailor_unfed_warning"));
       }
 
       if (Loyalty == SailorLoyalty.Mutineer)
@@ -1168,6 +1231,15 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   {
     if (string.IsNullOrEmpty(hatPrefabName)) return;
 
+    if (hatPrefabName.Equals("HelmetFishingHat", StringComparison.OrdinalIgnoreCase))
+    {
+      hatPrefabName = "HelmetFishing";
+    }
+    else if (hatPrefabName.Equals("HelmetStrawHat", StringComparison.OrdinalIgnoreCase))
+    {
+      hatPrefabName = "HelmetHat1";
+    }
+
     Transform? headBone = FindHeadBone(_character);
     if (headBone == null) return;
 
@@ -1185,6 +1257,10 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     }
     if (hatPrefab == null)
     {
+      hatPrefab = ObjectDB.instance?.GetItemPrefab("HelmetHat1") ?? ZNetScene.instance?.GetPrefab("HelmetHat1");
+    }
+    if (hatPrefab == null)
+    {
       ZLog.LogWarning($"[ValheimRAFT] Sailor hat prefab not found: {hatPrefabName}");
       return;
     }
@@ -1199,68 +1275,62 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
     hatVisual.name = "SailorHatVisual";
 
+    // Clean up unnecessary components
     var itemDrop = hatVisual.GetComponent<ItemDrop>();
     if (itemDrop != null) Destroy(itemDrop);
-
     var zNetView = hatVisual.GetComponent<ZNetView>();
     if (zNetView != null) Destroy(zNetView);
-
     var rb = hatVisual.GetComponent<Rigidbody>();
     if (rb != null) Destroy(rb);
-
     foreach (var col in hatVisual.GetComponentsInChildren<Collider>(true))
     {
       Destroy(col);
     }
 
+    // Convert any SkinnedMeshRenderer into a baked static MeshRenderer
+    // so it doesn't need humanoid player skeleton bones to render!
+    var skinnedRenderers = hatVisual.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+    foreach (var smr in skinnedRenderers)
+    {
+      Mesh baked = new Mesh();
+      smr.BakeMesh(baked);
+      var go = smr.gameObject;
+      var mf = go.AddComponent<MeshFilter>();
+      mf.sharedMesh = baked;
+      var mr = go.AddComponent<MeshRenderer>();
+      mr.sharedMaterials = smr.sharedMaterials;
+      mr.enabled = true;
+      Destroy(smr);
+    }
+
+    // Ensure all renderers are active, visible, and cast shadows
     foreach (var rend in hatVisual.GetComponentsInChildren<Renderer>(true))
     {
       rend.enabled = true;
+      rend.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+      rend.receiveShadows = true;
     }
 
-    // Rotate -90, 180, 0 degrees (flip X to -90)
-    hatVisual.transform.localRotation = Quaternion.Euler(-90f, 180f, 0f);
-    hatVisual.transform.localPosition = Vector3.zero;
-
-    // Compensate for parent bone scale so world size is always exact (regular greydwarf scale 0.9f)
-    Vector3 parentLossy = headBone.lossyScale;
-    float targetScale = 0.90f;
-    hatVisual.transform.localScale = new Vector3(
-      targetScale / (Mathf.Abs(parentLossy.x) > 0.001f ? Mathf.Abs(parentLossy.x) : 1f),
-      targetScale / (Mathf.Abs(parentLossy.y) > 0.001f ? Mathf.Abs(parentLossy.y) : 1f),
-      targetScale / (Mathf.Abs(parentLossy.z) > 0.001f ? Mathf.Abs(parentLossy.z) : 1f)
-    );
-
-    // Automatically eliminate any prefab offset by centering the hat mesh directly on the head with (0.25x, 0.25y, 0z) offset
-    var rends = hatVisual.GetComponentsInChildren<Renderer>(true);
-    Bounds meshBounds = new Bounds();
-    bool hasBounds = false;
-    foreach (var r in rends)
+    // Match layer of head bone so camera never culls the hat
+    int layer = headBone.gameObject.layer;
+    foreach (var t in hatVisual.GetComponentsInChildren<Transform>(true))
     {
-      if (r is MeshRenderer || r is SkinnedMeshRenderer)
-      {
-        if (!hasBounds)
-        {
-          meshBounds = r.bounds;
-          hasBounds = true;
-        }
-        else
-        {
-          meshBounds.Encapsulate(r.bounds);
-        }
-      }
+      t.gameObject.layer = layer;
     }
 
-    Vector3 localOffset = new Vector3(0f, 0.25f, 0f);
-    if (hasBounds)
+    // Position and orientation:
+    // Align with head bone. Greydwarf head bone is slightly tilted forward.
+    // Local offset puts the cap squarely on top of the Greydwarf's head.
+    Transform? equipoffset = hatPrefab.transform.Find("equipoffset");
+
+    hatVisual.transform.localPosition = new Vector3(0f, 0.16f, 0.05f);
+    hatVisual.transform.localRotation = Quaternion.Euler(-15f, 0f, 0f);
+    hatVisual.transform.localScale = Vector3.one * 0.95f;
+
+    if (equipoffset != null)
     {
-      Vector3 targetHeadPos = headBone.TransformPoint(localOffset);
-      Vector3 shift = targetHeadPos - meshBounds.center;
-      hatVisual.transform.position += shift;
-    }
-    else
-    {
-      hatVisual.transform.localPosition = localOffset;
+      hatVisual.transform.localPosition += equipoffset.localPosition * 0.5f;
+      hatVisual.transform.localRotation *= equipoffset.localRotation;
     }
   }
 
@@ -1286,9 +1356,24 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     if (character == null) return null;
 
     var humanoid = character as Humanoid;
+    if (humanoid != null && humanoid.m_visEquipment != null && humanoid.m_visEquipment.m_helmet != null)
+    {
+      return humanoid.m_visEquipment.m_helmet;
+    }
+
+    if (character.m_head != null)
+    {
+      return character.m_head;
+    }
+
     if (humanoid != null && humanoid.m_head != null)
     {
       return humanoid.m_head;
+    }
+
+    if (character.m_eye != null)
+    {
+      return character.m_eye;
     }
 
     var anim = character.GetComponentInChildren<Animator>();
@@ -1301,7 +1386,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     var all = character.GetComponentsInChildren<Transform>(true);
     foreach (var t in all)
     {
-      if (t.name.Equals("Head", StringComparison.OrdinalIgnoreCase))
+      if (t.name.IndexOf("head", StringComparison.OrdinalIgnoreCase) >= 0)
       {
         return t;
       }

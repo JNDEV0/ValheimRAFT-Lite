@@ -177,7 +177,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
         {
           sailorComp.EquipSpecificHat(prefabName);
           player.Message(MessageHud.MessageType.Center,
-            $"Equipped {item.m_shared.m_name} on Sailor Greydwarf!");
+            $"Equipped {item.m_shared.m_name} on Greydwarf Sailor!");
           return true;
         }
       }
@@ -185,14 +185,21 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       // 2. Check if feeding Resin directly to restore loyalty
       if (IsItemMatch(item, "Resin", "$item_resin"))
       {
+        var sailorComp = EnsureSailorComponent();
+        if (sailorComp != null && sailorComp.Loyalty == SailorLoyalty.Satisfied)
+        {
+          player.Message(MessageHud.MessageType.Center,
+            "Greydwarf Sailor is already satisfied!");
+          return true;
+        }
+
         if (inv != null && GetItemCount(inv, "Resin", "$item_resin") >= 1)
         {
           RemoveItemCount(inv, "Resin", "$item_resin", 1);
-          var sailorComp = EnsureSailorComponent();
           sailorComp?.FeedResin();
           SpawnFeedEffects();
           player.Message(MessageHud.MessageType.Center,
-            "Fed Sailor Greydwarf 1 Resin! Loyalty: Satisfied.");
+            "Fed Greydwarf Sailor 1 Resin! Loyalty: Satisfied.");
           return true;
         }
       }
