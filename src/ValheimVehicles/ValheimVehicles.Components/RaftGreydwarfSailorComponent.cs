@@ -32,9 +32,9 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   ];
 
   // Sailor Hat transform offset controls (for in-game slider adjustments)
-  public static Vector3 SailorHatPositionOffset = new Vector3(0.00f, 0.16f, 0.05f);
-  public static Vector3 SailorHatRotationEuler = new Vector3(-90.0f, 0.0f, 180.0f);
-  public static float SailorHatScale = 0.05f;
+  public static Vector3 SailorHatPositionOffset = new Vector3(0.000f, 0.005f, 0.000f);
+  public static Vector3 SailorHatRotationEuler = new Vector3(-90.0f, 0.0f, -180.0f);
+  public static float SailorHatScale = 0.03f;
 
   public static bool IsSailorHat(string prefabName)
   {
@@ -1439,7 +1439,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
         sailor.ApplyCurrentHatTransform();
       }
     }
-    ZLog.Log($"[SailorHat Debug] Offset -> Pos: ({SailorHatPositionOffset.x:F2}, {SailorHatPositionOffset.y:F2}, {SailorHatPositionOffset.z:F2}) | Rot: ({SailorHatRotationEuler.x:F2}, {SailorHatRotationEuler.y:F2}, {SailorHatRotationEuler.z:F2}) | Scale: {SailorHatScale:F2}");
+    ZLog.Log($"[SailorHat Debug] Offset -> Pos: ({SailorHatPositionOffset.x:F3}, {SailorHatPositionOffset.y:F3}, {SailorHatPositionOffset.z:F3}) | Rot: ({SailorHatRotationEuler.x:F1}, {SailorHatRotationEuler.y:F1}, {SailorHatRotationEuler.z:F1}) | Scale: {SailorHatScale:F3}");
   }
 
   public void CycleNextHat(Player? player = null)

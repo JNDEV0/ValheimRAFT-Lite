@@ -1058,14 +1058,14 @@
         });
       if (noMaterialCostRow != null) commandsPanelToggleObjects.Add(noMaterialCostRow);
 
-      // 8. Sailor Hat Debug Sliders (0.01 Step)
-      SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, "Sailor Hat Debug (0.01 Step)");
+      // 8. Sailor Hat Debug Sliders (0.001 Step)
+      SwivelUIHelpers.AddSectionLabel(svParent, viewStyles, "Sailor Hat Debug (0.001 Step)");
 
       var hatPosXRow = SwivelUIHelpers.AddSliderRow(
         svParent,
         viewStyles,
         "Hat Pos X",
-        -0.50f, 0.50f,
+        -0.200f, 0.200f,
         RaftGreydwarfSailorComponent.SailorHatPositionOffset.x,
         val =>
         {
@@ -1074,14 +1074,14 @@
         },
         out _,
         contentItemWidth,
-        0.01f);
+        0.001f);
       if (hatPosXRow != null) commandsPanelToggleObjects.Add(hatPosXRow);
 
       var hatPosYRow = SwivelUIHelpers.AddSliderRow(
         svParent,
         viewStyles,
         "Hat Pos Y",
-        -0.50f, 0.80f,
+        -0.100f, 0.300f,
         RaftGreydwarfSailorComponent.SailorHatPositionOffset.y,
         val =>
         {
@@ -1090,14 +1090,14 @@
         },
         out _,
         contentItemWidth,
-        0.01f);
+        0.001f);
       if (hatPosYRow != null) commandsPanelToggleObjects.Add(hatPosYRow);
 
       var hatPosZRow = SwivelUIHelpers.AddSliderRow(
         svParent,
         viewStyles,
         "Hat Pos Z",
-        -0.50f, 0.50f,
+        -0.200f, 0.200f,
         RaftGreydwarfSailorComponent.SailorHatPositionOffset.z,
         val =>
         {
@@ -1106,7 +1106,7 @@
         },
         out _,
         contentItemWidth,
-        0.01f);
+        0.001f);
       if (hatPosZRow != null) commandsPanelToggleObjects.Add(hatPosZRow);
 
       var hatRotXRow = SwivelUIHelpers.AddSliderRow(
@@ -1122,7 +1122,7 @@
         },
         out _,
         contentItemWidth,
-        0.01f);
+        0.5f);
       if (hatRotXRow != null) commandsPanelToggleObjects.Add(hatRotXRow);
 
       var hatRotYRow = SwivelUIHelpers.AddSliderRow(
@@ -1138,7 +1138,7 @@
         },
         out _,
         contentItemWidth,
-        0.01f);
+        0.5f);
       if (hatRotYRow != null) commandsPanelToggleObjects.Add(hatRotYRow);
 
       var hatRotZRow = SwivelUIHelpers.AddSliderRow(
@@ -1154,14 +1154,14 @@
         },
         out _,
         contentItemWidth,
-        0.01f);
+        0.5f);
       if (hatRotZRow != null) commandsPanelToggleObjects.Add(hatRotZRow);
 
       var hatScaleRow = SwivelUIHelpers.AddSliderRow(
         svParent,
         viewStyles,
         "Hat Scale",
-        0.01f, 0.50f,
+        0.001f, 0.150f,
         RaftGreydwarfSailorComponent.SailorHatScale,
         val =>
         {
@@ -1170,7 +1170,7 @@
         },
         out _,
         contentItemWidth,
-        0.01f);
+        0.001f);
       if (hatScaleRow != null) commandsPanelToggleObjects.Add(hatScaleRow);
     }
 

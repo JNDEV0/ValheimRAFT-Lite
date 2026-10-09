@@ -3,6 +3,7 @@
 
 #region
 
+using System;
 using System.Globalization;
 using TMPro;
 using UnityEngine;
@@ -164,21 +165,39 @@ namespace ValheimVehicles.SharedScripts.UI
       valueLabel.color = viewStyles.InputTextColor;
       valueLabel.alignment = TextAlignmentOptions.MidlineRight;
       valueLabel.enableAutoSizing = true;
-      valueLabel.text = step < 0.05f ? initial.ToString("F2", CultureInfo.InvariantCulture) : (step < 0.2f ? initial.ToString("F1", CultureInfo.InvariantCulture) : Mathf.RoundToInt(initial).ToString());
+      valueLabel.text = step < 0.005f ? initial.ToString("F3", CultureInfo.InvariantCulture) : (step < 0.05f ? initial.ToString("F2", CultureInfo.InvariantCulture) : (step < 0.2f ? initial.ToString("F1", CultureInfo.InvariantCulture) : Mathf.RoundToInt(initial).ToString()));
 
       var valueRT = valueLabelGO.GetComponent<RectTransform>();
       valueRT.anchorMin = new Vector2(1f, 0);
       valueRT.anchorMax = new Vector2(1f, 1f);
       valueRT.pivot = new Vector2(1f, 0.5f);
-      valueRT.offsetMin = new Vector2(-60, 0);
+      valueRT.offsetMin = new Vector2(-75, 0);
       valueRT.offsetMax = new Vector2(0, 0);
 
       // === Update ===
       localSlider.onValueChanged.AddListener(v =>
       {
-        var rounded = step > 0f ? (Mathf.Round(v / step) * step) : v;
+        float rounded;
+        if (step <= 0f)
+        {
+          rounded = v;
+        }
+        else if (step < 0.005f)
+        {
+          rounded = (float)System.Math.Round((double)v / step) * step;
+          rounded = (float)System.Math.Round((double)rounded, 3);
+        }
+        else if (step < 0.05f)
+        {
+          rounded = (float)System.Math.Round((double)v / step) * step;
+          rounded = (float)System.Math.Round((double)rounded, 2);
+        }
+        else
+        {
+          rounded = Mathf.Round(v / step) * step;
+        }
         localSlider.SetValueWithoutNotify(rounded); // prevent infinite loop
-        valueLabel.text = step < 0.05f ? rounded.ToString("F2", CultureInfo.InvariantCulture) : (step < 0.2f ? rounded.ToString("F1", CultureInfo.InvariantCulture) : rounded.ToString(CultureInfo.CurrentCulture));
+        valueLabel.text = step < 0.005f ? rounded.ToString("F3", CultureInfo.InvariantCulture) : (step < 0.05f ? rounded.ToString("F2", CultureInfo.InvariantCulture) : (step < 0.2f ? rounded.ToString("F1", CultureInfo.InvariantCulture) : rounded.ToString(CultureInfo.CurrentCulture)));
         onChanged?.Invoke(rounded);
       });
 
