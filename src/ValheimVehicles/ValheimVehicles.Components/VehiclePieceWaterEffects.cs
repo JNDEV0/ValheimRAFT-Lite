@@ -5,6 +5,7 @@ using ValheimVehicles.Controllers;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Helpers;
 using ValheimVehicles.BepInExConfig;
+using Zolantris.Shared;
 
 namespace ValheimVehicles.Components;
 
@@ -15,16 +16,66 @@ public enum VehicleWaterEffectType
 
 public class VehiclePieceWaterEffects : MonoBehaviour
 {
+  public static bool GlobalEnableWaterWake = true;
+  public static float FlatFoamOffsetX = 0f;
+  public static float FlatFoamOffsetY = 0f;
+  public static float FlatFoamOffsetZ = 0f;
+  public static float SprayOffsetX = 0f;
+  public static float SprayOffsetY = 0f;
+  public static float SprayOffsetZ = 0f;
+
   public VehicleWaterEffectType EffectType = VehicleWaterEffectType.Wake;
   public bool IsFallbackEmitter = false;
 
   private GameObject? _effectInstance;
+  private Transform? _flatFoamRoot;
+  private Transform? _sprayRoot;
+  private ParticleSystem[] _flatFoamParticles = Array.Empty<ParticleSystem>();
+  private ParticleSystem[] _sprayParticles = Array.Empty<ParticleSystem>();
   private ParticleSystem[] _particles = Array.Empty<ParticleSystem>();
   private ParticleSystem.Particle[]? _particleBuffer;
   private Rigidbody? _vehicleRigidbody;
   private VehicleManager? _vehicleManager;
   private WaterVolume _previousWaterVolume;
   private bool _isEmitting;
+
+  public bool GetWaterWakeEnabled()
+  {
+    var zdo = _vehicleManager?.m_nview?.GetZDO();
+    if (zdo != null)
+    {
+      return zdo.GetBool(Shared.Constants.VehicleZdoVars.ShipWaterWakeEnabled, GlobalEnableWaterWake);
+    }
+    return GlobalEnableWaterWake;
+  }
+
+  public Vector3 GetFlatFoamOffset()
+  {
+    var zdo = _vehicleManager?.m_nview?.GetZDO();
+    if (zdo != null)
+    {
+      return new Vector3(
+        zdo.GetFloat(Shared.Constants.VehicleZdoVars.FlatFoamOffsetX, FlatFoamOffsetX),
+        zdo.GetFloat(Shared.Constants.VehicleZdoVars.FlatFoamOffsetY, FlatFoamOffsetY),
+        zdo.GetFloat(Shared.Constants.VehicleZdoVars.FlatFoamOffsetZ, FlatFoamOffsetZ)
+      );
+    }
+    return new Vector3(FlatFoamOffsetX, FlatFoamOffsetY, FlatFoamOffsetZ);
+  }
+
+  public Vector3 GetSprayOffset()
+  {
+    var zdo = _vehicleManager?.m_nview?.GetZDO();
+    if (zdo != null)
+    {
+      return new Vector3(
+        zdo.GetFloat(Shared.Constants.VehicleZdoVars.SprayOffsetX, SprayOffsetX),
+        zdo.GetFloat(Shared.Constants.VehicleZdoVars.SprayOffsetY, SprayOffsetY),
+        zdo.GetFloat(Shared.Constants.VehicleZdoVars.SprayOffsetZ, SprayOffsetZ)
+      );
+    }
+    return new Vector3(SprayOffsetX, SprayOffsetY, SprayOffsetZ);
+  }
 
   public void Initialize(VehicleWaterEffectType type = VehicleWaterEffectType.Wake, VehicleManager? manager = null)
   {
@@ -75,44 +126,96 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     _effectInstance.transform.localPosition = Vector3.zero;
     _effectInstance.transform.localRotation = Quaternion.identity;
 
+    var flatFoamObj = new GameObject("FlatFoamRoot");
+    flatFoamObj.transform.SetParent(_effectInstance.transform, false);
+    flatFoamObj.transform.localPosition = Vector3.zero;
+    flatFoamObj.transform.localRotation = Quaternion.identity;
+    _flatFoamRoot = flatFoamObj.transform;
+
+    var sprayObj = new GameObject("SprayRoot");
+    sprayObj.transform.SetParent(_effectInstance.transform, false);
+    sprayObj.transform.localPosition = Vector3.zero;
+    sprayObj.transform.localRotation = Quaternion.identity;
+    _sprayRoot = sprayObj.transform;
+
     var allPs = _effectInstance.GetComponentsInChildren<ParticleSystem>(true);
-    var wakePsList = new List<ParticleSystem>();
+    var flatFoamList = new List<ParticleSystem>();
+    var sprayList = new List<ParticleSystem>();
+    var allValidPs = new List<ParticleSystem>();
+
+    var validPsCandidates = new List<ParticleSystem>();
     foreach (var ps in allPs)
     {
+      if (ps == null) continue;
       var psName = ps.name;
       var psRenderer = ps.GetComponent<ParticleSystemRenderer>();
 
-      // Filter out splashes, cutwater, sprays, drops, droplets, mist, and stretched particle streaks
+      // Filter out splashes, cutwater, drops, droplets, mist, and stretched particle streaks
       if (psName.IndexOf("splash", StringComparison.OrdinalIgnoreCase) >= 0 ||
           psName.IndexOf("cutwater", StringComparison.OrdinalIgnoreCase) >= 0 ||
-          psName.IndexOf("spray", StringComparison.OrdinalIgnoreCase) >= 0 ||
           psName.IndexOf("drop", StringComparison.OrdinalIgnoreCase) >= 0 ||
           psName.IndexOf("mist", StringComparison.OrdinalIgnoreCase) >= 0 ||
           (psRenderer != null && (psRenderer.renderMode == ParticleSystemRenderMode.Stretch || psRenderer.renderMode == ParticleSystemRenderMode.VerticalBillboard)))
       {
         if (VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false)
         {
-          Zolantris.Shared.LoggerProvider.LogInfo($"[PieceWaterEffects] Filtered out PS '{psName}', localPos={ps.transform.localPosition}, renderMode={psRenderer?.renderMode}");
+          LoggerProvider.LogInfo($"[PieceWaterEffects] Filtered out PS '{psName}', localPos={ps.transform.localPosition}, renderMode={psRenderer?.renderMode}");
         }
         ps.gameObject.SetActive(false);
         Destroy(ps.gameObject);
         continue;
       }
 
-      // Enforce horizontal billboard mode so wake foam lies flat on the water surface as a horizontal decal
-      if (psRenderer != null && psRenderer.renderMode == ParticleSystemRenderMode.Billboard)
+      validPsCandidates.Add(ps);
+    }
+
+    for (int i = 0; i < validPsCandidates.Count; i++)
+    {
+      var ps = validPsCandidates[i];
+      var psName = ps.name;
+      var psRenderer = ps.GetComponent<ParticleSystemRenderer>();
+
+      bool isSpray = false;
+      if (validPsCandidates.Count == 1)
       {
-        psRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
+        isSpray = psName.IndexOf("spray", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                  psName.IndexOf("trail", StringComparison.OrdinalIgnoreCase) >= 0;
+      }
+      else
+      {
+        isSpray = psName.IndexOf("spray", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                  psName.IndexOf("trail", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                  psName.IndexOf("particle", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                  ps.transform.localPosition.z < -0.5f;
       }
 
+      if (isSpray)
+      {
+        ps.transform.SetParent(_sprayRoot, false);
+        ps.transform.localPosition = Vector3.zero;
+        sprayList.Add(ps);
+      }
+      else
+      {
+        if (psRenderer != null && psRenderer.renderMode == ParticleSystemRenderMode.Billboard)
+        {
+          psRenderer.renderMode = ParticleSystemRenderMode.HorizontalBillboard;
+        }
+        ps.transform.SetParent(_flatFoamRoot, false);
+        ps.transform.localPosition = Vector3.zero;
+        flatFoamList.Add(ps);
+      }
+
+      allValidPs.Add(ps);
       if (VehicleGuiMenuConfig.EnableLoopLogging?.Value ?? false)
       {
-        Zolantris.Shared.LoggerProvider.LogInfo($"[PieceWaterEffects] Active wake PS '{psName}', localPos={ps.transform.localPosition}, renderMode={psRenderer?.renderMode}");
+        LoggerProvider.LogInfo($"[PieceWaterEffects] Assigned PS '{psName}' as {(isSpray ? "SPRAY" : "FLAT FOAM")}");
       }
-
-      wakePsList.Add(ps);
     }
-    _particles = wakePsList.ToArray();
+
+    _flatFoamParticles = flatFoamList.ToArray();
+    _sprayParticles = sprayList.ToArray();
+    _particles = allValidPs.ToArray();
     _effectInstance.SetActive(true);
     SetEmission(false);
   }
@@ -120,6 +223,17 @@ public class VehiclePieceWaterEffects : MonoBehaviour
   private void LateUpdate()
   {
     if (_particles == null || _particles.Length == 0) return;
+
+    if (!GetWaterWakeEnabled())
+    {
+      if (_isEmitting) SetEmission(false);
+      if (_effectInstance != null && _effectInstance.activeSelf) _effectInstance.SetActive(false);
+      return;
+    }
+    if (_effectInstance != null && !_effectInstance.activeSelf)
+    {
+      _effectInstance.SetActive(true);
+    }
 
     if (_vehicleRigidbody == null)
     {
@@ -146,7 +260,6 @@ public class VehiclePieceWaterEffects : MonoBehaviour
 
     if (IsFallbackEmitter)
     {
-      // Fallback emitter only emits when there are NO rudders on the boat
       var ruddersCount = _vehicleManager?.PiecesController?.m_rudderPieces?.Count ?? 0;
       if (ruddersCount == 0 && speed > minSpeed)
       {
@@ -174,7 +287,6 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     }
     else
     {
-      // Rudder wake: check where the waterline meets the vertical length of the rudder
       var rudderPos = transform.position;
       var waterY = Floating.GetWaterLevel(new Vector3(rudderPos.x, 0f, rudderPos.z), ref _previousWaterVolume);
       bool isRudderInWater = (waterY > -1000f) && (waterY >= rudderPos.y - 3.5f) && (waterY <= rudderPos.y + 1.0f);
@@ -200,10 +312,20 @@ public class VehiclePieceWaterEffects : MonoBehaviour
       _effectInstance.transform.rotation = Quaternion.Euler(0f, targetYaw, 0f);
     }
 
-    // Dynamic wave decal projection: update all living particles to dynamically hug undulating ocean waves
-    for (int pIdx = 0; pIdx < _particles.Length; pIdx++)
+    // Apply interactive slider offsets to flat foam and spray roots
+    if (_flatFoamRoot != null)
     {
-      var ps = _particles[pIdx];
+      _flatFoamRoot.localPosition = GetFlatFoamOffset();
+    }
+    if (_sprayRoot != null)
+    {
+      _sprayRoot.localPosition = GetSprayOffset();
+    }
+
+    // Dynamic wave decal projection: update flat foam particles to dynamically hug undulating ocean waves
+    for (int pIdx = 0; pIdx < _flatFoamParticles.Length; pIdx++)
+    {
+      var ps = _flatFoamParticles[pIdx];
       if (ps == null) continue;
 
       int maxP = ps.main.maxParticles;

@@ -941,7 +941,131 @@
         panelWidth - 32f);
       if (minFloatSliderRow != null) commandsPanelToggleObjects.Add(minFloatSliderRow);
 
-      // 3. Console Debug Logs (Loop Log)
+      // Ship Water Wake Controls (Toggle & Positional Sliders)
+      var wakeEnabled = vZdo?.GetBool(VehicleZdoVars.ShipWaterWakeEnabled, VehiclePieceWaterEffects.GlobalEnableWaterWake) ?? VehiclePieceWaterEffects.GlobalEnableWaterWake;
+      var wakeToggleRow = SwivelUIHelpers.AddToggleRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Ship Water Wake Effects",
+        wakeEnabled,
+        val =>
+        {
+          VehiclePieceWaterEffects.GlobalEnableWaterWake = val;
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null)
+          {
+            v.m_nview.GetZDO().Set(VehicleZdoVars.ShipWaterWakeEnabled, val);
+          }
+        });
+      if (wakeToggleRow != null) commandsPanelToggleObjects.Add(wakeToggleRow);
+
+      // Flat Foam Circle Sliders (-100 to 100, default 0)
+      var curFlatFoamZ = vZdo?.GetFloat(VehicleZdoVars.FlatFoamOffsetZ, VehiclePieceWaterEffects.FlatFoamOffsetZ) ?? VehiclePieceWaterEffects.FlatFoamOffsetZ;
+      var curFlatFoamY = vZdo?.GetFloat(VehicleZdoVars.FlatFoamOffsetY, VehiclePieceWaterEffects.FlatFoamOffsetY) ?? VehiclePieceWaterEffects.FlatFoamOffsetY;
+      var curFlatFoamX = vZdo?.GetFloat(VehicleZdoVars.FlatFoamOffsetX, VehiclePieceWaterEffects.FlatFoamOffsetX) ?? VehiclePieceWaterEffects.FlatFoamOffsetX;
+
+      var flatFoamZRow = SwivelUIHelpers.AddSliderRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Flat Foam Forward/Back",
+        -100f, 100f,
+        curFlatFoamZ,
+        val =>
+        {
+          VehiclePieceWaterEffects.FlatFoamOffsetZ = val;
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null) v.m_nview.GetZDO().Set(VehicleZdoVars.FlatFoamOffsetZ, val);
+        },
+        out _,
+        panelWidth - 32f);
+      if (flatFoamZRow != null) commandsPanelToggleObjects.Add(flatFoamZRow);
+
+      var flatFoamYRow = SwivelUIHelpers.AddSliderRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Flat Foam Up/Down",
+        -100f, 100f,
+        curFlatFoamY,
+        val =>
+        {
+          VehiclePieceWaterEffects.FlatFoamOffsetY = val;
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null) v.m_nview.GetZDO().Set(VehicleZdoVars.FlatFoamOffsetY, val);
+        },
+        out _,
+        panelWidth - 32f);
+      if (flatFoamYRow != null) commandsPanelToggleObjects.Add(flatFoamYRow);
+
+      var flatFoamXRow = SwivelUIHelpers.AddSliderRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Flat Foam Left/Right",
+        -100f, 100f,
+        curFlatFoamX,
+        val =>
+        {
+          VehiclePieceWaterEffects.FlatFoamOffsetX = val;
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null) v.m_nview.GetZDO().Set(VehicleZdoVars.FlatFoamOffsetX, val);
+        },
+        out _,
+        panelWidth - 32f);
+      if (flatFoamXRow != null) commandsPanelToggleObjects.Add(flatFoamXRow);
+
+      // Trailing Particle Spray Sliders (-100 to 100, default 0)
+      var curSprayZ = vZdo?.GetFloat(VehicleZdoVars.SprayOffsetZ, VehiclePieceWaterEffects.SprayOffsetZ) ?? VehiclePieceWaterEffects.SprayOffsetZ;
+      var curSprayY = vZdo?.GetFloat(VehicleZdoVars.SprayOffsetY, VehiclePieceWaterEffects.SprayOffsetY) ?? VehiclePieceWaterEffects.SprayOffsetY;
+      var curSprayX = vZdo?.GetFloat(VehicleZdoVars.SprayOffsetX, VehiclePieceWaterEffects.SprayOffsetX) ?? VehiclePieceWaterEffects.SprayOffsetX;
+
+      var sprayZRow = SwivelUIHelpers.AddSliderRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Particle Spray Forward/Back",
+        -100f, 100f,
+        curSprayZ,
+        val =>
+        {
+          VehiclePieceWaterEffects.SprayOffsetZ = val;
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null) v.m_nview.GetZDO().Set(VehicleZdoVars.SprayOffsetZ, val);
+        },
+        out _,
+        panelWidth - 32f);
+      if (sprayZRow != null) commandsPanelToggleObjects.Add(sprayZRow);
+
+      var sprayYRow = SwivelUIHelpers.AddSliderRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Particle Spray Up/Down",
+        -100f, 100f,
+        curSprayY,
+        val =>
+        {
+          VehiclePieceWaterEffects.SprayOffsetY = val;
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null) v.m_nview.GetZDO().Set(VehicleZdoVars.SprayOffsetY, val);
+        },
+        out _,
+        panelWidth - 32f);
+      if (sprayYRow != null) commandsPanelToggleObjects.Add(sprayYRow);
+
+      var sprayXRow = SwivelUIHelpers.AddSliderRow(
+        commandsWindow.transform,
+        viewStyles,
+        "Particle Spray Left/Right",
+        -100f, 100f,
+        curSprayX,
+        val =>
+        {
+          VehiclePieceWaterEffects.SprayOffsetX = val;
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null) v.m_nview.GetZDO().Set(VehicleZdoVars.SprayOffsetX, val);
+        },
+        out _,
+        panelWidth - 32f);
+      if (sprayXRow != null) commandsPanelToggleObjects.Add(sprayXRow);
+
+      // 4. Console Debug Logs (Loop Log)
       var logRow = SwivelUIHelpers.AddToggleRow(
         commandsWindow.transform,
         viewStyles,
