@@ -79,7 +79,7 @@ public class RopeLadderPrefabRegistry : RegisterPrefab<RopeLadderPrefabRegistry>
           },
           new RequirementConfig
           {
-            Amount = 12,
+            Amount = 6,
             Item = "Dandelion",
             Recover = true
           }

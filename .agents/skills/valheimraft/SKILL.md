@@ -12,7 +12,7 @@ This skill provides full contextual memory, architectural patterns, critical bug
 ## 1. Project Overview & Repository Layout
 
 - **Git Repository**: `D:\SteamLibrary\steamapps\common\Valheim\ValheimMods_Repo`
-- **Active Game Plugin Directory**: `d:\SteamLibrary\steamapps\common\Valheim\BepInEx\plugins\ValheimRAFT`
+- **Test / Mod Manager**: r2modman (via local Thunderstore `.zip` import, replacing manual plugin folder copies)
 - **Solution File**: `D:\SteamLibrary\steamapps\common\Valheim\ValheimMods_Repo\ValheimMods.sln`
 - **Desktop Release Folder**: `C:\Users\User\Desktop\ValheimRAFT <version> for Valheim 1.0.12\`
 
@@ -82,7 +82,7 @@ This skill provides full contextual memory, architectural patterns, critical bug
 ## 3. Build & Release Workflow
 
 ### Step 1: Version Bumping
-Calculate version: count commits since version `5.1.7` (`0.0.1` per commit, rolling over every 10 commits by `0.1.0`).
+Calculate version: count commits since version `5.3.1` (`7f91460`): `+0.0.1` per commit, `+0.1.0` every 10 commits, and `+1.0.0` every 100 commits (e.g. 4 commits since `5.3.1` -> `5.3.5`).
 Update version across:
 1. `build/valheimraft_version.props`: `<Version>5.3.X</Version>`
 2. `src/ValheimRAFT/Thunderstore/manifest.json`: `"version_number": "5.3.X"`
@@ -95,25 +95,16 @@ Run MSBuild with `SolutionDir` defined:
 & "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" "D:\SteamLibrary\steamapps\common\Valheim\ValheimMods_Repo\src\ValheimRAFT\ValheimRAFT.csproj" -p:Configuration=Release -p:SolutionDir="D:\SteamLibrary\steamapps\common\Valheim\ValheimMods_Repo\\" -v:m
 ```
 
-### Step 3: Deploy to Local Game Plugin Directory
-Copy compiled binaries from `Build/bin/` to `d:\SteamLibrary\steamapps\common\Valheim\BepInEx\plugins\ValheimRAFT\`:
-- `ValheimRAFT.dll` & `.pdb`
-- `ValheimVehicles.dll` & `.pdb`
-- `ZdoWatcher.dll` & `.pdb`
-- `DynamicLocations.dll` & `.pdb`
-- `Zolantris.Shared.dll` & `.pdb`
-- `ServerSync.dll`
-- `Assets/Translations/English/valheimraft.json` *(English ONLY)*
-
-### Step 4: Desktop Packaging
+### Step 3: Desktop Packaging & r2modman Testing
 Create directory `C:\Users\User\Desktop\ValheimRAFT <version> for Valheim 1.0.12`:
-1. **NexusMods Zip** (`ValheimRAFT-<version>-NexusMods.zip`):
-   - Contains a root `ValheimRAFT/` folder with all DLLs, PDBs, ServerSync, English translation json ONLY, and README.
-2. **Thunderstore Zip** (`ValheimRAFT-<version>-Thunderstore.zip`):
+1. **Thunderstore Zip** (`ValheimRAFT-<version>-Thunderstore.zip`):
    - Flat root containing `manifest.json`, `icon.png`, `README.md`, `LICENSE`, all DLLs/PDBs, and `Assets/Translations/English/valheimraft.json` *(English ONLY)*.
-3. Unpacked `NexusMods/` and `Thunderstore/` folders alongside the zips for manual review.
+   - **For local testing**: Import this `.zip` file directly into **r2modman** (`Settings` -> `Import local mod`). Never manually copy binaries into the game's `BepInEx/plugins` folder.
+2. **NexusMods Zip** (`ValheimRAFT-<version>-NexusMods.zip`):
+   - Contains a root `ValheimRAFT/` folder with all DLLs, PDBs, ServerSync, English translation json ONLY, and README.
+3. Unpacked `NexusMods/` and `Thunderstore/` folders alongside the zips for manual inspection.
 
-### Step 5: Git Commit & Push
+### Step 4: Git Commit & Push
 ```powershell
 git add -A
 git commit -m "ValheimRAFT <version> release: <summary>"
@@ -126,6 +117,22 @@ git push origin main
 ---
 
 ## 4. Release History Highlights
+
+### v5.3.5
+- **Map Pin Bed Target Guard**: `BoatBedSpawnController.VehicleHasOnboardBed` ensures the map icon and `[Spawn]` label never target boats that lack an onboard bed piece, resolving an issue where claiming a land bed near a newly built boat produced duplicate bed map pins.
+- **Nautical Recipe Rebalances**:
+  - Ship's Helm: Removed resin cost.
+  - Steering Oar: Halved resin cost (6 -> 3).
+  - Sternpost Rudder: Doubled round logs (12 -> 24), resin (6 -> 12), neck tails (2 -> 4), and added 2 bronze.
+  - Sails (Raft & Karve): Halved dandelion cost (12 -> 6).
+  - Ship Anchor: Halved dandelion cost (20 -> 10).
+  - Rope Ladder / Jacob's Ladder: Halved dandelion cost (12 -> 6).
+  - Deck Planking: Halved nail costs across nailed, iron-plated, and iron-reinforced planking pieces.
+  - Nailed Keel Extension: Added 4 bronze nail requirement.
+  - Portholes: Doubled wood requirement across standalone and wall/floor porthole variants.
+  - Gunnery Binnacle / Cannon Control Center: Removed surtling core requirement.
+- **Unity Project Cleanup**: Removed 73.9 MB of orphaned 3D models (naval cannon, nautilus, extra engines) and tank test scenes from Unity project.
+- **Documentation Sync**: Synchronized root `README.md` with `src/ValheimRAFT/README.md` to ensure Thunderstore details page and GitHub display the latest guide and recommended mod list.
 
 ### v5.3.1
 - **Greydwarf Sailors (Easter Egg)**: Added `VehicleGlobalConfig.EnableGreydwarfSailors` toggle (off by default). Turning off suppresses taming, hides coin hover text, blocks commands, and dismisses active shipboard sailors to the wild.

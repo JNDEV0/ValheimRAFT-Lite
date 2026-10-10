@@ -63,6 +63,18 @@ public static class BoatBedSpawnController
   public static ZDOID GetBoundBedUid()
   {
     if (Player.m_localPlayer == null) return ZDOID.None;
+
+    if (Player.m_localPlayer.m_customData != null &&
+        Player.m_localPlayer.m_customData.TryGetValue(Key_BoatSpawnBedUid, out var uidStr) &&
+        !string.IsNullOrEmpty(uidStr))
+    {
+      var parts = uidStr.Split('_');
+      if (parts.Length == 2 && long.TryParse(parts[0], out var u) && uint.TryParse(parts[1], out var id))
+      {
+        return new ZDOID(u, id);
+      }
+    }
+
     var playerZdo = Player.m_localPlayer.m_nview != null ? Player.m_localPlayer.m_nview.GetZDO() : null;
     if (playerZdo != null)
     {
@@ -71,10 +83,44 @@ public static class BoatBedSpawnController
     return ZDOID.None;
   }
 
+  public static bool VehicleHasOnboardBed(int vehicleId)
+  {
+    if (vehicleId == 0) return false;
+
+    // 1. If vehicle is loaded, check active pieces controller
+    if (VehiclePiecesController.ActiveInstances.TryGetValue(vehicleId, out var vpc) && vpc != null)
+    {
+      if (vpc.m_bedPieces != null && vpc.m_bedPieces.Count > 0)
+      {
+        foreach (var bed in vpc.m_bedPieces)
+        {
+          if (bed != null) return true;
+        }
+      }
+      return false; // Loaded vehicle has no bed pieces onboard
+    }
+
+    // 2. If vehicle is not loaded, verify if the bound bed UID exists and is parented to this vehicle
+    var boundBedUid = GetBoundBedUid();
+    if (boundBedUid != ZDOID.None && ZDOMan.instance != null)
+    {
+      var bedZdo = ZDOMan.instance.GetZDO(boundBedUid);
+      if (bedZdo != null && bedZdo.IsValid())
+      {
+        var parentId = bedZdo.GetInt(VehicleZdoVars.MBParentId, 0);
+        if (parentId == 0) parentId = VehiclePiecesController.GetParentID(bedZdo);
+        if (parentId == vehicleId) return true;
+      }
+    }
+
+    return false;
+  }
+
   public static bool IsBoatSpawnActiveForVehicle(int vehicleId)
   {
     if (vehicleId == 0) return false;
-    return GetBoundVehicleId() == vehicleId;
+    if (GetBoundVehicleId() != vehicleId) return false;
+    return VehicleHasOnboardBed(vehicleId);
   }
 
   public static void SetBoatSpawn(Bed bed, int vehicleId)
@@ -98,6 +144,7 @@ public static class BoatBedSpawnController
     {
       Player.m_localPlayer.m_customData[Key_BoatSpawnVehicleId] = vehicleId.ToString();
       Player.m_localPlayer.m_customData[Key_BoatSpawnWorldUid] = worldUid.ToString();
+      Player.m_localPlayer.m_customData[Key_BoatSpawnBedUid] = $"{bedUid.UserID}_{bedUid.ID}";
       Player.m_localPlayer.m_customData[Key_BoatSpawnBedOffsetX] = localOffset.x.ToString("F3");
       Player.m_localPlayer.m_customData[Key_BoatSpawnBedOffsetY] = localOffset.y.ToString("F3");
       Player.m_localPlayer.m_customData[Key_BoatSpawnBedOffsetZ] = localOffset.z.ToString("F3");
@@ -128,6 +175,7 @@ public static class BoatBedSpawnController
       {
         Player.m_localPlayer.m_customData[Key_BoatSpawnVehicleId] = "0";
         Player.m_localPlayer.m_customData[Key_BoatSpawnWorldUid] = "0";
+        Player.m_localPlayer.m_customData[Key_BoatSpawnBedUid] = "";
       }
 
       var playerZdo = Player.m_localPlayer.m_nview != null ? Player.m_localPlayer.m_nview.GetZDO() : null;
@@ -171,6 +219,16 @@ public static class BoatBedSpawnController
 
     var boundVehicleId = GetBoundVehicleId();
     if (boundVehicleId == 0) return;
+
+    // Strictly ensure the vehicle actually has an onboard bed before targeting it for the map pin!
+    if (!VehicleHasOnboardBed(boundVehicleId))
+    {
+      if (VehiclePiecesController.ActiveInstances.ContainsKey(boundVehicleId))
+      {
+        ClearBoatSpawn();
+      }
+      return;
+    }
 
     if (VehicleRecallController.GetVehicleLocation(boundVehicleId, out var targetPos, out var targetRot, out _, out _))
     {

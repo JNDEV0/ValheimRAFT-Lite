@@ -1124,7 +1124,7 @@ private static void FixKeelIronPlatedMaterials(GameObject prefab)
     FixPortholeWoodMaterials(prefab);
 
     SetupHullPrefab(prefab, PrefabNames.WindowWallPortholeWood2x2Prefab,
-      HullMaterial.Wood, 2, null, null, VehicleHammerTableCategories.Nailed);
+      HullMaterial.Wood, 4, null, null, VehicleHammerTableCategories.Nailed);
   }
 
   public static void RegisterWindowWallPorthole4x4Wood()
@@ -1137,7 +1137,7 @@ private static void FixKeelIronPlatedMaterials(GameObject prefab)
     FixPortholeWoodMaterials(prefab);
 
     SetupHullPrefab(prefab, PrefabNames.WindowWallPortholeWood4x4Prefab,
-      HullMaterial.Wood, 4, null, null, VehicleHammerTableCategories.Nailed);
+      HullMaterial.Wood, 8, null, null, VehicleHammerTableCategories.Nailed);
   }
 
   public static void RegisterWindowWallPorthole8x4Wood()
@@ -1150,7 +1150,7 @@ private static void FixKeelIronPlatedMaterials(GameObject prefab)
     FixPortholeWoodMaterials(prefab);
 
     SetupHullPrefab(prefab, PrefabNames.WindowWallPortholeWood8x4Prefab,
-      HullMaterial.Wood, 8, null, null, VehicleHammerTableCategories.Nailed, addToPieceTable: false);
+      HullMaterial.Wood, 16, null, null, VehicleHammerTableCategories.Nailed, addToPieceTable: false);
   }
 
   public static void RegisterWindowFloorPorthole4x4Wood()
@@ -1163,7 +1163,7 @@ private static void FixKeelIronPlatedMaterials(GameObject prefab)
     FixPortholeWoodMaterials(prefab);
 
     SetupHullPrefab(prefab, PrefabNames.WindowFloorPortholeWood4x4Prefab,
-      HullMaterial.Wood, 4, null, null, VehicleHammerTableCategories.Nailed);
+      HullMaterial.Wood, 8, null, null, VehicleHammerTableCategories.Nailed);
     var wnt = prefab.GetComponent<WearNTear>();
     if (wnt) wnt.m_health /= 2f;
   }

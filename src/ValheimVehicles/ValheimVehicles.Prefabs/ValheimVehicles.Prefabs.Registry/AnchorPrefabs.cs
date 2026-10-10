@@ -142,7 +142,7 @@ public class AnchorPrefabs : RegisterPrefab<AnchorPrefabs>
             },
             new RequirementConfig
             {
-              Amount = 20,
+              Amount = 10,
               Item = "Dandelion",
               Recover = true
             }
