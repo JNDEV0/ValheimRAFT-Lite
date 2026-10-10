@@ -32,21 +32,12 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     "HelmetHat8",           // Fur Cap Grey
     "HelmetHat9",           // Dark Tied Headscarf
     "HelmetHat10",          // Striped Headscarf
-    "HelmetMidsummerCrown", // Midsummer Crown
-    "HelmetCrownOfValheim", // Crown of Valheim
-    "HelmetRootCrown",      // Root Crown
     "HelmetYule",           // Yule Hat
     "HelmetDverger",        // Dvergr Circlet
-    "HelmetSweatBand",      // Sweatband
     "HelmetLeather",        // Leather Helmet
-    "HelmetTrollLeather",   // Troll Leather Hood
     "HelmetBronze",         // Bronze Helmet
     "HelmetIron",           // Iron Helmet
-    "HelmetRoot",           // Root Mask
-    "HelmetFenring",        // Fenris Hood
-    "HelmetPadded",         // Padded Helmet
-    "HelmetMage",           // Eitr-weave Hood
-    "HelmetAshlandsMediumHood" // Medium Ashlands Hood
+    "HelmetRoot"            // Root Mask
   ];
 
   // Sailor Hat transform offset controls (tuned ideal defaults)
@@ -435,9 +426,29 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     Destroy(this);
   }
 
+  private float _lastDismissRequestTime = -999f;
+  public float LastDismissRequestTime => _lastDismissRequestTime;
+
   public void Dismiss(Player player)
   {
     if (_character == null) return;
+
+    float now = Time.time;
+    if (now - _lastDismissRequestTime > 3.0f)
+    {
+      _lastDismissRequestTime = now;
+      string confirmMsg = Localization.instance != null
+        ? Localization.instance.Localize("$valheim_vehicles_sailor_dismiss_confirm")
+        : "Dismiss Greydwarf sailor? Repeat to confirm (3s)";
+      if (string.IsNullOrEmpty(confirmMsg) || confirmMsg.StartsWith("$"))
+      {
+        confirmMsg = "Dismiss Greydwarf sailor? Repeat to confirm (3s)";
+      }
+      MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, confirmMsg);
+      return;
+    }
+
+    _lastDismissRequestTime = -999f;
 
     DropCarriedItem();
     _character.SetTamed(false);

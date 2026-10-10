@@ -33,6 +33,10 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
       var sailor = GetComponent<RaftGreydwarfSailorComponent>();
       string loyaltyStr = sailor != null ? sailor.GetLoyaltyHoverString() : "<color=#00FF00>Satisfied</color>";
       string dismissPrompt = Localization.instance.Localize("$valheim_vehicles_sailor_dismiss");
+      if (sailor != null && Time.time - sailor.LastDismissRequestTime <= 3.0f)
+      {
+        dismissPrompt = "<color=red>Confirm Dismiss</color>";
+      }
       return Localization.instance.Localize(
         $"$valheim_vehicles_sailor_greydwarf\nLoyalty: {loyaltyStr}\n[<color=yellow><b>Shift+$KEY_Use</b></color>] {dismissPrompt}\n[<color=yellow><b>Ctrl+$KEY_Use</b></color>] Change Hat\n<color=grey>Keep resin available in chests</color>");
     }

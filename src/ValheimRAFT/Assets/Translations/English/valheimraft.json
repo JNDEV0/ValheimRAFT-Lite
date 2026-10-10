@@ -605,5 +605,6 @@
   "valheim_vehicles_tame_no_ship": "No ship nearby to assign this sailor to.",
   "valheim_vehicles_sailor_dismissed": "Sailor Greydwarf dismissed!",
   "valheim_vehicles_sailor_dismiss": "Dismiss",
+  "valheim_vehicles_sailor_dismiss_confirm": "Dismiss Greydwarf sailor? Repeat to confirm (3s)",
   "valheim_vehicles_tame_ship_too_far": "Ship is too far"
 }
