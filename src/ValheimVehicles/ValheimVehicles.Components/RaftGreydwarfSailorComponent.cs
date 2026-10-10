@@ -1,3 +1,4 @@
+using ValheimVehicles.BepInExConfig;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -440,7 +441,7 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       string confirmMsg = Localization.instance != null
         ? Localization.instance.Localize("$valheim_vehicles_sailor_dismiss_confirm")
         : "Dismiss Greydwarf sailor? Repeat to confirm (3s)";
-      if (string.IsNullOrEmpty(confirmMsg) || confirmMsg.StartsWith("$"))
+      if (string.IsNullOrEmpty(confirmMsg) || confirmMsg.StartsWith("$") || confirmMsg.StartsWith("["))
       {
         confirmMsg = "Dismiss Greydwarf sailor? Repeat to confirm (3s)";
       }
@@ -1469,7 +1470,10 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
         sailor.ApplyCurrentHatTransform();
       }
     }
-    ZLog.Log($"[SailorHat Debug] Offset -> Pos: ({SailorHatPositionOffset.x:F3}, {SailorHatPositionOffset.y:F3}, {SailorHatPositionOffset.z:F3}) | Rot: ({SailorHatRotationEuler.x:F1}, {SailorHatRotationEuler.y:F1}, {SailorHatRotationEuler.z:F1}) | Scale: {SailorHatScale:F3}");
+    if (VehicleGuiMenuConfig.EnableLoopLogging?.Value == true)
+    {
+      ZLog.Log($"[SailorHat Debug] Offset -> Pos: ({SailorHatPositionOffset.x:F3}, {SailorHatPositionOffset.y:F3}, {SailorHatPositionOffset.z:F3}) | Rot: ({SailorHatRotationEuler.x:F1}, {SailorHatRotationEuler.y:F1}, {SailorHatRotationEuler.z:F1}) | Scale: {SailorHatScale:F3}");
+    }
   }
 
   public void CycleNextHat(Player? player = null)
@@ -1504,7 +1508,10 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
     {
       player.Message(MessageHud.MessageType.Center, $"Sailor Hat: {newHat} ({nextIndex + 1}/{SailorHats.Length})");
     }
-    ZLog.Log($"[SailorHat] Cycled hat on Greydwarf to '{newHat}' ({nextIndex + 1}/{SailorHats.Length})");
+    if (VehicleGuiMenuConfig.EnableLoopLogging?.Value == true)
+    {
+      ZLog.Log($"[SailorHat] Cycled hat on Greydwarf to '{newHat}' ({nextIndex + 1}/{SailorHats.Length})");
+    }
   }
 
   public void AttachSailorHat(string hatPrefabName, bool forceReplace = false)
@@ -1624,10 +1631,13 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       hatVisual.transform.localRotation *= equipoffset.localRotation;
     }
 
-    ZLog.Log($"[SailorHat] Attached hat '{hatPrefabName}' to bone '{headBone.name}'. " +
-      $"Offset values -> localPosition: {hatVisual.transform.localPosition}, " +
-      $"localRotation Euler: {hatVisual.transform.localRotation.eulerAngles}, " +
-      $"localScale: {hatVisual.transform.localScale}");
+    if (VehicleGuiMenuConfig.EnableLoopLogging?.Value == true)
+    {
+      ZLog.Log($"[SailorHat] Attached hat '{hatPrefabName}' to bone '{headBone.name}'. " +
+        $"Offset values -> localPosition: {hatVisual.transform.localPosition}, " +
+        $"localRotation Euler: {hatVisual.transform.localRotation.eulerAngles}, " +
+        $"localScale: {hatVisual.transform.localScale}");
+    }
   }
 
   public void RemoveSailorHat()

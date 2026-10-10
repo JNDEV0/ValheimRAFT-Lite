@@ -25,7 +25,6 @@ namespace ValheimVehicles.SharedScripts
   /// <summary>
   /// ContainerAmmoController is meant to be run with TargetController
   /// </summary>
-  [RequireComponent(typeof(TargetController))]
   public class AmmoController : MonoBehaviour
   {
     private static readonly HashSet<AmmoController> Instances = new();
