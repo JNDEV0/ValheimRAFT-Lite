@@ -305,9 +305,7 @@
     // ship rudders
     internal List<RudderComponent> m_rudderPieces = [];
 
-    // rowing seats
-    internal List<GreydwarfRowingSeatComponent> m_greydwarfRowingSeats = [];
-    public List<GreydwarfRowingSeatComponent> GreydwarfRowingSeats => m_greydwarfRowingSeats;
+
     public List<RopeLadderComponent> RopeLadders => m_ladders;
     internal List<RaftGreydwarfSailorComponent> m_activeSailors = [];
     public List<RaftGreydwarfSailorComponent> ActiveSailors => m_activeSailors;
@@ -1113,39 +1111,7 @@
             SetShipWakeBounds();
             break;
           }
-          case GreydwarfRowingSeatComponent rowingSeat:
-          {
-            // Enforce that rowing seat faces forward relative to vehicle
-            var forwardDot = Vector3.Dot(rowingSeat.transform.forward, transform.forward);
-            var isSeatInvalid = forwardDot < 0.2f;
-            string errorKey = "$valheim_vehicles_seat_must_face_forward";
 
-            // If rudder(s) already exist, enforce that rowing seat faces same direction as rudder
-            m_rudderPieces.RemoveAll(r => r == null || !r);
-            if (!isSeatInvalid && m_rudderPieces.Count > 0 && m_rudderPieces[0] != null)
-            {
-              var rudderDot = Vector3.Dot(rowingSeat.transform.forward, m_rudderPieces[0].transform.forward);
-              if (rudderDot < 0.2f)
-              {
-                isSeatInvalid = true;
-                errorKey = "$valheim_vehicles_seat_orientation_invalid";
-              }
-            }
-
-            if (isSeatInvalid)
-            {
-              BreakInvalidPiece(netView, errorKey);
-              break;
-            }
-
-            m_greydwarfRowingSeats.RemoveAll(s => s == null || !s);
-            if (!m_greydwarfRowingSeats.Contains(rowingSeat))
-            {
-              m_greydwarfRowingSeats.Add(rowingSeat);
-            }
-            rowingSeat.CacheVehicle();
-            break;
-          }
           case RopeAnchorComponent ropeAnchor:
             if (ropeAnchor.IsDockAnchor())
             {
@@ -3700,14 +3666,7 @@
       return speed;
     }
 
-    public int TotalRowingSeatsCount
-    {
-      get
-      {
-        m_greydwarfRowingSeats.RemoveAll(s => s == null || !s);
-        return m_greydwarfRowingSeats.Count;
-      }
-    }
+
 
     public int ActiveSailorsCount
     {
@@ -3718,19 +3677,7 @@
       }
     }
 
-    public GreydwarfRowingSeatComponent? GetNextAvailableRowingSeat()
-    {
-      m_greydwarfRowingSeats.RemoveAll(s => s == null || !s);
-      foreach (var seat in m_greydwarfRowingSeats)
-      {
-        if (seat == null || !seat) continue;
-        if (!seat.IsOccupied && seat.OccupantCharacter == null)
-        {
-          return seat;
-        }
-      }
-      return null;
-    }
+
 
     public void RegisterSailor(RaftGreydwarfSailorComponent sailor)
     {
@@ -3748,14 +3695,6 @@
 
     public Vector3 GetPlanterOrSafeDeckPosition()
     {
-      m_greydwarfRowingSeats.RemoveAll(s => s == null || !s);
-      foreach (var seat in m_greydwarfRowingSeats)
-      {
-        if (seat != null)
-        {
-          return seat.GetSeatPosition();
-        }
-      }
       foreach (var p in m_pieces)
       {
         if (p == null || p.gameObject == null) continue;
@@ -3792,6 +3731,7 @@
 
     public void CheckAndRestoreRemoteCrew()
     {
+      if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true) return;
       if (m_nview == null || !m_nview.IsValid()) return;
       if (ZNetScene.instance == null) return;
       string crewData = m_nview.GetZDO().GetString("RaftAssignedCrew", "");
@@ -3824,7 +3764,7 @@
 
     private void SpawnMissingCrew(string prefabName, int needed)
     {
-      if (needed <= 0) return;
+      if (needed <= 0 || VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true) return;
       var prefab = ZNetScene.instance?.GetPrefab(prefabName);
       if (prefab == null) return;
 

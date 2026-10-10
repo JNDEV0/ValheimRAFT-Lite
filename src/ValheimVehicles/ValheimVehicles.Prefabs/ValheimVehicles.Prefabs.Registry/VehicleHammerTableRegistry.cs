@@ -132,7 +132,6 @@ namespace ValheimVehicles.Prefabs.Registry
       "MBKarveMast", // Karve Sail / Mast (between square rigged sail and rigging cleat)
       "MBVikingShipMast", // Viking Sail
       "ValheimVehicles_DrakkalMast", // Drakkal Sail
-      // "ValheimVehicles_Greydwarf_Rowing_Seat", // Greydwarf Rowing Seat
       "MBRopeAnchor", // 116. Rigging Cleat
       "ValheimVehicles_ShipAnchor_Wood", // 118. Ship Anchor
       "MBBoardingRamp", // 119. Boarding Ramp
@@ -459,8 +458,7 @@ namespace ValheimVehicles.Prefabs.Registry
       { "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Left_Iron", new[] { "hull_rib_corner_floor_iron_2x4_left", "valheim_vehicles_hull_rib_corner_floor_iron_left_2x4" } },
       { "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x4_Right_Iron", new[] { "hull_rib_corner_floor_iron_2x4_right", "valheim_vehicles_hull_rib_corner_floor_iron_right_2x4" } },
       { "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Left_Iron", new[] { "hull_rib_corner_floor_iron_2x8_left", "valheim_vehicles_hull_rib_corner_floor_iron_left_2x8" } },
-      { "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", new[] { "hull_rib_corner_floor_iron_2x8_right", "valheim_vehicles_hull_rib_corner_floor_iron_right_2x8" } },
-      { "ValheimVehicles_Greydwarf_Rowing_Seat", new[] { "greydwarf_rowing_seat", "valheimvehicles_greydwarf_rowing_seat", "rowingseat" } }
+      { "ValheimVehicles_Ship_Hull_Rib_Corner_Floor_2x8_Right_Iron", new[] { "hull_rib_corner_floor_iron_2x8_right", "valheim_vehicles_hull_rib_corner_floor_iron_right_2x8" } }
     };
 
     private static bool MatchesPieceName(string actualName, string desiredName)

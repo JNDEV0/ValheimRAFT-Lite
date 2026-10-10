@@ -7,6 +7,14 @@ using ValheimVehicles.Controllers;
 
 namespace ValheimVehicles.Components;
 
+public enum GreydwarfSailorType
+{
+  None,
+  Regular,
+  Shaman,
+  Brute
+}
+
 public enum SailorLoyalty
 {
   Satisfied = 0,
@@ -120,6 +128,12 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   private void Awake()
   {
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true)
+    {
+      Dismiss(null);
+      return;
+    }
+
     _character = GetComponent<Character>();
     _humanoid = GetComponent<Humanoid>();
     _monsterAI = GetComponent<MonsterAI>();
@@ -136,6 +150,12 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   private void Start()
   {
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true)
+    {
+      Dismiss(null);
+      return;
+    }
+
     if (PiecesController == null)
     {
       PiecesController = FindNearestShip(transform.position);
@@ -259,6 +279,12 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
 
   private void Update()
   {
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true)
+    {
+      Dismiss(null);
+      return;
+    }
+
     if (_character == null || !_character.IsTamed()) return;
 
     if (PiecesController == null)
@@ -428,28 +454,43 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
   }
 
   private float _lastDismissRequestTime = -999f;
+  public static void DismissAllSailors()
+  {
+    var allSailors = UnityEngine.Object.FindObjectsOfType<RaftGreydwarfSailorComponent>();
+    foreach (var sailor in allSailors)
+    {
+      if (sailor != null)
+      {
+        sailor.Dismiss(null);
+      }
+    }
+  }
+
   public float LastDismissRequestTime => _lastDismissRequestTime;
 
-  public void Dismiss(Player player)
+  public void Dismiss(Player? player = null)
   {
     if (_character == null) return;
 
-    float now = Time.time;
-    if (now - _lastDismissRequestTime > 3.0f)
+    if (player != null)
     {
-      _lastDismissRequestTime = now;
-      string confirmMsg = Localization.instance != null
-        ? Localization.instance.Localize("$valheim_vehicles_sailor_dismiss_confirm")
-        : "Dismiss Greydwarf sailor? Repeat to confirm (3s)";
-      if (string.IsNullOrEmpty(confirmMsg) || confirmMsg.StartsWith("$") || confirmMsg.StartsWith("["))
+      float now = Time.time;
+      if (now - _lastDismissRequestTime > 3.0f)
       {
-        confirmMsg = "Dismiss Greydwarf sailor? Repeat to confirm (3s)";
+        _lastDismissRequestTime = now;
+        string confirmMsg = Localization.instance != null
+          ? Localization.instance.Localize("$valheim_vehicles_sailor_dismiss_confirm")
+          : "Dismiss Greydwarf sailor? Repeat to confirm (3s)";
+        if (string.IsNullOrEmpty(confirmMsg) || confirmMsg.StartsWith("$") || confirmMsg.StartsWith("["))
+        {
+          confirmMsg = "Dismiss Greydwarf sailor? Repeat to confirm (3s)";
+        }
+        MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, confirmMsg);
+        return;
       }
-      MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center, confirmMsg);
-      return;
-    }
 
-    _lastDismissRequestTime = -999f;
+      _lastDismissRequestTime = -999f;
+    }
 
     DropCarriedItem();
     _character.SetTamed(false);
@@ -476,14 +517,20 @@ public class RaftGreydwarfSailorComponent : MonoBehaviour
       _character.m_body.linearVelocity = jumpDir.normalized * 7.5f;
     }
 
-    if (_monsterAI != null && player != null)
+    if (_monsterAI != null)
     {
       _monsterAI.SetAlerted(true);
-      _monsterAI.Flee(Time.deltaTime, player.transform.position);
+      if (player != null)
+      {
+        _monsterAI.Flee(Time.deltaTime, player.transform.position);
+      }
     }
 
-    MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center,
-      Localization.instance.Localize("$valheim_vehicles_sailor_dismissed"));
+    if (player != null)
+    {
+      MessageHud.instance?.ShowMessage(MessageHud.MessageType.Center,
+        Localization.instance.Localize("$valheim_vehicles_sailor_dismissed"));
+    }
 
     Destroy(this);
   }

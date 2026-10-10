@@ -1,3 +1,4 @@
+using ValheimVehicles.BepInExConfig;
 using System.Collections.Generic;
 using System;
 using HarmonyLib;
@@ -14,6 +15,7 @@ public class GreydwarfTaming_Patch
   public static void MonsterAI_Awake_Postfix(MonsterAI __instance)
   {
     if (__instance == null || __instance.gameObject == null) return;
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true) return;
     var name = __instance.gameObject.name;
     // Only regular Greydwarf can be hired as sailors (exclude Shaman, Brute/Elite)
     if (name.StartsWith("Greydwarf", StringComparison.OrdinalIgnoreCase) &&
@@ -33,6 +35,7 @@ public class GreydwarfTaming_Patch
   public static void Character_GetHoverText_Postfix(Character __instance, ref string __result)
   {
     if (__instance == null) return;
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true) return;
     var taming = __instance.GetComponent<RaftGreydwarfTaming>();
     if (taming != null)
     {
@@ -45,6 +48,7 @@ public class GreydwarfTaming_Patch
   public static void Character_GetHoverName_Postfix(Character __instance, ref string __result)
   {
     if (__instance == null) return;
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true) return;
     if (__instance.IsTamed())
     {
       var sailor = __instance.GetComponent<RaftGreydwarfSailorComponent>();
@@ -61,6 +65,7 @@ public class GreydwarfTaming_Patch
   {
     if (hold) return true;
     if (__instance == null || !__instance.IsPlayer()) return true;
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true) return true;
 
     var target = __instance.GetHoverCreature() != null ? __instance.GetHoverCreature().gameObject : go;
     if (target != null)

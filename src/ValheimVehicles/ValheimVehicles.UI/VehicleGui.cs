@@ -1058,6 +1058,24 @@
         });
       if (noMaterialCostRow != null) commandsPanelToggleObjects.Add(noMaterialCostRow);
 
+      // 8. Greydwarf Sailors (Easter Egg) Toggle
+      var sailorsRow = SwivelUIHelpers.AddToggleRow(
+        svParent,
+        viewStyles,
+        "Greydwarf Sailors (Easter Egg)",
+        VehicleGlobalConfig.EnableGreydwarfSailors?.Value ?? false,
+        val =>
+        {
+          if (VehicleGlobalConfig.EnableGreydwarfSailors != null)
+          {
+            VehicleGlobalConfig.EnableGreydwarfSailors.Value = val;
+          }
+          if (!val)
+          {
+            RaftGreydwarfSailorComponent.DismissAllSailors();
+          }
+        });
+      if (sailorsRow != null) commandsPanelToggleObjects.Add(sailorsRow);
 
     }
 

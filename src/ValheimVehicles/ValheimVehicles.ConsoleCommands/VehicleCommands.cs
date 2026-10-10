@@ -216,6 +216,12 @@ public class VehicleCommands : ConsoleCommand
   private void HireSailorDirectly()
   {
     var player = Player.m_localPlayer;
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true)
+    {
+      Logger.LogMessage("Greydwarf Sailors are disabled. Enable them in the mechanism toggle menu first.");
+      player?.Message(MessageHud.MessageType.Center, "Greydwarf Sailors are disabled in Mechanism settings.");
+      return;
+    }
     if (player == null)
     {
       Logger.LogMessage("No local player found. Must be in-game to hire a sailor.");

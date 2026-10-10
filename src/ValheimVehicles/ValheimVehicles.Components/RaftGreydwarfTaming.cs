@@ -1,3 +1,4 @@
+using ValheimVehicles.BepInExConfig;
 using System;
 using UnityEngine;
 using ValheimVehicles.Controllers;
@@ -19,6 +20,18 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
 
   private void Start()
   {
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true)
+    {
+      if (_character != null && _character.IsTamed())
+      {
+        _character.SetTamed(false);
+        _character.m_faction = Character.Faction.ForestMonsters;
+        var existingSailor = GetComponent<RaftGreydwarfSailorComponent>();
+        if (existingSailor != null) existingSailor.Dismiss(null);
+      }
+      return;
+    }
+
     if (_character != null && _character.IsTamed())
     {
       var sailor = EnsureSailorComponent();
@@ -28,6 +41,11 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
 
   public string GetHoverText()
   {
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true)
+    {
+      return "";
+    }
+
     if (_character != null && _character.IsTamed())
     {
       var sailor = GetComponent<RaftGreydwarfSailorComponent>();
@@ -118,6 +136,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
   {
     if (hold) return false;
     if (user == null || !user.IsPlayer()) return false;
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true) return false;
 
     var player = user as Player;
     if (player == null) return false;
@@ -175,6 +194,7 @@ public class RaftGreydwarfTaming : MonoBehaviour, Hoverable, Interactable
   public bool UseItem(Humanoid user, ItemDrop.ItemData item)
   {
     if (user == null || !user.IsPlayer() || item == null) return false;
+    if (VehicleGlobalConfig.EnableGreydwarfSailors?.Value != true) return false;
     var player = user as Player;
     if (player == null) return false;
 

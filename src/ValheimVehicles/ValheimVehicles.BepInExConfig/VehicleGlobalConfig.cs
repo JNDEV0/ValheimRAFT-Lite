@@ -46,6 +46,10 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   // snow overlay toggle (false by default)
   public static ConfigEntry<bool> BoatSnowOverlay = null!;
 
+  // greydwarf sailors toggle (false by default: optional easter egg)
+  public static ConfigEntry<bool> EnableGreydwarfSailors = null!;
+  private const string VehicleSailorsKey = $"{VehicleGlobalBaseKey}:EasterEggs";
+
   public override void OnBindConfig(ConfigFile config)
   {
     CreateSoundConfig(config);
@@ -55,6 +59,7 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
     CreateDamageConfig(config);
     CreateSnowConfig(config);
     CreateMaterialConfig(config);
+    CreateSailorsConfig(config);
   }
 
   private static void CreateHornConfig(ConfigFile config)
@@ -160,6 +165,22 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
     NoMaterialCost.SettingChanged += (_, _) =>
     {
       VehicleMaterialCostController.SetOneWoodCost(NoMaterialCost.Value);
+    };
+  }
+
+  private static void CreateSailorsConfig(ConfigFile config)
+  {
+    EnableGreydwarfSailors = config.BindUnique(VehicleSailorsKey,
+      "EnableGreydwarfSailors", false,
+      ConfigHelpers.CreateConfigDescription(
+        "Enable Greydwarf Sailors (Easter Egg). When disabled, Greydwarfs cannot be hired as sailors and any active shipboard sailors become wild. Disabled by default.",
+        false, false));
+    EnableGreydwarfSailors.SettingChanged += (_, _) =>
+    {
+      if (!EnableGreydwarfSailors.Value)
+      {
+        RaftGreydwarfSailorComponent.DismissAllSailors();
+      }
     };
   }
 }
