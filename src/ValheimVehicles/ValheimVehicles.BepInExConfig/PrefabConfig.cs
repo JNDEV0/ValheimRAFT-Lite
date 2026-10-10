@@ -154,19 +154,20 @@ public class PrefabConfig : BepInExBaseConfig<PrefabConfig>
     {
       var parsed = ParseCsv(VehicleHammerCategoryOrderCsv.Value);
 
-      // Keep only known categories, preserving user order, removing duplicates
-      var knownSet = new HashSet<string>();
-      var cleaned = new List<string>(parsed.Count);
+      // Keep only known categories, mapping legacy aliases to canonical IDs and deduping
+      var knownSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+      var cleaned = new List<string>(4);
       foreach (var c in parsed)
       {
-        if (!VehicleHammerTableCategories.IsHammerTableCategory(c)) continue;
-        if (knownSet.Add(c)) cleaned.Add(c);
+        if (string.IsNullOrWhiteSpace(c)) continue;
+        var canonical = VehicleHammerTableCategories.NormalizeCategory(c);
+        if (knownSet.Add(canonical)) cleaned.Add(canonical);
       }
 
       // Append any missing ones in default order
       foreach (var c in DefaultOrder)
       {
-        if (!knownSet.Contains(c)) cleaned.Add(c);
+        if (knownSet.Add(c)) cleaned.Add(c);
       }
 
       // Publish if changed

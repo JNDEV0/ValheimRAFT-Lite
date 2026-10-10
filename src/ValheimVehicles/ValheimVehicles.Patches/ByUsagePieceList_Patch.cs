@@ -11,21 +11,48 @@ namespace ValheimVehicles.Patches
   {
     private static bool IsVehicleHammer(PieceTable? pieceTable)
     {
-      if (pieceTable == null) return false;
-      return pieceTable.name.StartsWith(VehicleHammerTableRegistry.VehicleHammerTableName, StringComparison.OrdinalIgnoreCase);
+      if (pieceTable != null && pieceTable.name.IndexOf(VehicleHammerTableRegistry.VehicleHammerTableName, StringComparison.OrdinalIgnoreCase) >= 0)
+      {
+        return true;
+      }
+      var playerTable = Player.m_localPlayer?.m_buildPieces;
+      return playerTable != null && playerTable.name.IndexOf(VehicleHammerTableRegistry.VehicleHammerTableName, StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    [HarmonyPatch(nameof(ByUsagePieceList.TagCount), MethodType.Getter)]
+    [HarmonyPrefix]
+    public static bool TagCount_Prefix(ByUsagePieceList __instance, ref int __result)
+    {
+      var pieceTable = Player.m_localPlayer?.m_buildPieces;
+      if (!IsVehicleHammer(pieceTable)) return true;
+
+      __result = 4;
+      return false;
     }
 
     [HarmonyPatch(nameof(ByUsagePieceList.UpdateAvailableTags))]
     [HarmonyPrefix]
     public static bool UpdateAvailableTags_Prefix(ByUsagePieceList __instance, PieceTable pieceTable)
     {
-      if (!IsVehicleHammer(pieceTable)) return true;
+      var table = pieceTable ?? Player.m_localPlayer?.m_buildPieces;
+      if (!IsVehicleHammer(table)) return true;
 
       __instance.m_availableTags.Clear();
       __instance.m_availableTags.Add(0); // Resined
       __instance.m_availableTags.Add(1); // Nailed
       __instance.m_availableTags.Add(2); // Iron
       __instance.m_availableTags.Add(3); // Misc
+      return false;
+    }
+
+    [HarmonyPatch(nameof(ByUsagePieceList.GetTagIdByIndex))]
+    [HarmonyPrefix]
+    public static bool GetTagIdByIndex_Prefix(ByUsagePieceList __instance, int index, ref int __result)
+    {
+      var pieceTable = Player.m_localPlayer?.m_buildPieces;
+      if (!IsVehicleHammer(pieceTable)) return true;
+
+      __result = Mathf.Clamp(index, 0, 3);
       return false;
     }
 
@@ -36,14 +63,16 @@ namespace ValheimVehicles.Patches
       var pieceTable = Player.m_localPlayer?.m_buildPieces;
       if (!IsVehicleHammer(pieceTable)) return true;
 
-      var tagId = __instance.GetTagIdByIndex(index);
+      var tagId = index >= 0 && index < __instance.m_availableTags.Count
+        ? __instance.GetTagIdByIndex(index)
+        : index;
+
       __result = tagId switch
       {
         0 => VehicleHammerTableCategories.ToLocalizedLabel(VehicleHammerTableCategories.Resined),
         1 => VehicleHammerTableCategories.ToLocalizedLabel(VehicleHammerTableCategories.Nailed),
         2 => VehicleHammerTableCategories.ToLocalizedLabel(VehicleHammerTableCategories.Iron),
-        3 => VehicleHammerTableCategories.ToLocalizedLabel(VehicleHammerTableCategories.Misc),
-        _ => "Misc"
+        _ => VehicleHammerTableCategories.ToLocalizedLabel(VehicleHammerTableCategories.Misc)
       };
       return false;
     }
@@ -56,12 +85,13 @@ namespace ValheimVehicles.Patches
       PieceTable pieceTable,
       IList<Piece> resultOut)
     {
-      if (!IsVehicleHammer(pieceTable)) return true;
+      var table = pieceTable ?? Player.m_localPlayer?.m_buildPieces;
+      if (!IsVehicleHammer(table)) return true;
 
       resultOut.Clear();
-      if (pieceTable.m_pieces == null) return false;
+      if (table.m_pieces == null) return false;
 
-      foreach (var go in pieceTable.m_pieces)
+      foreach (var go in table.m_pieces)
       {
         if (go == null) continue;
         var piece = go.GetComponent<Piece>();
@@ -70,14 +100,14 @@ namespace ValheimVehicles.Patches
         var isSpecial = piece.m_repairPiece || piece.m_removePiece;
         if (tagId == -1 || isSpecial)
         {
-          if (isSpecial || pieceTable.m_availablePieces.Contains(piece))
+          if (isSpecial || table.m_availablePieces.Contains(piece))
           {
             resultOut.Add(piece);
           }
           continue;
         }
 
-        if (!pieceTable.m_availablePieces.Contains(piece)) continue;
+        if (!table.m_availablePieces.Contains(piece)) continue;
 
         var category = VehicleHammerTableCategories.GetCategoryForPiece(go.name);
         var matches = tagId switch
@@ -86,7 +116,7 @@ namespace ValheimVehicles.Patches
           1 => category == VehicleHammerTableCategories.Nailed,
           2 => category == VehicleHammerTableCategories.Iron,
           3 => category == VehicleHammerTableCategories.Misc,
-          _ => true
+          _ => false
         };
 
         if (matches)

@@ -55,6 +55,12 @@ namespace ValheimVehicles.Prefabs.Registry
 
       // 3) Set the UI labels for those categories in the SAME index order
       table.m_categoryLabels = localizedLabels;
+
+      // Ensure table.m_categories does not contain stale or excess categories beyond canonical count
+      if (table.m_categories != null && table.m_categories.Count > localizedLabels.Count)
+      {
+        table.m_categories.RemoveRange(localizedLabels.Count, table.m_categories.Count - localizedLabels.Count);
+      }
     }
 
     /// <summary>

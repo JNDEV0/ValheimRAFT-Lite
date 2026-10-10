@@ -34,7 +34,7 @@ namespace ValheimVehicles.Prefabs.Registry
     /// Default order of canonical IDs (used to append any missing that user omitted).
     /// </summary>
     public static readonly List<string> AllVehicleHammerCategoriesFallbackNames =
-      new() { Resined, Nailed, Iron, Misc, Deprecated };
+      new() { Resined, Nailed, Iron, Misc };
 
     /// <summary>
     /// English canonical -> localization key ($key) mapping.
@@ -100,6 +100,21 @@ namespace ValheimVehicles.Prefabs.Registry
       }
 
       // 4. Everything else is Misc
+      return Misc;
+    }
+
+    /// <summary>
+    /// Normalizes any category string (including legacy ones) to one of the 4 canonical categories:
+    /// Resined, Nailed, Iron, or Misc.
+    /// </summary>
+    public static string NormalizeCategory(string? val)
+    {
+      if (string.IsNullOrWhiteSpace(val)) return Misc;
+      var clean = val.Trim();
+      if (string.Equals(clean, Resined, StringComparison.OrdinalIgnoreCase)) return Resined;
+      if (string.Equals(clean, Nailed, StringComparison.OrdinalIgnoreCase)) return Nailed;
+      if (string.Equals(clean, Iron, StringComparison.OrdinalIgnoreCase) ||
+          string.Equals(clean, "Hull", StringComparison.OrdinalIgnoreCase)) return Iron;
       return Misc;
     }
 
