@@ -1,11 +1,11 @@
 ---
 name: valheimraft-lite
-description: Comprehensive knowledge base, architecture cheatsheet, troubleshooting guide, build/release workflows, and changelog history for developing and maintaining the ValheimRAFT Lite mod for Valheim 1.0.12 (Unity 6).
+description: Comprehensive knowledge base, architecture cheatsheet, build/release workflows, and changelog history for developing and maintaining the ValheimRAFT Lite mod.
 ---
 
 # ValheimRAFT Development & Maintenance Guide
 
-This skill provides full contextual memory, architectural patterns, critical bug resolutions, build/packaging procedures, and historical changelogs for the **ValheimRAFT** project.
+This skill provides some contextual memory, architectural patterns starting reference files, build/packaging procedures, and historical changelogs for the **ValheimRAFT** project.
 
 ---
 
@@ -16,9 +16,6 @@ This skill provides full contextual memory, architectural patterns, critical bug
 - **Solution File**: `D:\SteamLibrary\steamapps\common\Valheim\ValheimMods_Repo\ValheimMods.sln`
 - **Desktop Release Folder**: `C:\Users\User\Desktop\ValheimRAFT <version>\`
 
-### Key Sub-Projects
-| Project | Path | Role |
-| :--- | :--- | :--- |
 | **ValheimRAFT** | `src/ValheimRAFT/` | Entry point mod plugin (`ValheimRaftPlugin.cs`), ship boarding, dock components. |
 | **ValheimVehicles** | `src/ValheimVehicles/` | Vehicle controllers (`VehicleManager`, `VehiclePiecesController`, `VehicleMovementController`), helm steering, propulsion, portals, ropes. |
 | **ZdoWatcher** | `src/ZdoWatcher/` | ZDO lifecycle hooks, persistent ID lookups, server-client sync (`ZdoWatchController`, `ZdoPatch`). |
@@ -27,62 +24,10 @@ This skill provides full contextual memory, architectural patterns, critical bug
 
 ---
 
-## 2. Core Architectural Discoveries & Critical Gotchas
-
-### A. The Ashlands+ Save-Cleanup Wipeout
-- **Mechanism**: In Valheim Ashlands+, world saves call `ZDOMan.GetSaveClonePerChunk()`, which creates temporary clone ZDOs, writes them to disk, and then invokes `ZDOMan.SaveCleanup()`. `SaveCleanup` calls `zdo.Reset()` to recycle save clones.
-- **The Fix**: In both `Zdo_Patch.ZDO_Reset` and `VehiclePiecesController.RemoveZDO`, verify whether the live ZDO is still active in `ZDOMan`:
-  ```csharp
-  if (ZDOMan.instance != null && ZDOMan.instance.GetZDO(zdo.m_uid) != null)
-  {
-      return; // Live ZDO is still active in ZDOMan; do NOT remove or unregister!
-  }
-  ```
-
-### B. Valheim Sector Migration Limitation & Missing Pieces
-- **Mechanism**: Valheim's internal `ZDO.SetSector(SectorIndex)` only runs `AddToSector` and `RemoveFromSector` for portal prefabs. Non-portal pieces (beds, chests, crafting benches, walls) are never migrated across sectors by vanilla Valheim code when moved!
-- **The Fix**:
-  - In `VehiclePiecesController.SetPrefabWorldPosition` and `MigratePortalSectorInZdoMan`, detect when `oldSector != newSector`.
-  - For **all** pieces, call `ZDOMan.instance.RemoveFromSector(zdo, oldSector)` and `ZDOMan.instance.AddToSector(zdo, newSector)`.
-  - For **portals**, migrate `ZDOMan.instance.m_portalObjects` dictionary and call `ZDOMan.instance.SetDirtyPortals()`.
-  - In `ForceUpdateAllPiecePositions`, compute `pieceWorldPos` using `VehicleZdoVars.MBPositionHash` even if the GameObject is unloaded (`nv == null`), ensuring bed spawn points and map icons follow the moving ship.
-
-### C. ServerSync MissingFieldException Patch (Mono.Cecil)
-- **Problem**: In Valheim 1.0.12 (Unity 6), `ZRoutedRpc.Everybody` changed from a `public static readonly long` field to a compile-time literal / const `0L`. Calling code referencing `ldsfld int64 ZRoutedRpc::Everybody` throws `System.MissingFieldException: Field not found: .ZRoutedRpc.Everybody Due to: Using static instructions with literal field`.
-- **The Permanent Fix**: `ServerSync.dll` across the repository dependencies and builds is binary patched using Mono.Cecil to replace `ldsfld int64 ZRoutedRpc::Everybody` instruction sequences with `ldc.i8 0L`. Always ensure the patched binary (SHA256 `EB93074622090E0B27FFACE68FEB2A8B746BF963398532A3A5DDF74A8CA53F8D`) is deployed.
-
-### D. Greydwarf Sailors (Easter Egg Mechanism Toggle)
-- **Easter Egg Toggle**: Gated behind `VehicleGlobalConfig.EnableGreydwarfSailors` (`false` by default) in the mechanism menu ("Greydwarf Sailors (Easter Egg)").
-- **When Disabled**:
-  - Hover text on Greydwarfs to hire them with coins is completely suppressed (`""`).
-  - Player interaction and item use (`Interact` and `UseItem`) on Greydwarfs are rejected.
-  - Active shipboard sailors immediately revert to wild monsters (`Dismiss(null)`): they drop carried items, remove hats, revert faction to `ForestMonsters`, unparent from the vessel, launch into the water, and alert monster AI.
-  - Console command `vehicle hiresailor` and remote crew restore checks are blocked.
-- **When Enabled**:
-  - Hire with 10+ coins in the action bar within 250m of a ship.
-  - 19 curated working hats cyclable via <kbd>Ctrl</kbd>+<kbd>E</kbd> or giving helmet item.
-  - Tuned hat offset defaults: `Pos (0, 0.003, 0)`, `Rot (-90, 0, -180)`, `Scale 0.025`.
-  - Predictive velocity leading and ballistic drop compensation for thrown rocks; melee claw swings disabled for shipboard defenders.
-  - Double-tap dismissal confirmation: <kbd>Shift</kbd>+<kbd>E</kbd> requires repeat press within 3s.
-  - Passive resin upkeep (1 resin from any vessel chest per 5 minutes) and loot gathering.
-
-### E. Pruning Stale Rowing Seats
-- Rowing benches (`GreydwarfRowingSeatComponent` and `GreydwarfRowingSeatPrefab`) have been permanently removed. Sailors roam the decks freely and do not occupy stationary rowing seats. Rowing speed is determined by rudders (`GetRowingSpeed()`).
-
-### F. Localization Architecture & Build Packaging Guardrails
-- **3-Tier English Safety Net**: `English/valheimraft.json` is embedded into `ValheimRAFT.dll` as an assembly `<EmbeddedResource>` (`LogicalName="English.valheimraft.json"`), ensuring the mod never displays raw variable tags even with zero loose files on disk.
-- **CRITICAL Build Guardrail - Do NOT Include Optional Translations in Distribution Builds**:
-  - Standard distribution packages (NexusMods and Thunderstore zips) must contain **ONLY** `Assets/Translations/English/valheimraft.json`.
-  - Additional language files (`Chinese`, `Russian`, `Spanish`, `Portuguese_Brazilian`, `French`, `German`, `Polish`, `Japanese`, `Korean`) are maintained **exclusively** in the repository's top-level `optional_translations/` folder.
-  - **NEVER bundle `optional_translations/` or extra language folders into release zips**; keeping them separate prevents folder clutter, suspicion, and mod bloat.
-  - International users download their specific language folder from the GitHub repository and place it into `BepInEx/plugins/ValheimRAFT/Assets/Translations/<Language>/valheimraft.json`.
-
----
-
-## 3. Build & Release Workflow
+## 2. Build & Release Workflow
 
 ### Step 1: Version Bumping
-Calculate version: count commits since version `5.3.1` (`7f91460`): `+0.0.1` per commit, `+0.1.0` every 10 commits, and `+1.0.0` every 100 commits (e.g. 4 commits since `5.3.1` -> `5.3.5`).
+Calculate version: count commits since version `5.3.1` (`7f91460`): `+0.0.1` per commit, `+0.1.0` every 10 commits, and `+1.0.0` every 100 commits (e.g. 4 commits since `5.3.1` -> `5.3.5`, 14 commits since `5.3.1` -> `5.4.5`).
 Update version across:
 1. `build/valheimraft_version.props`: `<Version>5.3.X</Version>`
 2. `src/ValheimRAFT/Thunderstore/manifest.json`: `"version_number": "5.3.X"`
@@ -96,7 +41,7 @@ Run MSBuild with `SolutionDir` defined:
 ```
 
 ### Step 3: Desktop Packaging & r2modman Testing
-Create directory `C:\Users\User\Desktop\ValheimRAFT <version> for Valheim 1.0.12`:
+Create directory `C:\Users\User\Desktop\ValheimRAFT <version>`:
 1. **Thunderstore Zip** (`ValheimRAFT-<version>-Thunderstore.zip`):
    - Flat root containing `manifest.json`, `icon.png`, `README.md`, `LICENSE`, all DLLs/PDBs, and `Assets/Translations/English/valheimraft.json` *(English ONLY)*.
    - **For local testing**: Import this `.zip` file directly into **r2modman** (`Settings` -> `Import local mod`). Never manually copy binaries into the game's `BepInEx/plugins` folder.
@@ -105,6 +50,10 @@ Create directory `C:\Users\User\Desktop\ValheimRAFT <version> for Valheim 1.0.12
 3. Unpacked `NexusMods/` and `Thunderstore/` folders alongside the zips for manual inspection.
 
 ### Step 4: Git Commit & Push
+
+prepend(newer versions towards the top, older towards the bottom) this skill.md's "4. release history highlights" section with the latest changes when there is a version update.
+
+### Step 5: Git Commit & Push
 ```powershell
 git add -A
 git commit -m "ValheimRAFT <version> release: <summary>"
@@ -117,6 +66,12 @@ git push origin main
 ---
 
 ## 4. Release History Highlights
+
+### v5.3.7
+- **Uniform Ladder Climb Speed**: Removed all sprint / Shift speed multipliers during ladder climbing to enforce a consistent, uniform vertical velocity ascending and descending without stamina sprinting.
+- **Fixed Inverted Animation Direction**: Fixed the inverted scrub phase calculation so climbing up plays the upward climbing motion and climbing down plays downward motion.
+- **In-Game Speed Tuning Sliders**: Added two real-time sliders ("Ladder Climb Speed" and "Ladder Animation Speed") to the Boat Settings toggle switch menu (`VehicleGui.cs`) backed by persistent BepInEx configs (`LadderClimbSpeed` and `LadderAnimationSpeed` in `VehicleGlobalConfig.cs`), enabling real-time fine-tuning of movement speed versus animation cadence.
+- **Decoupled Movement & Animation Cadence**: Decoupled spatial translation from animation scrub phase, preserving continuous rung alignment and seamless directional reversals during any speed configuration.
 
 ### v5.3.6
 - **Jacob's / Rope Ladder Biomechanical IK & Gait**: Extracted standalone `valheim-ladderclimb` animation clip and implemented deterministic scrubbing gait (`LadderGait.cs`). Integrated analytical 2-bone arm IK (`Bend`) and rung snap targeting on Jacob's ladder / rope ladders (`RopeLadderComponent.cs`). Suppressed vanilla foot IK interference in `CharacterAnimEvent_Patch.cs` to prevent feet snapping downwards to terrain/water colliders.

@@ -33,11 +33,15 @@
     private static readonly Dictionary<Animator, (Transform body, Transform ladder)> s_posed = new();
     private static int[]? s_climbStates;
 
+    public static float ClimbSpeed => VehicleGlobalConfig.LadderClimbSpeed?.Value ?? 0.67f;
+    public static float AnimationSpeed => VehicleGlobalConfig.LadderAnimationSpeed?.Value ?? 1.0f;
+
     public float m_ladderHeight = 1f;
 
     public float baseLadderMoveSpeed = 0.667f;
-    public float ladderRunSpeedMult => PrefabConfig.RopeLadderRunMultiplier.Value;
+    public float ladderRunSpeedMult => 1f;
 
+    private float m_climbAnimPhase = 0f;
 
     public int m_stepOffsetUp = 2;
 
@@ -160,6 +164,8 @@
       m_attachPoint.localRotation = Quaternion.identity;
 
       bool hasClimbClip = ApplyClimbAnimation(player);
+
+      m_climbAnimPhase = LadderGait.Phase(initialAttachY);
 
       player.AttachStart(m_attachPoint, null, true, false,
         false,
@@ -386,10 +392,7 @@
 
     private float UpdateMoveOffset(MoveDirection moveDir, float offset)
     {
-      var ladderMoveSpeed =
-        isRunning
-          ? baseLadderMoveSpeed * ladderRunSpeedMult
-          : baseLadderMoveSpeed;
+      var ladderMoveSpeed = ClimbSpeed;
       switch (moveDir)
       {
         case MoveDirection.Up:
@@ -418,13 +421,13 @@
     /// </summary>
     public void DetectInputKeys(float moveDir)
     {
-      isRunning = true;
+      isRunning = false;
       hasAutoClimb = true;
     }
 
     public void ProcessClimbInput(Player player, float moveDir, bool run)
     {
-      isRunning = run;
+      isRunning = false;
       MoveOnLadder(player, moveDir);
     }
 
@@ -455,6 +458,16 @@
       }
 
       offset = UpdateMoveOffset(_autoClimbDir, offset);
+
+      // Advance animation phase based on movement direction and AnimationSpeed
+      if (_autoClimbDir == MoveDirection.Up)
+      {
+        m_climbAnimPhase += AnimationSpeed * Time.deltaTime;
+      }
+      else if (_autoClimbDir == MoveDirection.Down)
+      {
+        m_climbAnimPhase -= AnimationSpeed * Time.deltaTime;
+      }
 
       m_attachPoint.localPosition = new Vector3(0f,
         ClampOffset(offset),
@@ -608,8 +621,7 @@
         }
       }
 
-      float currentHeight = -m_attachPoint.localPosition.y;
-      float phase = LadderGait.Phase(currentHeight);
+      float phase = Mathf.Repeat(m_climbAnimPhase, 1f);
 
       if (s_climbStates == null || s_climbStates.Length != animator.layerCount)
       {
@@ -654,8 +666,7 @@
       if (animator == null || player == null) return;
       if (!s_originalControllers.ContainsKey(animator)) return;
 
-      float currentHeight = -m_attachPoint.localPosition.y;
-      float phase = LadderGait.Phase(currentHeight);
+      float phase = Mathf.Repeat(m_climbAnimPhase, 1f);
 
       LadderGait.SnapArms(animator, player.transform, phase);
     }

@@ -50,6 +50,11 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   public static ConfigEntry<bool> EnableGreydwarfSailors = null!;
   private const string VehicleSailorsKey = $"{VehicleGlobalBaseKey}:EasterEggs";
 
+  // ladder settings (climb speed and animation speed tuning)
+  public static ConfigEntry<float> LadderClimbSpeed = null!;
+  public static ConfigEntry<float> LadderAnimationSpeed = null!;
+  private const string VehicleLadderKey = $"{VehicleGlobalBaseKey}:Ladder";
+
   public override void OnBindConfig(ConfigFile config)
   {
     CreateSoundConfig(config);
@@ -60,6 +65,7 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
     CreateSnowConfig(config);
     CreateMaterialConfig(config);
     CreateSailorsConfig(config);
+    CreateLadderConfig(config);
   }
 
   private static void CreateHornConfig(ConfigFile config)
@@ -182,5 +188,20 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
         RaftGreydwarfSailorComponent.DismissAllSailors();
       }
     };
+  }
+
+  private static void CreateLadderConfig(ConfigFile config)
+  {
+    LadderClimbSpeed = config.BindUnique(VehicleLadderKey,
+      "LadderClimbSpeed", 0.67f,
+      ConfigHelpers.CreateConfigDescription(
+        "Ladder climbing vertical movement speed in meters per second.",
+        false, false, new AcceptableValueRange<float>(0.1f, 3.0f)));
+
+    LadderAnimationSpeed = config.BindUnique(VehicleLadderKey,
+      "LadderAnimationSpeed", 1.0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Ladder climbing animation playback speed rate.",
+        false, false, new AcceptableValueRange<float>(0.1f, 3.0f)));
   }
 }

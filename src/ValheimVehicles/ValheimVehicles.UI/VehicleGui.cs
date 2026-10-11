@@ -1077,6 +1077,44 @@
         });
       if (sailorsRow != null) commandsPanelToggleObjects.Add(sailorsRow);
 
+      // 9. Ladder Climb Speed Slider
+      var ladderClimbSliderRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Ladder Climb Speed",
+        0.1f, 3.0f,
+        VehicleGlobalConfig.LadderClimbSpeed?.Value ?? 0.67f,
+        val =>
+        {
+          if (VehicleGlobalConfig.LadderClimbSpeed != null)
+          {
+            VehicleGlobalConfig.LadderClimbSpeed.Value = val;
+          }
+        },
+        out _,
+        contentItemWidth,
+        0.05f);
+      if (ladderClimbSliderRow != null) commandsPanelToggleObjects.Add(ladderClimbSliderRow);
+
+      // 10. Ladder Animation Speed Slider
+      var ladderAnimSliderRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Ladder Animation Speed",
+        0.1f, 3.0f,
+        VehicleGlobalConfig.LadderAnimationSpeed?.Value ?? 1.0f,
+        val =>
+        {
+          if (VehicleGlobalConfig.LadderAnimationSpeed != null)
+          {
+            VehicleGlobalConfig.LadderAnimationSpeed.Value = val;
+          }
+        },
+        out _,
+        contentItemWidth,
+        0.05f);
+      if (ladderAnimSliderRow != null) commandsPanelToggleObjects.Add(ladderAnimSliderRow);
+
     }
 
     public static void ToggleConvexHullDebugger()
