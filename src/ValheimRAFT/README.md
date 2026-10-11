@@ -34,7 +34,7 @@ These mods complement **ValheimRAFT Lite** particularly well for an expansive na
 - **[More_World_Locations_AIO](https://thunderstore.io/c/valheim/p/warpalicious/More_World_Locations_AIO/)** by warpalicious: Adds dozens of hand-crafted dungeons, camps, and coastal points of interest to discover while sailing.
 - **[ImmersiveTrader](https://thunderstore.io/c/valheim/p/Hypnogoogic/ImmersiveTrader/)** by Hypnogoogic: Take on shipping and transport contracts between traders across the map for profit and adventure.
 - **[SeedBed](https://thunderstore.io/c/valheim/p/blacks7ar/SeedBed/)** by blacks7ar: Adds a compact raised bed to plant on that works well on a boat where soil space is limited.
-- **[ODINFLIGHT](https://thunderstore.io/c/valheim/p/Pfhoenix/ODINFLIGHT/)** by Pfhoenix: Adds gliders and wings to skydive and glide down safely when leaping from a flying vessel in flight mode.
+- **[ODINFLIGHT](https://thunderstore.io/c/valheim/p/Pfhoenix/ODINFLIGHT/)** by Pfhoenix: Adds glider wings to skydive and glide down safely when leaping from a flying vessel in flight mode.
 
 ---
 
