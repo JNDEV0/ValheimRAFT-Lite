@@ -50,7 +50,9 @@ public class LoadValheimRaftAssets : ILoadAssets
         Path.Combine(assemblyDir, "Assets", "valheim-ladderclimb"),
         Path.Combine(assemblyDir, "valheim-ladderclimb"),
         Path.Combine(Paths.PluginPath, "ValheimRAFT", "Assets", "valheim-ladderclimb"),
-        Path.Combine(Paths.PluginPath, "ValheimRAFT", "valheim-ladderclimb")
+        Path.Combine(Paths.PluginPath, "ValheimRAFT", "valheim-ladderclimb"),
+        Path.Combine(Paths.PluginPath, "team0-ValheimRAFT_Lite", "Assets", "valheim-ladderclimb"),
+        Path.Combine(Paths.PluginPath, "team0-ValheimRAFT_Lite", "valheim-ladderclimb")
       };
 
       foreach (var path in candidatePaths)
@@ -64,8 +66,25 @@ public class LoadValheimRaftAssets : ILoadAssets
             if (ladderClimb != null)
             {
               LoggerProvider.LogInfo($"Loaded ladder climb animation from {path}");
-              break;
+              return;
             }
+          }
+        }
+      }
+
+      // Fallback: load directly from embedded assembly resource
+      var asm = typeof(LoadValheimRaftAssets).Assembly;
+      using var stream = asm.GetManifestResourceStream("valheim-ladderclimb");
+      if (stream != null)
+      {
+        var bundle = AssetBundle.LoadFromStream(stream);
+        if (bundle != null)
+        {
+          ladderClimb = bundle.LoadAsset<AnimationClip>("LadderClimb");
+          if (ladderClimb != null)
+          {
+            LoggerProvider.LogInfo("Loaded ladder climb animation from embedded assembly resource");
+            return;
           }
         }
       }

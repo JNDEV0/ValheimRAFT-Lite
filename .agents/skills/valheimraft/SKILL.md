@@ -43,10 +43,10 @@ Run MSBuild with `SolutionDir` defined:
 ### Step 3: Desktop Packaging & r2modman Testing
 Create directory `C:\Users\User\Desktop\ValheimRAFT <version>`:
 1. **Thunderstore Zip** (`ValheimRAFT-<version>-Thunderstore.zip`):
-   - Flat root containing `manifest.json`, `icon.png`, `README.md`, `LICENSE`, all DLLs/PDBs, and `Assets/Translations/English/valheimraft.json` *(English ONLY)*.
+   - Flat root containing `manifest.json`, `icon.png`, `README.md`, `LICENSE`, all DLLs/PDBs, `Assets/valheim-ladderclimb`, and `Assets/Translations/English/valheimraft.json` *(English ONLY)*.
    - **For local testing**: Import this `.zip` file directly into **r2modman** (`Settings` -> `Import local mod`). Never manually copy binaries into the game's `BepInEx/plugins` folder.
 2. **NexusMods Zip** (`ValheimRAFT-<version>-NexusMods.zip`):
-   - Contains a root `ValheimRAFT/` folder with all DLLs, PDBs, ServerSync, English translation json ONLY, and README.
+   - Contains a root `ValheimRAFT/` folder with all DLLs, PDBs, ServerSync, `Assets/valheim-ladderclimb`, English translation json ONLY, and README.
 3. Unpacked `NexusMods/` and `Thunderstore/` folders alongside the zips for manual inspection.
 
 ### Step 4: Git Commit & Push
@@ -66,6 +66,12 @@ git push origin main
 ---
 
 ## 4. Release History Highlights
+
+### v5.4.0
+- **Embedded Ladder Climb Animation Asset**: Embedded `valheim-ladderclimb` asset bundle directly into `ValheimVehicles.dll` as a manifest resource with automatic memory stream fallback loading, guaranteeing the ladder climbing animation always loads even if external asset files are omitted during packaging or manual installs.
+- **Top Release Deck Snapping & Forward Landing**: Fixed early dismount (`TopReleaseOffset`) to snap the player up to the boat deck exit surface (`m_exitPoint.position + forward * 0.5f + up * 0.25f`) with forward velocity, preventing the character from falling straight down into the sea/ground in front of the ladder when early release is triggered.
+- **Unaltered Climb Offset Vertical Alignment**: Verified that "Climbing Offset" shifts the character's physical attachment vertically relative to the rungs without altering animation playback, phase scrubbing, or speed.
+- **Immediate Mecanim Climb State Activation**: Forced immediate animator state activation (`anim.Play("attach_mast", 0, phase); anim.Update(0f);`) upon ladder attachment, eliminating transition freezes on frame 0.
 
 ### v5.3.9
 - **Ship Planter Direct Hotbar Seed Planting**: Implemented `Interactable` and `Hoverable` on `CultivatableComponent` (`Ship Planter - Small` and `Large`), allowing players to select seeds on the hotbar (slots 1–8) and plant them directly into the soil bed without receiving "Use on what?" errors.

@@ -28,8 +28,7 @@
         <!--        <EmbeddedResource Include="$(SolutionDir)AssetBundle\AssetBundle.manifest" LogicalName="AssetBundle.manifest"/>-->
         <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles" LogicalName="valheim-vehicles"/>
         <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-vehicles.manifest" LogicalName="valheim-vehicles.manifest"/>
-        <!--        TODO import assets this way-->
-        <!--        <EmbeddedResources Include="Assets\**.png" /> -->
+        <EmbeddedResource Include="$(SolutionDir)AssetBundle\valheim-ladderclimb" LogicalName="valheim-ladderclimb"/>
     </ItemGroup>
 
     <ItemGroup Label="ValheimVehicle.SharedScripts Unity testable scripts">

@@ -38,6 +38,8 @@
     public static float ClimbOffset => VehicleGlobalConfig.LadderClimbOffset?.Value ?? 0.0f;
     public static float TopReleaseOffset => VehicleGlobalConfig.LadderTopReleaseOffset?.Value ?? 0.48f;
 
+    public bool m_isReleasingAtTop = false;
+
     public float m_ladderHeight = 1f;
 
     public float baseLadderMoveSpeed = 0.667f;
@@ -172,6 +174,16 @@
       player.AttachStart(m_attachPoint, null, true, false,
         false,
         hasClimbClip ? "attach_mast" : "Movement", Vector3.zero);
+
+      if (hasClimbClip)
+      {
+        var anim = player.GetComponentInChildren<Animator>();
+        if (anim != null)
+        {
+          anim.Play("attach_mast", 0, Mathf.Repeat(m_climbAnimPhase, 1f));
+          anim.Update(0f);
+        }
+      }
 
       DriveAnimation(player);
     }
@@ -451,6 +463,7 @@
       if (atTop && (_autoClimbDir == MoveDirection.Up || dir == MoveDirection.Up))
       {
         _autoClimbDir = MoveDirection.None;
+        m_isReleasingAtTop = true;
         player.AttachStop();
         return;
       }
@@ -502,15 +515,18 @@
     {
       if (player == null) return;
 
-      if (nearTop)
+      bool isTopExit = nearTop || m_isReleasingAtTop;
+      m_isReleasingAtTop = false;
+
+      if (isTopExit)
       {
         Vector3 forward = transform.forward;
         forward.y = 0f;
         if (forward.sqrMagnitude < 0.001f) forward = Vector3.forward;
         forward.Normalize();
 
-        Vector3 exitPos = m_exitPoint != null ? m_exitPoint.position : (transform.position + Vector3.up);
-        exitPos += forward * 0.45f + Vector3.up * 0.15f;
+        Vector3 exitBase = m_exitPoint != null ? m_exitPoint.position : (transform.position + Vector3.up);
+        Vector3 exitPos = exitBase + forward * 0.5f + Vector3.up * 0.25f;
 
         player.transform.position = exitPos;
         player.transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
@@ -533,13 +549,17 @@
     public void OnStepOffLadder(Player player)
     {
       var exitY = m_exitPoint != null ? m_exitPoint.position.y : transform.position.y;
-      bool nearTop = (exitY - player.transform.position.y) < 2.0f && (player.transform.position.y - exitY) < 1.5f;
+      bool nearTop = m_isReleasingAtTop || (exitY - player.transform.position.y) < 2.5f && (player.transform.position.y - exitY) < 1.5f;
       CompleteLadderDismount(player, nearTop);
     }
 
     public static bool ApplyClimbAnimation(Character character)
     {
       if (character == null) return false;
+      if (LoadValheimRaftAssets.ladderClimb == null)
+      {
+        LoadValheimRaftAssets.LoadLadderClimb();
+      }
       var animator = character.GetComponentInChildren<Animator>();
       var clip = LoadValheimRaftAssets.ladderClimb;
       if (animator == null || clip == null) return false;
@@ -657,7 +677,7 @@
       }
       else
       {
-        animator.Play(0, 0, phase);
+        animator.Play("attach_mast", 0, phase);
       }
 
       s_posed[animator] = (character.transform, transform);

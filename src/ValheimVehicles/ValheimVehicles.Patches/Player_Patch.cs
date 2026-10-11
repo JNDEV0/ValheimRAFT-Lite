@@ -595,7 +595,7 @@
         {
           s_detachingLadder = ladder;
           var exitY = ladder.m_exitPoint != null ? ladder.m_exitPoint.position.y : ladder.transform.position.y;
-          s_detachingNearTop = Mathf.Abs(__instance.transform.position.y - exitY) < 1.2f;
+          s_detachingNearTop = ladder.m_isReleasingAtTop || ((exitY - __instance.transform.position.y) < 2.5f && (__instance.transform.position.y - exitY) < 1.5f);
         }
 
         ((Character)__instance).m_animator.SetIKPositionWeight(
