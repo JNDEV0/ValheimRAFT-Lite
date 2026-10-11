@@ -35,6 +35,8 @@
 
     public static float ClimbSpeed => VehicleGlobalConfig.LadderClimbSpeed?.Value ?? 0.67f;
     public static float AnimationSpeed => VehicleGlobalConfig.LadderAnimationSpeed?.Value ?? 1.0f;
+    public static float ClimbOffset => VehicleGlobalConfig.LadderClimbOffset?.Value ?? 0.0f;
+    public static float TopReleaseOffset => VehicleGlobalConfig.LadderTopReleaseOffset?.Value ?? 0.48f;
 
     public float m_ladderHeight = 1f;
 
@@ -159,7 +161,7 @@
       var initialAttachY = ClampOffset(m_attachPoint.parent
         .InverseTransformPoint(player.transform.position).y);
       m_attachPoint.localPosition = new Vector3(0f,
-        initialAttachY,
+        initialAttachY + ClimbOffset,
         -LadderGait.HoldOut);
       m_attachPoint.localRotation = Quaternion.identity;
 
@@ -435,7 +437,7 @@
     {
       hasAutoClimb = true;
 
-      var offset = m_attachPoint.localPosition.y;
+      var offset = m_attachPoint.localPosition.y - ClimbOffset;
       var dir = GetMovementDir(moveDir);
 
       if (dir != MoveDirection.None && dir != _autoClimbDir)
@@ -443,7 +445,7 @@
         _autoClimbDir = dir;
       }
 
-      var atTop = offset >= 0.48f;
+      var atTop = offset >= TopReleaseOffset;
       var atBottom = offset <= (0f - m_collider.size.y + 0.05f);
 
       if (atTop && (_autoClimbDir == MoveDirection.Up || dir == MoveDirection.Up))
@@ -470,7 +472,7 @@
       }
 
       m_attachPoint.localPosition = new Vector3(0f,
-        ClampOffset(offset),
+        ClampOffset(offset) + ClimbOffset,
         -LadderGait.HoldOut);
       m_attachPoint.localRotation = Quaternion.identity;
       m_currentMoveDir = moveDir;
@@ -480,7 +482,7 @@
 
     private float ClampOffset(float offset)
     {
-      return Mathf.Clamp(offset, 0f - m_collider.size.y, 0.5f);
+      return Mathf.Clamp(offset, 0f - m_collider.size.y, Mathf.Max(0.5f, TopReleaseOffset));
     }
 
     /// <summary>
@@ -531,7 +533,7 @@
     public void OnStepOffLadder(Player player)
     {
       var exitY = m_exitPoint != null ? m_exitPoint.position.y : transform.position.y;
-      bool nearTop = Mathf.Abs(player.transform.position.y - exitY) < 1.2f;
+      bool nearTop = (exitY - player.transform.position.y) < 2.0f && (player.transform.position.y - exitY) < 1.5f;
       CompleteLadderDismount(player, nearTop);
     }
 

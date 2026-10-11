@@ -50,9 +50,11 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   public static ConfigEntry<bool> EnableGreydwarfSailors = null!;
   private const string VehicleSailorsKey = $"{VehicleGlobalBaseKey}:EasterEggs";
 
-  // ladder settings (climb speed and animation speed tuning)
+  // ladder settings (climb speed, animation speed, climb offset, top release offset)
   public static ConfigEntry<float> LadderClimbSpeed = null!;
   public static ConfigEntry<float> LadderAnimationSpeed = null!;
+  public static ConfigEntry<float> LadderClimbOffset = null!;
+  public static ConfigEntry<float> LadderTopReleaseOffset = null!;
   private const string VehicleLadderKey = $"{VehicleGlobalBaseKey}:Ladder";
 
   public override void OnBindConfig(ConfigFile config)
@@ -203,5 +205,17 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
       ConfigHelpers.CreateConfigDescription(
         "Ladder climbing animation playback speed rate.",
         false, false, new AcceptableValueRange<float>(0.1f, 3.0f)));
+
+    LadderClimbOffset = config.BindUnique(VehicleLadderKey,
+      "LadderClimbOffset", 0.0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Vertical offset to align character hands and feet with ladder rungs.",
+        false, false, new AcceptableValueRange<float>(-0.5f, 0.5f)));
+
+    LadderTopReleaseOffset = config.BindUnique(VehicleLadderKey,
+      "LadderTopReleaseOffset", 0.48f,
+      ConfigHelpers.CreateConfigDescription(
+        "Height threshold at top of ladder to release early onto the deck.",
+        false, false, new AcceptableValueRange<float>(-1.0f, 0.8f)));
   }
 }

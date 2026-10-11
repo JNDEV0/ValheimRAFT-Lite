@@ -1,4 +1,4 @@
-# ValheimRAFT Lite SP v5.3.7
+# ValheimRAFT Lite SP v5.3.8
 
 **ValheimRAFT Lite (Single Player)** — Fixed various issues and expanded features. Design and construct custom navigable vessels and movable bases in Valheim. Ship bed, Portal, improved physics, drop anchor, recruit Greydwarf sailors, and take to the skies in flight!
 

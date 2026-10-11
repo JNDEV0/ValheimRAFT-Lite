@@ -67,6 +67,11 @@ git push origin main
 
 ## 4. Release History Highlights
 
+### v5.3.8
+- **Ladder Alignment & Early Dismount Tuning Sliders**: Added "Climbing Offset" (`LadderClimbOffset`) and "Top Release Offset" (`LadderTopReleaseOffset`) sliders to the Boat Settings toggle switch menu (`VehicleGui.cs`) backed by persistent BepInEx configurations.
+- **Rung Alignment Tuning**: "Climbing Offset" slider allows fine-tuning the character's vertical offset (-0.5m to +0.5m) to visually align hands and feet with ladder rungs.
+- **Top Release Early Dismount**: "Top Release Offset" slider allows tuning down the release height threshold (-1.0m to +0.8m) so climbing completes early and pops the character forward onto the boat surface without climbing unrealistically into thin air.
+
 ### v5.3.7
 - **Uniform Ladder Climb Speed**: Removed all sprint / Shift speed multipliers during ladder climbing to enforce a consistent, uniform vertical velocity ascending and descending without stamina sprinting.
 - **Fixed Inverted Animation Direction**: Fixed the inverted scrub phase calculation so climbing up plays the upward climbing motion and climbing down plays downward motion.

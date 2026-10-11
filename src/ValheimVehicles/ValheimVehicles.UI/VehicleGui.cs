@@ -1115,6 +1115,44 @@
         0.05f);
       if (ladderAnimSliderRow != null) commandsPanelToggleObjects.Add(ladderAnimSliderRow);
 
+      // 11. Ladder Climbing Offset Slider
+      var ladderClimbOffsetRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Climbing Offset",
+        -0.5f, 0.5f,
+        VehicleGlobalConfig.LadderClimbOffset?.Value ?? 0.0f,
+        val =>
+        {
+          if (VehicleGlobalConfig.LadderClimbOffset != null)
+          {
+            VehicleGlobalConfig.LadderClimbOffset.Value = val;
+          }
+        },
+        out _,
+        contentItemWidth,
+        0.01f);
+      if (ladderClimbOffsetRow != null) commandsPanelToggleObjects.Add(ladderClimbOffsetRow);
+
+      // 12. Ladder Top Release Offset Slider
+      var ladderTopReleaseRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Top Release Offset",
+        -1.0f, 0.8f,
+        VehicleGlobalConfig.LadderTopReleaseOffset?.Value ?? 0.48f,
+        val =>
+        {
+          if (VehicleGlobalConfig.LadderTopReleaseOffset != null)
+          {
+            VehicleGlobalConfig.LadderTopReleaseOffset.Value = val;
+          }
+        },
+        out _,
+        contentItemWidth,
+        0.02f);
+      if (ladderTopReleaseRow != null) commandsPanelToggleObjects.Add(ladderTopReleaseRow);
+
     }
 
     public static void ToggleConvexHullDebugger()
