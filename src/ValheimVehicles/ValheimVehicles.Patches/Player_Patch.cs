@@ -627,18 +627,20 @@
       var shouldHandle = isAttached && (bool)__instance.m_attachPoint &&
                          (bool)__instance.m_attachPoint.parent;
       if (!shouldHandle) return true;
-      if (movedir.x == 0f && movedir.y == 0f && !jump && !crouch && !attack &&
-          !attackHold &&
-          !secondaryAttack && !block)
+      var ladder = __instance.m_attachPoint.parent
+        .GetComponent<RopeLadderComponent>();
+      if ((bool)ladder)
       {
-        var ladder = __instance.m_attachPoint.parent
-          .GetComponent<RopeLadderComponent>();
-        if ((bool)ladder)
+        if (jump)
         {
-          ladder.MoveOnLadder(__instance, movedir.z);
+          __instance.AttachStop();
           return false;
         }
+
+        ladder.ProcessClimbInput(__instance, movedir.z, run);
+        return false;
       }
+
 
       var wheel = __instance.m_attachPoint.parent != null
         ? __instance.m_attachPoint.parent.GetComponent<SteeringWheelComponent>()

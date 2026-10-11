@@ -31,6 +31,7 @@
   "mb_rope_anchor_attach": "Attach Rope",
   "mb_rope_anchor_attach_to": "Attach Rope to this object",
   "mb_rope_ladder_use": "Climb",
+  "mb_rope_ladder_release": "Release",
   "valheim_vehicles_slow": "Slow",
   "valheim_vehicles_fast": "Fast",
   "valheim_vehicles_auto": "Auto",

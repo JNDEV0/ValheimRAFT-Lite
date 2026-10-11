@@ -392,3 +392,6 @@ src/ValheimRAFT.Unity/Assets/SUIMONO - WATER SYSTEM 2
 modSync.json5
 
 mod-releases
+# Temporary inspection assets
+ValheimTunneling.dll
+tunneling_shaders

@@ -1,11 +1,11 @@
 ---
-name: valheimraft
-description: Comprehensive knowledge base, architecture cheatsheet, troubleshooting guide, build/release workflows, and changelog history for developing and maintaining the ValheimRAFT mod for Valheim 1.0.12 (Unity 6).
+name: valheimraft-lite
+description: Comprehensive knowledge base, architecture cheatsheet, troubleshooting guide, build/release workflows, and changelog history for developing and maintaining the ValheimRAFT Lite mod for Valheim 1.0.12 (Unity 6).
 ---
 
 # ValheimRAFT Development & Maintenance Guide
 
-This skill provides full contextual memory, architectural patterns, critical bug resolutions, build/packaging procedures, and historical changelogs for the **ValheimRAFT** project (specifically the Valheim 1.0.12 / Unity 6 overhaul).
+This skill provides full contextual memory, architectural patterns, critical bug resolutions, build/packaging procedures, and historical changelogs for the **ValheimRAFT** project.
 
 ---
 
@@ -14,7 +14,7 @@ This skill provides full contextual memory, architectural patterns, critical bug
 - **Git Repository**: `D:\SteamLibrary\steamapps\common\Valheim\ValheimMods_Repo`
 - **Test / Mod Manager**: r2modman (via local Thunderstore `.zip` import, replacing manual plugin folder copies)
 - **Solution File**: `D:\SteamLibrary\steamapps\common\Valheim\ValheimMods_Repo\ValheimMods.sln`
-- **Desktop Release Folder**: `C:\Users\User\Desktop\ValheimRAFT <version> for Valheim 1.0.12\`
+- **Desktop Release Folder**: `C:\Users\User\Desktop\ValheimRAFT <version>\`
 
 ### Key Sub-Projects
 | Project | Path | Role |
@@ -117,6 +117,10 @@ git push origin main
 ---
 
 ## 4. Release History Highlights
+
+### v5.3.6
+- **Jacob's / Rope Ladder Biomechanical IK & Gait**: Extracted standalone `valheim-ladderclimb` animation clip and implemented deterministic scrubbing gait (`LadderGait.cs`). Integrated analytical 2-bone arm IK (`Bend`) and rung snap targeting on Jacob's ladder / rope ladders (`RopeLadderComponent.cs`). Suppressed vanilla foot IK interference in `CharacterAnimEvent_Patch.cs` to prevent feet snapping downwards to terrain/water colliders.
+- **Standalone Asset Separation**: Isolated `LadderClimb` into pure standalone asset bundle without embedding third-party shaders.
 
 ### v5.3.5
 - **Map Pin Bed Target Guard**: `BoatBedSpawnController.VehicleHasOnboardBed` ensures the map icon and `[Spawn]` label never target boats that lack an onboard bed piece, resolving an issue where claiming a land bed near a newly built boat produced duplicate bed map pins.

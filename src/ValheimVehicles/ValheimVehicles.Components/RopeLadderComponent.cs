@@ -7,6 +7,7 @@
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
+  using Zolantris.Shared;
 
 #endregion
 
@@ -25,7 +26,12 @@
 
     public VehiclePiecesController vehiclePiecesController;
 
-    public float m_stepDistance = 0.5f;
+    public float m_stepDistance = LadderGait.Rung;
+
+    private static readonly Dictionary<Animator, RuntimeAnimatorController> s_originalControllers = new();
+    private static readonly Dictionary<RuntimeAnimatorController, AnimatorOverrideController> s_overrideCache = new();
+    private static readonly Dictionary<Animator, (Transform body, Transform ladder)> s_posed = new();
+    private static int[]? s_climbStates;
 
     public float m_ladderHeight = 1f;
 
@@ -134,6 +140,7 @@
       if (!(bool)player) return;
       if (player.IsAttached())
       {
+        RestoreClimbAnimation(player);
         player.AttachStop();
         return;
       }
@@ -147,19 +154,18 @@
 
       var initialAttachY = ClampOffset(m_attachPoint.parent
         .InverseTransformPoint(player.transform.position).y);
-      m_attachPoint.localPosition = new Vector3(m_attachPoint.localPosition.x,
+      m_attachPoint.localPosition = new Vector3(0f,
         initialAttachY,
-        m_attachPoint.localPosition.z);
+        LadderGait.HoldOut);
+      m_attachPoint.localRotation = Quaternion.Euler(0f, 180f, 0f);
 
-      var initialFootCenter = Mathf.RoundToInt((initialAttachY - 0.85f) / m_stepDistance);
-      m_currentLeft = initialFootCenter;
-      m_currentRight = initialFootCenter;
-      m_targetLeft = INVALID_STEP;
-      m_targetRight = INVALID_STEP;
+      bool hasClimbClip = ApplyClimbAnimation(player);
 
       player.AttachStart(m_attachPoint, null, true, false,
         false,
-        "Movement", Vector3.zero);
+        hasClimbClip ? "attach_mast" : "Movement", Vector3.zero);
+
+      DriveAnimation(player);
     }
 
     private bool ShouldRetractLadder()
@@ -363,169 +369,17 @@
 
     public void UpdateIK(Animator animator)
     {
-      if (animator == null || m_attachPoint == null) return;
-
-      var hipY = m_attachPoint.localPosition.y;
-      var ladderBottomY = -m_ladderHeight;
-
-      // Natural foot resting level is ~0.85m below the hip attach point
-      var footCenter = Mathf.RoundToInt((hipY - 0.85f) / m_stepDistance);
-
-      if (m_currentRight == INVALID_STEP) m_currentRight = footCenter;
-      if (m_currentLeft == INVALID_STEP) m_currentLeft = footCenter;
-
-      var currentMoveDir =
-        hasAutoClimb ? _autoClimbDir : GetMovementDir(m_currentMoveDir);
-
-      // Synchronize IK step animation rate with physical ladder movement speed
-      var moveSpeed =
-        isRunning
-          ? baseLadderMoveSpeed * ladderRunSpeedMult
-          : baseLadderMoveSpeed;
-      var stepRate = Mathf.Max(moveSpeed / m_stepDistance, 1f);
-
-      if (currentMoveDir != MoveDirection.None)
-      {
-        if (m_targetLeft == INVALID_STEP && m_targetRight == INVALID_STEP)
-        {
-          var stepOffset = currentMoveDir == MoveDirection.Up
-            ? m_stepOffsetUp
-            : m_stepOffsetDown;
-          var targetRung = footCenter + stepOffset;
-
-          bool moveLeft;
-          if (currentMoveDir == MoveDirection.Up)
-          {
-            moveLeft = m_currentLeft < m_currentRight || (m_currentLeft == m_currentRight && !m_lastMovedLeft);
-          }
-          else
-          {
-            moveLeft = m_currentLeft > m_currentRight || (m_currentLeft == m_currentRight && !m_lastMovedLeft);
-          }
-
-          if (moveLeft)
-          {
-            m_targetLeft = targetRung;
-            m_leftMoveTime = Time.time;
-            m_lastMovedLeft = true;
-          }
-          else
-          {
-            m_targetRight = targetRung;
-            m_rightMoveTime = Time.time;
-            m_lastMovedLeft = false;
-          }
-        }
-      }
-      else
-      {
-        // When stopped or at ladder bottom/top:
-        // Automatically settle any trailing/stale foot to footCenter (fixes Image 4)
-        if (m_targetLeft == INVALID_STEP && Mathf.Abs(m_currentLeft - footCenter) > 1)
-        {
-          m_targetLeft = footCenter;
-          m_leftMoveTime = Time.time;
-        }
-        else if (m_targetRight == INVALID_STEP && Mathf.Abs(m_currentRight - footCenter) > 1)
-        {
-          m_targetRight = footCenter;
-          m_rightMoveTime = Time.time;
-        }
-      }
-
-      // Base hand and foot local positions (Hands are 3 rungs / 1.5m above feet, at chest/head level)
-      var leftHandPos = new Vector3(-0.3f, (float)(m_currentLeft + 3) * m_stepDistance, 0f);
-      var leftFootPos = new Vector3(-0.2f, (float)m_currentLeft * m_stepDistance, -0.15f);
-      var rightHandPos = new Vector3(0.3f, (float)(m_currentRight + 3) * m_stepDistance, 0f);
-      var rightFootPos = new Vector3(0.2f, (float)m_currentRight * m_stepDistance, -0.15f);
-
-      // Interpolate left limb step
-      if (m_targetLeft != INVALID_STEP)
-      {
-        var targetLeftHandPos = new Vector3(-0.3f, (float)(m_targetLeft + 3) * m_stepDistance, 0f);
-        var targetLeftFootPos = new Vector3(-0.2f, (float)m_targetLeft * m_stepDistance, -0.15f);
-
-        var leftAlpha = Mathf.Clamp01((Time.time - m_leftMoveTime) * stepRate);
-        leftHandPos = Vector3.Lerp(leftHandPos, targetLeftHandPos, leftAlpha);
-        leftFootPos = Vector3.Lerp(leftFootPos, targetLeftFootPos, leftAlpha);
-
-        // Natural step arc: lift outward and upward during step transition
-        var arc = Mathf.Sin(leftAlpha * Mathf.PI);
-        leftFootPos.z += arc * 0.08f;
-        leftFootPos.y += arc * 0.05f;
-        leftHandPos.z += arc * 0.06f;
-
-        if (Mathf.Approximately(leftAlpha, 1f))
-        {
-          m_currentLeft = m_targetLeft;
-          m_targetLeft = INVALID_STEP;
-        }
-      }
-
-      // Interpolate right limb step
-      if (m_targetRight != INVALID_STEP)
-      {
-        var targetRightHandPos = new Vector3(0.3f, (float)(m_targetRight + 3) * m_stepDistance, 0f);
-        var targetRightFootPos = new Vector3(0.2f, (float)m_targetRight * m_stepDistance, -0.15f);
-
-        var rightAlpha = Mathf.Clamp01((Time.time - m_rightMoveTime) * stepRate);
-        rightHandPos = Vector3.Lerp(rightHandPos, targetRightHandPos, rightAlpha);
-        rightFootPos = Vector3.Lerp(rightFootPos, targetRightFootPos, rightAlpha);
-
-        // Natural step arc: lift outward and upward during step transition
-        var arc = Mathf.Sin(rightAlpha * Mathf.PI);
-        rightFootPos.z += arc * 0.08f;
-        rightFootPos.y += arc * 0.05f;
-        rightHandPos.z += arc * 0.06f;
-
-        if (Mathf.Approximately(rightAlpha, 1f))
-        {
-          m_currentRight = m_targetRight;
-          m_targetRight = INVALID_STEP;
-        }
-      }
-
-      // Allow natural leg reach & knee flexion: stepping foot can lift up to 0.20m below hip
-      var maxFootY = hipY - 0.20f;
-      var minFootY = hipY - 1.00f;
-      leftFootPos.y = Mathf.Clamp(leftFootPos.y, Mathf.Max(minFootY, ladderBottomY), maxFootY);
-      rightFootPos.y = Mathf.Clamp(rightFootPos.y, Mathf.Max(minFootY, ladderBottomY), maxFootY);
-
-      // Hands: allow extended upward reach when climbing up or down for visual realism
-      var minHandY = hipY + 0.35f;
-      var maxHandY = hipY + 1.40f;
-      leftHandPos.y = Mathf.Clamp(leftHandPos.y, minHandY, maxHandY);
-      rightHandPos.y = Mathf.Clamp(rightHandPos.y, minHandY, maxHandY);
-
-      // Transform to world space
-      var leftHand = transform.TransformPoint(leftHandPos);
-      var leftFoot = transform.TransformPoint(leftFootPos);
-      var rightHand = transform.TransformPoint(rightHandPos);
-      var rightFoot = transform.TransformPoint(rightFootPos);
-
-      // Apply IK positions
-      animator.SetIKPosition(AvatarIKGoal.LeftHand, leftHand);
-      animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 1f);
-      animator.SetIKPosition(AvatarIKGoal.LeftFoot, leftFoot);
-      animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 1f);
-      animator.SetIKPosition(AvatarIKGoal.RightHand, rightHand);
-      animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 1f);
-      animator.SetIKPosition(AvatarIKGoal.RightFoot, rightFoot);
-      animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 1f);
-
-      // Knee hints: guide knees to bend forward towards ladder rungs
-      var leftKneeHint = transform.TransformPoint(new Vector3(-0.2f, (hipY + leftFootPos.y) * 0.5f, 0.12f));
-      var rightKneeHint = transform.TransformPoint(new Vector3(0.2f, (hipY + rightFootPos.y) * 0.5f, 0.12f));
-      animator.SetIKHintPosition(AvatarIKHint.LeftKnee, leftKneeHint);
-      animator.SetIKHintPositionWeight(AvatarIKHint.LeftKnee, 0.9f);
-      animator.SetIKHintPosition(AvatarIKHint.RightKnee, rightKneeHint);
-      animator.SetIKHintPositionWeight(AvatarIKHint.RightKnee, 0.9f);
-
-      // Orient wrists to naturally grip the horizontal rungs (fixes Image 1 stiffness)
-      animator.SetIKRotation(AvatarIKGoal.LeftHand, transform.rotation);
-      animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0.7f);
-      animator.SetIKRotation(AvatarIKGoal.RightHand, transform.rotation);
-      animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0.7f);
+      if (animator == null) return;
+      animator.SetIKPositionWeight(AvatarIKGoal.LeftHand, 0f);
+      animator.SetIKPositionWeight(AvatarIKGoal.RightHand, 0f);
+      animator.SetIKRotationWeight(AvatarIKGoal.LeftHand, 0f);
+      animator.SetIKRotationWeight(AvatarIKGoal.RightHand, 0f);
+      animator.SetIKPositionWeight(AvatarIKGoal.LeftFoot, 0f);
+      animator.SetIKPositionWeight(AvatarIKGoal.RightFoot, 0f);
+      animator.SetIKRotationWeight(AvatarIKGoal.LeftFoot, 0f);
+      animator.SetIKRotationWeight(AvatarIKGoal.RightFoot, 0f);
+      animator.SetIKHintPositionWeight(AvatarIKHint.LeftKnee, 0f);
+      animator.SetIKHintPositionWeight(AvatarIKHint.RightKnee, 0f);
     }
 
     private float previousDir = 0;
@@ -568,6 +422,12 @@
       hasAutoClimb = true;
     }
 
+    public void ProcessClimbInput(Player player, float moveDir, bool run)
+    {
+      isRunning = run;
+      MoveOnLadder(player, moveDir);
+    }
+
     public void MoveOnLadder(Player player, float moveDir)
     {
       isRunning = true;
@@ -595,10 +455,13 @@
 
       offset = UpdateMoveOffset(_autoClimbDir, offset);
 
-      m_attachPoint.localPosition = new Vector3(m_attachPoint.localPosition.x,
+      m_attachPoint.localPosition = new Vector3(0f,
         ClampOffset(offset),
-        m_attachPoint.localPosition.z);
+        LadderGait.HoldOut);
+      m_attachPoint.localRotation = Quaternion.Euler(0f, 180f, 0f);
       m_currentMoveDir = moveDir;
+
+      DriveAnimation(player);
     }
 
     private float ClampOffset(float offset)
@@ -622,7 +485,131 @@
     /// <param name="player"></param>
     public void OnStepOffLadder(Player player)
     {
+      RestoreClimbAnimation(player);
       player.m_attachPoint = null;
       OnNearTopExitForwards(player);
+    }
+
+    public static bool ApplyClimbAnimation(Character character)
+    {
+      if (character == null) return false;
+      var animator = character.GetComponentInChildren<Animator>();
+      var clip = LoadValheimRaftAssets.ladderClimb;
+      if (animator == null || clip == null) return false;
+
+      if (s_originalControllers.ContainsKey(animator)) return true;
+
+      var baseController = animator.runtimeAnimatorController;
+      if (baseController == null) return false;
+
+      if (!s_overrideCache.TryGetValue(baseController, out var overrideController))
+      {
+        overrideController = new AnimatorOverrideController(baseController)
+        {
+          name = baseController.name + " (raft_ladder)"
+        };
+        bool found = false;
+        foreach (var c in baseController.animationClips)
+        {
+          if (c != null && c.name == "Hold The Mast")
+          {
+            overrideController[c] = clip;
+            found = true;
+            break;
+          }
+        }
+        if (!found)
+        {
+          LoggerProvider.LogWarning("No 'Hold The Mast' clip found on character animator controller.");
+          return false;
+        }
+        s_overrideCache[baseController] = overrideController;
+      }
+
+      s_originalControllers[animator] = baseController;
+      animator.runtimeAnimatorController = overrideController;
+      return true;
+    }
+
+    public static void RestoreClimbAnimation(Character character)
+    {
+      if (character == null) return;
+      var animator = character.GetComponentInChildren<Animator>();
+      if (animator == null) return;
+
+      if (s_originalControllers.TryGetValue(animator, out var orig))
+      {
+        s_originalControllers.Remove(animator);
+        s_posed.Remove(animator);
+        animator.speed = 1f;
+        animator.runtimeAnimatorController = orig;
+      }
+    }
+
+    public void DriveAnimation(Character character)
+    {
+      if (character == null) return;
+      var animator = character.GetComponentInChildren<Animator>();
+      if (animator == null || !s_originalControllers.ContainsKey(animator)) return;
+
+      animator.speed = 0f;
+      for (int i = 1; i < animator.layerCount; i++)
+      {
+        if (animator.GetLayerWeight(i) > 0f)
+        {
+          animator.SetLayerWeight(i, 0f);
+        }
+      }
+
+      float currentHeight = -m_attachPoint.localPosition.y;
+      float phase = LadderGait.Phase(currentHeight);
+
+      if (s_climbStates == null || s_climbStates.Length != animator.layerCount)
+      {
+        int[] states = new int[animator.layerCount];
+        bool found = false;
+        for (int i = 0; i < animator.layerCount; i++)
+        {
+          var clipInfos = animator.GetCurrentAnimatorClipInfo(i);
+          foreach (var info in clipInfos)
+          {
+            if (info.clip == LoadValheimRaftAssets.ladderClimb)
+            {
+              states[i] = animator.GetCurrentAnimatorStateInfo(i).fullPathHash;
+              found = true;
+              break;
+            }
+          }
+        }
+        if (found) s_climbStates = states;
+      }
+
+      if (s_climbStates != null)
+      {
+        for (int i = 0; i < s_climbStates.Length && i < animator.layerCount; i++)
+        {
+          if (s_climbStates[i] != 0)
+          {
+            animator.Play(s_climbStates[i], i, phase);
+          }
+        }
+      }
+      else
+      {
+        animator.Play(0, 0, phase);
+      }
+
+      s_posed[animator] = (character.transform, transform);
+    }
+
+    public void SnapLimbs(Animator animator, Player player)
+    {
+      if (animator == null || player == null) return;
+      if (!s_originalControllers.ContainsKey(animator)) return;
+
+      float currentHeight = -m_attachPoint.localPosition.y;
+      float phase = LadderGait.Phase(currentHeight);
+
+      LadderGait.SnapArms(animator, player.transform, phase);
     }
   }

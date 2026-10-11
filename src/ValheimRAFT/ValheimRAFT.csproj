@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <!--  for thunderstore version sync-->
     <PropertyGroup>
@@ -44,6 +44,9 @@
         <EmbeddedResource Include="Assets\Translations\English\valheimraft.json">
             <LogicalName>English.valheimraft.json</LogicalName>
         </EmbeddedResource>
+        <Content Include="Assets\valheim-ladderclimb">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
         <Content Include="README.md"/>
         <Content Include="Thunderstore\icon.png"/>
         <Content Include="Thunderstore\manifest.json"/>
