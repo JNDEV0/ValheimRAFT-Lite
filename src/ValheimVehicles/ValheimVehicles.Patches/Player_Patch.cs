@@ -567,16 +567,28 @@
       return false;
     }
 
+    private static RopeLadderComponent s_detachingLadder = null;
+    private static bool s_detachingNearTop = false;
+
     [HarmonyPatch(typeof(Player), "AttachStop")]
     [HarmonyPrefix]
     public static bool AttachStop(Player __instance)
     {
+      s_detachingLadder = null;
+      s_detachingNearTop = false;
+
       if (__instance.IsAttached() && (bool)__instance.m_attachPoint &&
           (bool)__instance.m_attachPoint.parent)
       {
         var ladder = __instance.m_attachPoint.parent
           .GetComponent<RopeLadderComponent>();
-        if ((bool)ladder) ladder.OnStepOffLadder(__instance);
+        if ((bool)ladder)
+        {
+          s_detachingLadder = ladder;
+          var exitY = ladder.m_exitPoint != null ? ladder.m_exitPoint.position.y : ladder.transform.position.y;
+          s_detachingNearTop = Mathf.Abs(__instance.transform.position.y - exitY) < 1.2f;
+        }
+
         ((Character)__instance).m_animator.SetIKPositionWeight(
           AvatarIKGoal.LeftHand, 0);
         ((Character)__instance).m_animator.SetIKPositionWeight(
@@ -603,6 +615,21 @@
       WaterZoneUtils.RestoreColliderCollisionsAfterDetach(__instance);
 
       return true;
+    }
+
+    [HarmonyPatch(typeof(Player), "AttachStop")]
+    [HarmonyPostfix]
+    public static void AttachStop_Postfix(Player __instance)
+    {
+      if (s_detachingLadder != null)
+      {
+        var ladder = s_detachingLadder;
+        bool nearTop = s_detachingNearTop;
+        s_detachingLadder = null;
+        s_detachingNearTop = false;
+
+        ladder.CompleteLadderDismount(__instance, nearTop);
+      }
     }
 
     /**

@@ -35,7 +35,7 @@
 
     public float m_ladderHeight = 1f;
 
-    public float baseLadderMoveSpeed = 2f;
+    public float baseLadderMoveSpeed = 0.667f;
     public float ladderRunSpeedMult => PrefabConfig.RopeLadderRunMultiplier.Value;
 
 
@@ -147,7 +147,7 @@
 
       if (m_attachPoint.parent == null) return;
 
-      isRunning = true;
+      isRunning = false;
       hasAutoClimb = true;
       var exitY = m_exitPoint != null ? m_exitPoint.position.y : transform.position.y;
       _autoClimbDir = player.transform.position.y >= exitY - 1f ? MoveDirection.Down : MoveDirection.Up;
@@ -156,8 +156,8 @@
         .InverseTransformPoint(player.transform.position).y);
       m_attachPoint.localPosition = new Vector3(0f,
         initialAttachY,
-        LadderGait.HoldOut);
-      m_attachPoint.localRotation = Quaternion.Euler(0f, 180f, 0f);
+        -LadderGait.HoldOut);
+      m_attachPoint.localRotation = Quaternion.identity;
 
       bool hasClimbClip = ApplyClimbAnimation(player);
 
@@ -430,7 +430,6 @@
 
     public void MoveOnLadder(Player player, float moveDir)
     {
-      isRunning = true;
       hasAutoClimb = true;
 
       var offset = m_attachPoint.localPosition.y;
@@ -444,9 +443,11 @@
       var atTop = offset >= 0.48f;
       var atBottom = offset <= (0f - m_collider.size.y + 0.05f);
 
-      if (atTop && _autoClimbDir == MoveDirection.Up)
+      if (atTop && (_autoClimbDir == MoveDirection.Up || dir == MoveDirection.Up))
       {
         _autoClimbDir = MoveDirection.None;
+        player.AttachStop();
+        return;
       }
       else if (atBottom && _autoClimbDir == MoveDirection.Down)
       {
@@ -457,8 +458,8 @@
 
       m_attachPoint.localPosition = new Vector3(0f,
         ClampOffset(offset),
-        LadderGait.HoldOut);
-      m_attachPoint.localRotation = Quaternion.Euler(0f, 180f, 0f);
+        -LadderGait.HoldOut);
+      m_attachPoint.localRotation = Quaternion.identity;
       m_currentMoveDir = moveDir;
 
       DriveAnimation(player);
@@ -482,12 +483,43 @@
     /// <summary>
     /// Callback bound to player onAttachStop
     /// </summary>
-    /// <param name="player"></param>
+    public void CompleteLadderDismount(Player player, bool nearTop)
+    {
+      if (player == null) return;
+
+      if (nearTop)
+      {
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.001f) forward = Vector3.forward;
+        forward.Normalize();
+
+        Vector3 exitPos = m_exitPoint != null ? m_exitPoint.position : (transform.position + Vector3.up);
+        exitPos += forward * 0.45f + Vector3.up * 0.15f;
+
+        player.transform.position = exitPos;
+        player.transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
+
+        if (player.m_body != null)
+        {
+          player.m_body.linearVelocity = forward * 2.0f;
+        }
+        Physics.SyncTransforms();
+      }
+      else
+      {
+        player.transform.position -= transform.forward * 0.35f;
+        Physics.SyncTransforms();
+      }
+
+      RestoreClimbAnimation(player);
+    }
+
     public void OnStepOffLadder(Player player)
     {
-      RestoreClimbAnimation(player);
-      player.m_attachPoint = null;
-      OnNearTopExitForwards(player);
+      var exitY = m_exitPoint != null ? m_exitPoint.position.y : transform.position.y;
+      bool nearTop = Mathf.Abs(player.transform.position.y - exitY) < 1.2f;
+      CompleteLadderDismount(player, nearTop);
     }
 
     public static bool ApplyClimbAnimation(Character character)
@@ -543,6 +575,21 @@
         s_posed.Remove(animator);
         animator.speed = 1f;
         animator.runtimeAnimatorController = orig;
+
+        for (int i = 1; i < animator.layerCount; i++)
+        {
+          animator.SetLayerWeight(i, 1f);
+        }
+
+        animator.Play("Movement", 0, 0f);
+        animator.Update(0f);
+      }
+
+      if (character is Player p && p.m_zanim != null)
+      {
+        p.m_zanim.SetBool("attach_mast", false);
+        p.m_zanim.SetBool("attach_chair", false);
+        p.m_zanim.SetBool("attach_bed", false);
       }
     }
 
