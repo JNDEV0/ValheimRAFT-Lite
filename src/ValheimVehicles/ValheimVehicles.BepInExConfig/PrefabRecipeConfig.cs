@@ -108,6 +108,22 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
       ]
     },
     {
+      PrefabNames.MBRopeLadder, [
+        new RequirementConfig
+        {
+          Amount = 10,
+          Item = "Wood",
+          Recover = true
+        },
+        new RequirementConfig
+        {
+          Amount = 6,
+          Item = "Dandelion",
+          Recover = true
+        }
+      ]
+    },
+    {
       PrefabNames.CannonHandHeldItem, [
         new RequirementConfig
         {

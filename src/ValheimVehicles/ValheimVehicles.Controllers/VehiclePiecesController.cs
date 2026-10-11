@@ -1,4 +1,4 @@
-﻿#region
+#region
 
   using System;
   using System.Collections;
@@ -1070,22 +1070,29 @@
               break;
             }
 
-            // Enforce that rudder faces the same forward direction as the vehicle / steering wheel
-            var forwardDot = Vector3.Dot(rudder.transform.forward, transform.forward);
-            var isInvalid = forwardDot < 0.2f;
+            // Enforce that rudder faces the forward direction of the ship
+            var shipForward = MovementController != null && MovementController.ShipDirection != null
+              ? MovementController.ShipDirection.forward
+              : (Manager != null ? Manager.transform.forward : transform.forward);
 
+            var forwardDot = Vector3.Dot(rudder.transform.forward, shipForward);
+            var isInvalid = forwardDot < 0.75f;
+            string rudderErrorKey = "$valheim_vehicles_rudder_must_face_forward";
+
+            // If a steering wheel already exists, enforce that rudder faces the same direction as the wheel
             if (!isInvalid && _steeringWheelPiece != null)
             {
               var wheelDot = Vector3.Dot(rudder.transform.forward, _steeringWheelPiece.transform.forward);
-              if (wheelDot < 0.2f)
+              if (wheelDot < 0.75f)
               {
                 isInvalid = true;
+                rudderErrorKey = "$valheim_vehicles_rudder_orientation_invalid";
               }
             }
 
             if (isInvalid)
             {
-              BreakInvalidPiece(netView, "$valheim_vehicles_rudder_orientation_invalid");
+              BreakInvalidPiece(netView, rudderErrorKey);
               break;
             }
 
@@ -1096,7 +1103,7 @@
               if (existingRudder != null)
               {
                 var existingDot = Vector3.Dot(rudder.transform.forward, existingRudder.transform.forward);
-                if (existingDot < 0.8f)
+                if (existingDot < 0.75f)
                 {
                   BreakInvalidPiece(netView, "$valheim_vehicles_rudder_orientation_invalid");
                   break;
@@ -1125,8 +1132,12 @@
           case SteeringWheelComponent wheel:
           {
             // Enforce that steering wheel faces forward relative to vehicle
-            var forwardDot = Vector3.Dot(wheel.transform.forward, transform.forward);
-            var isWheelInvalid = forwardDot < 0.2f;
+            var shipForward = MovementController != null && MovementController.ShipDirection != null
+              ? MovementController.ShipDirection.forward
+              : (Manager != null ? Manager.transform.forward : transform.forward);
+
+            var forwardDot = Vector3.Dot(wheel.transform.forward, shipForward);
+            var isWheelInvalid = forwardDot < 0.75f;
             string errorKey = "$valheim_vehicles_wheel_must_face_forward";
 
             // If rudder(s) already exist, enforce that steering wheel faces same direction as rudder
@@ -1134,7 +1145,7 @@
             if (!isWheelInvalid && m_rudderPieces.Count > 0)
             {
               var rudderDot = Vector3.Dot(wheel.transform.forward, m_rudderPieces[0].transform.forward);
-              if (rudderDot < 0.2f)
+              if (rudderDot < 0.75f)
               {
                 isWheelInvalid = true;
                 errorKey = "$valheim_vehicles_wheel_orientation_invalid";

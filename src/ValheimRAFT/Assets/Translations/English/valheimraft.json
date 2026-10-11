@@ -118,6 +118,7 @@
   "valheim_vehicles_rudder_required": "Ship rudder required",
   "valheim_vehicles_rudder_max_reached": "Maximum rudders placed (2)",
   "valheim_vehicles_rudder_must_attach_boat": "Rudder must be attached directly to the hull of the boat.",
+  "valheim_vehicles_rudder_must_face_forward": "Rudder must face forward.",
   "valheim_vehicles_rudder_orientation_invalid": "Rudder must face the same direction as the steering wheel.",
   "valheim_vehicles_wheel_orientation_invalid": "Steering wheel must face the same direction as the rudder.",
   "valheim_vehicles_wheel_must_face_forward": "Steering wheel must face forward.",

@@ -133,6 +133,7 @@ git push origin main
   - Gunnery Binnacle / Cannon Control Center: Removed surtling core requirement.
 - **Unity Project Cleanup**: Removed 73.9 MB of orphaned 3D models (naval cannon, nautilus, extra engines) and tank test scenes from Unity project.
 - **Documentation Sync**: Synchronized root `README.md` with `src/ValheimRAFT/README.md` to ensure Thunderstore details page and GitHub display the latest guide and recommended mod list.
+- **Rudder Forward Orientation Requirement**: Rudders must now face forward relative to the vessel heading, ensuring proper rudder alignment.
 
 ### v5.3.1
 - **Greydwarf Sailors (Easter Egg)**: Added `VehicleGlobalConfig.EnableGreydwarfSailors` toggle (off by default). Turning off suppresses taming, hides coin hover text, blocks commands, and dismisses active shipboard sailors to the wild.

@@ -25,6 +25,18 @@ public static class BoatBedSpawn_Patches
       {
         vehicleId = VehiclePiecesController.GetParentID(bedZdo);
       }
+
+      if (vehicleId != 0 && VehiclePiecesController.ActiveInstances.TryGetValue(vehicleId, out var activeVpc) && activeVpc != null)
+      {
+        if (!activeVpc.m_bedPieces.Contains(bed) && !bed.transform.IsChildOf(activeVpc.transform))
+        {
+          if (bed.m_nview != null && bed.m_nview.IsOwner())
+          {
+            bedZdo.RemoveInt(VehicleZdoVars.MBParentId);
+          }
+          vehicleId = 0;
+        }
+      }
     }
 
     if (vehicleId == 0)
@@ -43,26 +55,10 @@ public static class BoatBedSpawn_Patches
     {
       foreach (var kvp in VehiclePiecesController.ActiveInstances)
       {
-        if (kvp.Value != null && (kvp.Value.m_bedPieces.Contains(bed) ||
-            (kvp.Value.OnboardCollider != null && kvp.Value.OnboardCollider.bounds.Contains(bed.transform.position))))
+        if (kvp.Value != null && kvp.Value.m_bedPieces.Contains(bed))
         {
           vehicleId = kvp.Key;
           break;
-        }
-      }
-    }
-
-    if (vehicleId == 0 && Player.m_localPlayer != null)
-    {
-      foreach (var kvp in VehiclePiecesController.ActiveInstances)
-      {
-        if (kvp.Value != null && kvp.Value.Manager != null && kvp.Value.Manager.OnboardController != null)
-        {
-          if (kvp.Value.Manager.OnboardController.m_localPlayers.Contains(Player.m_localPlayer))
-          {
-            vehicleId = kvp.Key;
-            break;
-          }
         }
       }
     }

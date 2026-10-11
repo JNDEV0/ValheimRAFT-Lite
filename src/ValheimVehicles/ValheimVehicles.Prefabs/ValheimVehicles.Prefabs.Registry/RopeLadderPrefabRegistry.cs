@@ -2,6 +2,7 @@ using Jotunn.Configs;
 using Jotunn.Entities;
 using Jotunn.Managers;
 using UnityEngine;
+using ValheimVehicles.BepInExConfig;
 using ValheimVehicles.Components;
 using ValheimVehicles.Prefabs;
 using ValheimVehicles.Prefabs.Registry;
@@ -69,21 +70,7 @@ public class RopeLadderPrefabRegistry : RegisterPrefab<RopeLadderPrefabRegistry>
           .RopeLadder),
         Category = PrefabRegistryController.SetCategoryName(VehicleHammerTableCategories.Structure),
         Enabled = true,
-        Requirements =
-        [
-          new RequirementConfig
-          {
-            Amount = 10,
-            Item = "Wood",
-            Recover = true
-          },
-          new RequirementConfig
-          {
-            Amount = 6,
-            Item = "Dandelion",
-            Recover = true
-          }
-        ]
+        Requirements = PrefabRecipeConfig.GetRequirements(PrefabNames.MBRopeLadder)
       }));
   }
 }

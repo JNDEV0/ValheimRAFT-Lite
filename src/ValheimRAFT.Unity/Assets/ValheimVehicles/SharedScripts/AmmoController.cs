@@ -33,7 +33,8 @@ namespace ValheimVehicles.SharedScripts
     public static bool HasUnlimitedAmmo = false;
 
 #if VALHEIM
-    private HashSet<Container> _nearbyContainers = new();
+    private readonly HashSet<Container> _nearbyContainers = new();
+    private readonly Dictionary<Container, System.Action> _containerCallbacks = new();
 #endif
 
     [Header("Distances")]
@@ -135,8 +136,34 @@ namespace ValheimVehicles.SharedScripts
       Instances.Remove(this);
 #if VALHEIM
       ValheimContainerTracker.OnContainerAddSubscriptions -= TryAddNearbyContainer;
+      CleanUpContainerSubscriptions();
 #endif
     }
+
+    private void OnDestroy()
+    {
+      if (IsHandheld) return;
+      Instances.Remove(this);
+#if VALHEIM
+      ValheimContainerTracker.OnContainerAddSubscriptions -= TryAddNearbyContainer;
+      CleanUpContainerSubscriptions();
+#endif
+    }
+
+#if VALHEIM
+    private void CleanUpContainerSubscriptions()
+    {
+      foreach (var kvp in _containerCallbacks)
+      {
+        if (kvp.Key != null && kvp.Key.m_inventory != null && kvp.Value != null)
+        {
+          kvp.Key.m_inventory.m_onChanged -= kvp.Value;
+        }
+      }
+      _containerCallbacks.Clear();
+      _nearbyContainers.Clear();
+    }
+#endif
 
     private void Start()
     {
@@ -186,25 +213,26 @@ namespace ValheimVehicles.SharedScripts
       if (container == null) return;
       if (!container.isActiveAndEnabled) return;
       if (container.m_inventory == null) return;
+      if (_containerCallbacks.ContainsKey(container)) return;
 
-      // do not include containers outside a vehicle if the vehicle is nearby other container sources. This would effectively steal those items.
-      if (IsPiecesController && !PrefabNames.IsVehiclePiecesContainer(container.transform.root.name))
+      var pieceController = VehiclePiecesController.GetVehiclePiecesController(gameObject);
+      if (pieceController == null)
+      {
+        // Not attached to a vehicle - do not track world containers
+        return;
+      }
+
+      // Container MUST be on this vehicle
+      if (!container.transform.IsChildOf(pieceController.transform) &&
+          !PrefabNames.IsVehiclePiecesContainer(container.transform.root.name))
       {
         return;
       }
 
-      if (!IsPiecesController)
-      {
-        var distance = Vector3.Distance(container.transform.position, transform.position);
-        if (distance > MaxContainerSearchRadius)
-        {
-          return;
-        }
-      }
-
-
       _nearbyContainers.Add(container);
-      container.m_inventory.m_onChanged += () => OnContainerChanged(container);
+      System.Action callback = () => OnContainerChanged(container);
+      _containerCallbacks[container] = callback;
+      container.m_inventory.m_onChanged += callback;
     }
 #endif
 
@@ -466,6 +494,15 @@ namespace ValheimVehicles.SharedScripts
     /// </summary>
     private void OnContainerChanged(Container container)
     {
+      if (this == null || !this)
+      {
+        if (container != null && container.m_inventory != null && _containerCallbacks.TryGetValue(container, out var cb))
+        {
+          container.m_inventory.m_onChanged -= cb;
+          _containerCallbacks.Remove(container);
+        }
+        return;
+      }
       if (!isActiveAndEnabled) return;
       if (!_canTriggerChangeUpdate) return;
       _queuedInventoryUpdates.Add(container);
