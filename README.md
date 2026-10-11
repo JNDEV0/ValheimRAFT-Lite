@@ -33,6 +33,8 @@ These mods complement **ValheimRAFT Lite** particularly well for an expansive na
 - **[OdinsKingdom](https://thunderstore.io/c/valheim/p/OdinPlus/OdinsKingdom/)** by OdinPlus: Castle walls, turrets, and fortress parts—ideal for constructing a floating or flying sky fortress.
 - **[More_World_Locations_AIO](https://thunderstore.io/c/valheim/p/warpalicious/More_World_Locations_AIO/)** by warpalicious: Adds dozens of hand-crafted dungeons, camps, and coastal points of interest to discover while sailing.
 - **[ImmersiveTrader](https://thunderstore.io/c/valheim/p/Hypnogoogic/ImmersiveTrader/)** by Hypnogoogic: Take on shipping and transport contracts between traders across the map for profit and adventure.
+- **[SeedBed](https://thunderstore.io/c/valheim/p/blacks7ar/SeedBed/)** by blacks7ar: Adds a compact raised bed to plant on that works well on a boat where soil space is limited.
+- **[ODINFLIGHT](https://thunderstore.io/c/valheim/p/Pfhoenix/ODINFLIGHT/)** by Pfhoenix: Adds gliders and wings to skydive and glide down safely when leaping from a flying vessel in flight mode.
 
 ---
 

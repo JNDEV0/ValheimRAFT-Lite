@@ -12,8 +12,9 @@ public class Plantable_Patch
   [HarmonyPostfix]
   private static void UpdatePlacementGhost_Postfix(Player __instance)
   {
-    // Allow planting on cultivatable components even if status says NeedCultivated
-    if (__instance.m_placementStatus == Player.PlacementStatus.NeedCultivated &&
+    // Allow planting on cultivatable components even if status says NeedCultivated or Invalid
+    if ((__instance.m_placementStatus == Player.PlacementStatus.NeedCultivated ||
+         __instance.m_placementStatus == Player.PlacementStatus.Invalid) &&
         __instance.m_placementGhost != null)
     {
       var piece = __instance.m_placementGhost.GetComponent<Piece>();
@@ -23,7 +24,7 @@ public class Plantable_Patch
         if (Player.m_localPlayer.PieceRayTest(out _, out _, out var hoverPiece,
               out _, out _, false) && hoverPiece != null)
         {
-          var cmp = hoverPiece.GetComponent<CultivatableComponent>();
+          var cmp = hoverPiece.GetComponentInParent<CultivatableComponent>();
           if (cmp != null && cmp.isCultivatable)
           {
             __instance.m_placementStatus = Player.PlacementStatus.Valid;

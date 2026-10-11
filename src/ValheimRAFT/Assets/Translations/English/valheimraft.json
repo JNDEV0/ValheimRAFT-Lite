@@ -384,6 +384,7 @@
   "valheim_vehicles_ship_anchor": "Ship Anchor",
   "mb_dirt_floor_2x2_desc": "Dirt to plant seeds into and harvest plants from. A spacious deck-mounted cultivation bed providing ample fertile soil. <color=yellow>A proper floating farm. Just don't let the boars loose on deck.</color>",
   "mb_dirt_floor_1x1_desc": "Dirt to plant seeds into and harvest plants from. A compact, soil-filled wooden box treated to withstand salt water. <color=yellow>A tiny patch of earth to grow yer turnips. Scurvy ain't pretty, mates.</color>",
+  "mb_dirt_floor_use": "Plant Seed",
   "valheim_vehicles_hull_rib_aft_center_wood_desc": "A Hull-Rib Piece meant to be placed at the back of a ship. The central, reinforced stern frame providing a solid mounting point for heavy rudders. <color=yellow>A grand backside for a grand ship. Perfect for leaving yer enemies in yer wake.</color>",
   "valheim_vehicles_hull_rib_wood_desc": "A Hull-Rib Side piece. Useful for building realistic hulls. A reinforced vertical support rib structure essential for bearing structural loads. <color=yellow>Thick ribs for a thick ship. Let's see a troll try to punch through this.</color>",
   "valheim_vehicles_hull_rib_aft_center_wood": "Nailed Hull Rear Counter Stern - center",

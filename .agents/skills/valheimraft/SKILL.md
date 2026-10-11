@@ -67,6 +67,12 @@ git push origin main
 
 ## 4. Release History Highlights
 
+### v5.3.9
+- **Ship Planter Direct Hotbar Seed Planting**: Implemented `Interactable` and `Hoverable` on `CultivatableComponent` (`Ship Planter - Small` and `Large`), allowing players to select seeds on the hotbar (slots 1–8) and plant them directly into the soil bed without receiving "Use on what?" errors.
+- **Dynamic Crop Resolution & Spacing Protection**: Added dynamic lookup from the Cultivator piece table (with comprehensive vanilla and modded crop fallbacks), normal-aligned placement rotation on rolling vessels, and 0.35m anti-stacking spacing protection to prevent accidental overlapping plantings.
+- **Cultivator Tool Compatibility**: Enhanced `Plantable_Patch` and `Player_Patch` to validate both `NeedCultivated` and `Invalid` placement states on `CultivatableComponent` pieces via `GetComponentInParent`, ensuring smooth placement with both Cultivator tools and actionbar items.
+- **Recommended Mods Updated**: Added blacks7ar's `SeedBed` (compact raised beds for confined boat decks) and Pfhoenix's `ODINFLIGHT` (gliders and wings to skydive from flight mode) to the recommended mods list in `README.md`.
+
 ### v5.3.8
 - **Ladder Alignment & Early Dismount Tuning Sliders**: Added "Climbing Offset" (`LadderClimbOffset`) and "Top Release Offset" (`LadderTopReleaseOffset`) sliders to the Boat Settings toggle switch menu (`VehicleGui.cs`) backed by persistent BepInEx configurations.
 - **Rung Alignment Tuning**: "Climbing Offset" slider allows fine-tuning the character's vertical offset (-0.5m to +0.5m) to visually align hands and feet with ladder rungs.

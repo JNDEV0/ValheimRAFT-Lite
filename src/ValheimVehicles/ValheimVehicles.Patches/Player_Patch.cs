@@ -192,28 +192,37 @@
       }
 
       IPieceController? pieceController = null;
+      CultivatableComponent? cul = null;
       if (PatchSharedData.PlayerLastRayPiece != null)
       {
         pieceController = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<IPieceController>();
         if (netView != null)
         {
-          var cul = PatchSharedData.PlayerLastRayPiece.GetComponent<CultivatableComponent>();
+          cul = PatchSharedData.PlayerLastRayPiece.GetComponentInParent<CultivatableComponent>();
           if (cul != null) cul.AddNewChild(netView);
         }
       }
 
       // If raycast didn't hit a vehicle piece directly (e.g. snapped to snap point or aimed at deck), check what is underneath
-      if (pieceController == null)
+      if (pieceController == null || (cul == null && netView != null))
       {
         var hits = Physics.RaycastAll(gameObject.transform.position + Vector3.up * 0.2f, Vector3.down, 1.5f, LayerHelpers.PieceLayerMask);
         foreach (var hit in hits)
         {
           if (hit.collider == null) continue;
-          var pc = hit.collider.GetComponentInParent<IPieceController>();
-          if (pc != null)
+          if (pieceController == null)
           {
-            pieceController = pc;
-            break;
+            var pc = hit.collider.GetComponentInParent<IPieceController>();
+            if (pc != null) pieceController = pc;
+          }
+          if (cul == null && netView != null)
+          {
+            var c = hit.collider.GetComponentInParent<CultivatableComponent>();
+            if (c != null)
+            {
+              cul = c;
+              cul.AddNewChild(netView);
+            }
           }
         }
       }
