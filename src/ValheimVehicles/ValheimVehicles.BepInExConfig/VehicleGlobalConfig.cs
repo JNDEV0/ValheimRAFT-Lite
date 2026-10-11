@@ -50,11 +50,12 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   public static ConfigEntry<bool> EnableGreydwarfSailors = null!;
   private const string VehicleSailorsKey = $"{VehicleGlobalBaseKey}:EasterEggs";
 
-  // ladder settings (climb speed, animation speed, climb offset, top release offset)
+  // ladder settings (climb speed, top release clearance)
   public static ConfigEntry<float> LadderClimbSpeed = null!;
   public static ConfigEntry<float> LadderAnimationSpeed = null!;
   public static ConfigEntry<float> LadderClimbOffset = null!;
   public static ConfigEntry<float> LadderTopReleaseOffset = null!;
+  public static ConfigEntry<float> LadderTopReleaseClearance = null!;
   private const string VehicleLadderKey = $"{VehicleGlobalBaseKey}:Ladder";
 
   public override void OnBindConfig(ConfigFile config)
@@ -195,25 +196,31 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   private static void CreateLadderConfig(ConfigFile config)
   {
     LadderClimbSpeed = config.BindUnique(VehicleLadderKey,
-      "LadderClimbSpeed", 0.67f,
+      "LadderClimbSpeed", 1.5f,
       ConfigHelpers.CreateConfigDescription(
         "Ladder climbing vertical movement speed in meters per second.",
         false, false, new AcceptableValueRange<float>(0.1f, 3.0f)));
 
+    LadderTopReleaseClearance = config.BindUnique(VehicleLadderKey,
+      "LadderTopReleaseClearance", -0.6f,
+      ConfigHelpers.CreateConfigDescription(
+        "Vertical landing clearance offset at the top of the ladder.",
+        false, false, new AcceptableValueRange<float>(-1.2f, 0.8f)));
+
     LadderAnimationSpeed = config.BindUnique(VehicleLadderKey,
-      "LadderAnimationSpeed", 1.0f,
+      "LadderAnimationSpeed", 2.2f,
       ConfigHelpers.CreateConfigDescription(
         "Ladder climbing animation playback speed rate.",
         false, false, new AcceptableValueRange<float>(0.1f, 3.0f)));
 
     LadderClimbOffset = config.BindUnique(VehicleLadderKey,
-      "LadderClimbOffset", 0.0f,
+      "LadderClimbOffset", -0.5f,
       ConfigHelpers.CreateConfigDescription(
         "Vertical offset to align character hands and feet with ladder rungs.",
         false, false, new AcceptableValueRange<float>(-0.5f, 0.5f)));
 
     LadderTopReleaseOffset = config.BindUnique(VehicleLadderKey,
-      "LadderTopReleaseOffset", 0.48f,
+      "LadderTopReleaseOffset", -1.0f,
       ConfigHelpers.CreateConfigDescription(
         "Height threshold at top of ladder to release early onto the deck.",
         false, false, new AcceptableValueRange<float>(-1.0f, 0.8f)));

@@ -1083,7 +1083,7 @@
         viewStyles,
         "Ladder Climb Speed",
         0.1f, 3.0f,
-        VehicleGlobalConfig.LadderClimbSpeed?.Value ?? 0.67f,
+        VehicleGlobalConfig.LadderClimbSpeed?.Value ?? 1.5f,
         val =>
         {
           if (VehicleGlobalConfig.LadderClimbSpeed != null)
@@ -1096,62 +1096,24 @@
         0.05f);
       if (ladderClimbSliderRow != null) commandsPanelToggleObjects.Add(ladderClimbSliderRow);
 
-      // 10. Ladder Animation Speed Slider
-      var ladderAnimSliderRow = SwivelUIHelpers.AddSliderRow(
+      // 10. Top Release Clearance Slider
+      var ladderTopClearanceRow = SwivelUIHelpers.AddSliderRow(
         svParent,
         viewStyles,
-        "Ladder Animation Speed",
-        0.1f, 3.0f,
-        VehicleGlobalConfig.LadderAnimationSpeed?.Value ?? 1.0f,
+        "Top Release Clearance",
+        -1.2f, 0.8f,
+        VehicleGlobalConfig.LadderTopReleaseClearance?.Value ?? -0.6f,
         val =>
         {
-          if (VehicleGlobalConfig.LadderAnimationSpeed != null)
+          if (VehicleGlobalConfig.LadderTopReleaseClearance != null)
           {
-            VehicleGlobalConfig.LadderAnimationSpeed.Value = val;
-          }
-        },
-        out _,
-        contentItemWidth,
-        0.05f);
-      if (ladderAnimSliderRow != null) commandsPanelToggleObjects.Add(ladderAnimSliderRow);
-
-      // 11. Ladder Climbing Offset Slider
-      var ladderClimbOffsetRow = SwivelUIHelpers.AddSliderRow(
-        svParent,
-        viewStyles,
-        "Climbing Offset",
-        -0.5f, 0.5f,
-        VehicleGlobalConfig.LadderClimbOffset?.Value ?? 0.0f,
-        val =>
-        {
-          if (VehicleGlobalConfig.LadderClimbOffset != null)
-          {
-            VehicleGlobalConfig.LadderClimbOffset.Value = val;
-          }
-        },
-        out _,
-        contentItemWidth,
-        0.01f);
-      if (ladderClimbOffsetRow != null) commandsPanelToggleObjects.Add(ladderClimbOffsetRow);
-
-      // 12. Ladder Top Release Offset Slider
-      var ladderTopReleaseRow = SwivelUIHelpers.AddSliderRow(
-        svParent,
-        viewStyles,
-        "Top Release Offset",
-        -1.0f, 0.8f,
-        VehicleGlobalConfig.LadderTopReleaseOffset?.Value ?? 0.48f,
-        val =>
-        {
-          if (VehicleGlobalConfig.LadderTopReleaseOffset != null)
-          {
-            VehicleGlobalConfig.LadderTopReleaseOffset.Value = val;
+            VehicleGlobalConfig.LadderTopReleaseClearance.Value = val;
           }
         },
         out _,
         contentItemWidth,
         0.02f);
-      if (ladderTopReleaseRow != null) commandsPanelToggleObjects.Add(ladderTopReleaseRow);
+      if (ladderTopClearanceRow != null) commandsPanelToggleObjects.Add(ladderTopClearanceRow);
 
     }
 

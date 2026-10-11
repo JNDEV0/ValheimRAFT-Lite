@@ -33,10 +33,11 @@
     private static readonly Dictionary<Animator, (Transform body, Transform ladder)> s_posed = new();
     private static int[]? s_climbStates;
 
-    public static float ClimbSpeed => VehicleGlobalConfig.LadderClimbSpeed?.Value ?? 0.67f;
-    public static float AnimationSpeed => VehicleGlobalConfig.LadderAnimationSpeed?.Value ?? 1.0f;
-    public static float ClimbOffset => VehicleGlobalConfig.LadderClimbOffset?.Value ?? 0.0f;
-    public static float TopReleaseOffset => VehicleGlobalConfig.LadderTopReleaseOffset?.Value ?? 0.48f;
+    public static float ClimbSpeed => VehicleGlobalConfig.LadderClimbSpeed?.Value ?? 1.5f;
+    public static float AnimationSpeed => ClimbSpeed + 0.7f;
+    public const float ClimbOffset = -0.5f;
+    public const float TopReleaseOffset = -1.0f;
+    public static float TopReleaseClearance => VehicleGlobalConfig.LadderTopReleaseClearance?.Value ?? -0.6f;
 
     public bool m_isReleasingAtTop = false;
 
@@ -526,7 +527,7 @@
         forward.Normalize();
 
         Vector3 exitBase = m_exitPoint != null ? m_exitPoint.position : (transform.position + Vector3.up);
-        Vector3 exitPos = exitBase + forward * 0.5f + Vector3.up * 0.25f;
+        Vector3 exitPos = exitBase + forward * 0.5f + Vector3.up * TopReleaseClearance;
 
         player.transform.position = exitPos;
         player.transform.rotation = Quaternion.LookRotation(forward, Vector3.up);

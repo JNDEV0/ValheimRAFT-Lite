@@ -67,6 +67,11 @@ git push origin main
 
 ## 4. Release History Highlights
 
+### v5.4.1
+- **Top Release Clearance Tuning Slider**: Added "Top Release Clearance" slider (`LadderTopReleaseClearance`, range -1.2m to +0.8m, default -0.6m) to the Boat Settings toggle menu (`VehicleGui.cs`), eliminating character overshooting above the deck and enabling precision fine-tuning so feet land directly on deck planks upon top release.
+- **Hardset Rung Alignment & Early Dismount**: Hardcoded ideal tested values for Jacob's / rope ladders: `ClimbOffset = -0.5f` (perfect rung alignment) and `TopReleaseOffset = -1.0f` (immediate top release right as hands crest the deck edge), removing both redundant sliders from the menu.
+- **Coupled Speed Cadence & Streamlined Menu**: Hardcoded biomechanical speed ratio `AnimationSpeed = ClimbSpeed + 0.7f`, dynamically synchronizing climbing animation cadence with vertical movement speed while removing the standalone animation speed slider. Default climb speed updated to `1.5m/s` (animation speed `2.2`).
+
 ### v5.4.0
 - **Embedded Ladder Climb Animation Asset**: Embedded `valheim-ladderclimb` asset bundle directly into `ValheimVehicles.dll` as a manifest resource with automatic memory stream fallback loading, guaranteeing the ladder climbing animation always loads even if external asset files are omitted during packaging or manual installs.
 - **Top Release Deck Snapping & Forward Landing**: Fixed early dismount (`TopReleaseOffset`) to snap the player up to the boat deck exit surface (`m_exitPoint.position + forward * 0.5f + up * 0.25f`) with forward velocity, preventing the character from falling straight down into the sea/ground in front of the ladder when early release is triggered.
