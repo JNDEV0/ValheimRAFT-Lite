@@ -1,4 +1,4 @@
-# ValheimRAFT Lite SP v5.4.2
+# ValheimRAFT Lite SP v5.4.3
 
 **ValheimRAFT Lite (Single Player)** — Fixed various issues and expanded features. Design and construct custom navigable vessels and movable bases in Valheim. Ship bed, Portal, improved physics, drop anchor, recruit Greydwarf sailors, and take to the skies in flight!
 
@@ -8,16 +8,41 @@
 
 ---
 
-- **ValheimRAFT Lite** is a streamlined edition of ValheimRAFT aiming to improve progression, expand on missing features, enhance simulation stability, and nautical immersion. New material costs(tip: find a greydwarf nest in the black forest biome to farm resin, dandelions in meadows biome).
-- **Build Menu & Nautical Progression**: Reorganized the Boat Hammer into clean, tiered progression tabs (**Resined**, **Nailed**, **Iron**, and **Misc**), with authentic seafaring terminology and balanced material costs. Removed land vehicle pieces, unrelated extra plugins packaged into the original version, and redundant inverted parts. make a hull and deck first, then build with other parts on top.
-- **Helm & Rudder**: Sailing now requires a rudder, with clamped turn angles. the wheel and rudder must face forward. If the steering wheel or rudder is destroyed while underway, the vessel automatically halts safely instead of sailing away.
-- **Simple Propulsion**: Oar/Rudder determines rowing speed, sails determine sailing speed. No weight calculations. You can fly a stone castle now!
-- **Water Wake & Waterline Controls**: Water wake foam and trailing water spray dynamically track the water surface, with customizable float height controls (**Max**, **Base**, and **Min** sliders) in the "Toggle Switch - Boat settings" part menu.
-- **Physics & Flight Stability**: Automatic anchoring when leaving the ship, kinematic locking (preventing vessels from drifting or falling off the map), rock impact damping physics (no bulldozing terrain with the boat), responsive flight controls, and improved ship water physics.
-- **Quality of Life**: Working bed, portals and map pins that accurately track moving vessels, realistic ladder climbing animation with biomechanical hand and foot placement on Jacob's/rope ladder rungs, locked wheel hand IK and activation responsiveness, automatically deploying and retracting rope ladders and anchors, and the ability to toggle boat damage on/off in the "Toggle Switch - Boat settings" part menu to fit your playstyle.
-- **No Jittering on Boat Movement**: Moving the boat no longer causes vessel jitter, and the snow overlay on vehicle parts is disabled by default (fixing the visual glitch when flying at mountain altitude).
-- **Greydwarf Sailors (Optional — Enable in "Toggle Switch - Boat settings" part menu)**: Hire friendly Greydwarf sailors (10 coins, 1 resin upkeep) that throw rocks to defend your vessel against hostiles. Sailors respect closed doors so you can keep them contained in designated areas; otherwise, they wander freely around the boat. Sailors consume resin from nearby onboard containers every few minutes and automatically pick up loose items dropped on the boat, storing them into chests for you. Sailors will eventually mutiny if their resin upkeep runs out. Choose from 19 unique hats to customize your crew! (you can spawn one typing "vehicle hiresailor" in F5 console, after enabling)
-- **Persistent ZDOID Architecture**: Migrated vehicle piece tracking to persistent ZDOIDs, fixing disappearing parts, sector transition desyncs, and save issues. Includes numerous fixes for issues like incorrect vessel piece tracking, collapsing/disappearing parts, infinite loading screens, and bed desync.
+- **ValheimRAFT Lite** is a streamlined single-player edition of ValheimRAFT designed to improve progression, expand missing features, enhance simulation stability, and deepen nautical immersion.
+
+### 🔨 Nautical Progression & Construction
+- **Reorganized Boat Hammer**: Categorized into clean progression tabs (**Resined**, **Nailed**, **Iron**, and **Misc**) with authentic seafaring terminology and balanced material costs. *(Tip: find a Greydwarf nest in the Black Forest for resin, and Meadows for dandelions).*
+- **Focused Piece Palette**: Pruned cluttered land-vehicle parts, bloated third-party plugins, and redundant inverted pieces. Build a sturdy keel, hull, and deck first, then construct your vessel freely on top.
+- **Ship Planters & Maritime Agriculture**: Small and Large ship planters let you cultivate crops aboard your vessel—plant seeds directly from your actionbar (slots 1–8) or using a Cultivator tool.
+
+### ⚓ Helm, Rudder & Propulsion
+- **Helm & Rudder Control**: Navigating under sail requires a rudder (steering oar or sternpost rudder) and a steering wheel facing forward with clamped turn angles. If the helm or rudder is destroyed underway, the ship halts safely to avoid running adrift.
+- **Straightforward Propulsion**: Rudders and oars govern rowing speed, while sails govern sailing velocity. No arbitrary weight penalties—sail or fly even an immense stone castle!
+- **Dynamic Wake & Waterline Settings**: Trailing spray and foam realistically track the water surface. Adjust your waterline with customizable float height sliders (**Max**, **Base**, and **Min**) in the Boat Settings menu.
+
+### 🪜 Rope Ladders & Climbing
+- **Realistic Climbing Animations**: Smooth climbing motion with biomechanical hand and foot placement aligned precisely to Jacob's / rope ladder rungs.
+- **Smooth Top-Deck Release**: Early dismount detection snaps your character cleanly forward onto the deck planks rather than dropping you in front of the ladder or climbing into empty air.
+- **Automatic Deployment & Retraction**: Rope ladders and anchors automatically deploy when disembarking and retract when getting underway.
+
+### 🧭 Moving Bases: Beds, Portals & Map Pins
+- **Onboard Bed Respawns**: Claim a bed on your ship as your active respawn point—it dynamically moves and tracks with your vessel anywhere across the realm.
+- **Mobile Shipboard Portals**: Portals built on your deck travel seamlessly with your ship, letting you teleport directly to and from your vessel while exploring.
+- **Accurate Map Pin Tracking**: Real-time map pins follow your ship's coordinates, anchor state, and custom vessel name without producing ghost duplicate markers.
+
+### 💨 Physics, Flight & Ground Handling
+- **Anchoring & Kinematic Locking**: Automatic anchoring when stepping away from the helm or boarding, with kinematic locking to prevent vessels from drifting away or falling off the edge of the world.
+- **Smooth Flight Controls**: Take to the skies in Flight Mode with dedicated altitude controls, responsive maneuvering, and rock impact damping.
+- **Gentle Ground Landings & Anti-Fallthrough**: Safely land on terrain or beaches in Float Mode without getting catapulted into the air; anti-fallthrough guards keep the hull and rudder resting securely on land.
+- **Zero Jitter & Visual Polishing**: Eliminated camera and vessel movement jitter. Snow overlays on boat pieces are disabled by default, preventing visual blinding whiteouts when flying through mountain altitudes.
+
+### 🧙 Greydwarf Sailors (Optional Feature)
+- **Hirable Crew**: Hire friendly Greydwarf sailors (10 coins, 1 resin upkeep) through the "Toggle Switch - Boat settings" menu or via the `vehicle hiresailor` console command.
+- **Ship Defense & Logistics**: Sailors throw stones to defend your ship against hostiles, respect closed doors to stay within designated quarters, collect loose dropped cargo into chests, and feature 19 custom nautical hats!
+
+### 💾 Architecture & Stability
+- **Persistent ZDOID Architecture**: Migrated all vehicle piece tracking to persistent ZDOIDs, eliminating disappearing parts, sector transition desyncs, infinite loading screens, and save corruption.
+- **In-Game Boat Settings Menu**: Build a "Toggle Switch - Boat settings" piece to access real-time settings: toggle boat damage (god mode), adjust ladder climb speeds, fine-tune waterlines, or enable Creative Free-Build Mode (1 Wood per piece).
 
 ---
 

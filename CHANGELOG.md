@@ -6,6 +6,14 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
+## [5.4.3] - 2026-10-11
+
+### Changed
+
+- **Documentation Organization**: Completely restructured the README into clean, categorized sections covering Nautical Progression & Construction, Helm & Propulsion, Rope Ladders & Climbing, Mobile Base Systems (Beds, Portals, Map Pins), Flight & Physics, Greydwarf Sailors, and Core Stability.
+- **Terminology Alignment**: Standardized terminology across manifest descriptions, documentation, and in-game UI to consistently reference "Greydwarf Sailors".
+- **Package Distribution**: Packaged dedicated `CHANGELOG.md` directly into the Thunderstore archive root to populate the Changelog tab in Thunderstore and mod managers (r2modman).
+
 ## [5.4.2] - 2026-10-11
 
 ### Fixed

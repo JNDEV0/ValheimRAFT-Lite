@@ -67,6 +67,11 @@ git push origin main
 
 ## 4. Release History Highlights
 
+### v5.4.3
+- **Categorized Feature Documentation**: Reorganized mod documentation into distinct categories (Nautical Progression, Helm & Propulsion, Rope Ladders, Mobile Bases, Physics & Flight, Greydwarf Sailors, Architecture & Stability) for clarity.
+- **Terminology Standardization**: Standardized all references to "Greydwarf Sailors" across manifest descriptions, in-game UI, and documentation.
+- **Dedicated Changelog Tab Distribution**: Included `CHANGELOG.md` directly into the Thunderstore package root to properly populate Thunderstore and r2modman Changelog tabs.
+
 ### v5.4.2
 - **Fixed Float Mode Ground Impact Violent Y-Kickup**: Fixed a critical calculation bug in `VehicleMovementController.UpdateColliderPositions` where touching the ground or rudder while in Float Mode over land was adding the full world ground elevation (`_lastHighestGroundPoint`, ~45–55m) directly to `position.y`, violently catapulting the vessel 50–55m into the sky and causing an infinite falling/kickup loop. Corrected the anti-fallthrough penetration logic, capped maximum upward displacement strictly to 2.0m, zeroed downward linear velocity upon ground impact to prevent bounces, and ensured land terrain elevation does not pollute water ballast `TargetHeight`.
 - **Pruned Ghost Unloaded Ships & Filtered Non-Vehicle ZDOs**: Updated `VehicleRecallController.DoesVehicleExist` and `VehicleRecallController.GetVehicleLocation` to strictly validate vehicle prefabs (`WaterVehicleShip` and `LandVehicle`) and verify non-zero piece counts (`VehiclePiecesController.EnsurePiecesForVehicle(id).Count > 0`). Filtered `MapPinSync.UpdateVehiclePins` active vehicle lookups to ignore non-vehicle persistent IDs (such as toggle switches, rope ladder anchors, carrots, and dock components), completely eliminating ghost unloaded ship logs and cleaning up phantom map pins.

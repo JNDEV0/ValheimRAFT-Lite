@@ -1,9 +1,9 @@
 {
   "name": "ValheimRAFT_Lite",
-  "version_number": "5.4.2",
+  "version_number": "5.4.3",
   "author": "team0",
   "website_url": "https://github.com/JNDEV0/ValheimRAFT-Lite",
-  "description": "ValheimRAFT Lite (Single Player) — Fixed issues and expanded features. Design and construct custom navigable vessels and movable bases in Valheim. ship bed, improved physics, drop anchor, recruit Greydwarf deckhands, and take to the skies in flight!",
+  "description": "ValheimRAFT Lite (Single Player) — Fixed issues and expanded features. Design and construct custom navigable vessels and movable bases in Valheim. ship bed, improved physics, drop anchor, recruit Greydwarf sailors, and take to the skies in flight!",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2350",
     "ValheimModding-Jotunn-2.30.0",
