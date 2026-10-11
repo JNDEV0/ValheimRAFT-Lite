@@ -6,6 +6,89 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
+## [5.4.2] - 2026-10-11
+
+### Fixed
+
+- **Float Mode Ground Impact Kickup**: Fixed violent +50-55m Y-axis launch when touching ground/rudder in Float Mode over land. Corrected the anti-fallthrough penetration math, capped maximum lift strictly to 2.0m, zeroed downward linear velocity upon ground impact to prevent bounces, and ensured land terrain elevation does not pollute water ballast `TargetHeight`.
+- **Ghost Unloaded Ships Pruning**: Strictly validate vehicle prefabs (`WaterVehicleShip` and `LandVehicle`) and verify non-zero piece counts (`EnsurePiecesForVehicle(id).Count > 0`). Filtered `MapPinSync` active vehicle lookups to ignore non-vehicle persistent IDs (toggle switches, rope ladder anchors, carrots, and dock components), completely eliminating ghost unloaded ship logs and cleaning up phantom map pins.
+
+## [5.4.1] - 2026-10-11
+
+### Added
+
+- **Top Release Clearance Tuning Slider**: Added "Top Release Clearance" slider (`LadderTopReleaseClearance`, range -1.2m to +0.8m, default -0.6m) to the Boat Settings toggle menu (`VehicleGui.cs`), eliminating character overshooting above the deck and enabling precision fine-tuning so feet land directly on deck planks upon top release.
+
+### Changed
+
+- **Hardset Rung Alignment & Early Dismount**: Hardcoded ideal tested values for Jacob's / rope ladders: `ClimbOffset = -0.5f` (perfect rung alignment) and `TopReleaseOffset = -1.0f` (immediate top release right as hands crest the deck edge), removing both redundant sliders from the menu.
+- **Coupled Speed Cadence & Streamlined Menu**: Hardcoded biomechanical speed ratio `AnimationSpeed = ClimbSpeed + 0.7f`, dynamically synchronizing climbing animation cadence with vertical movement speed while removing the standalone animation speed slider. Default climb speed updated to `1.5m/s` (animation speed `2.2`).
+
+## [5.4.0] - 2026-10-11
+
+### Added
+
+- **Embedded Ladder Climb Animation Asset**: Embedded `valheim-ladderclimb` asset bundle directly into `ValheimVehicles.dll` as a manifest resource with automatic memory stream fallback loading, guaranteeing the ladder climbing animation always loads even if external asset files are omitted during packaging or manual installs.
+
+### Fixed
+
+- **Top Release Deck Snapping & Forward Landing**: Fixed early dismount (`TopReleaseOffset`) to snap the player up to the boat deck exit surface (`m_exitPoint.position + forward * 0.5f + up * 0.25f`) with forward velocity, preventing the character from falling straight down into the sea/ground in front of the ladder when early release is triggered.
+- **Immediate Mecanim Climb State Activation**: Forced immediate animator state activation (`anim.Play("attach_mast", 0, phase); anim.Update(0f);`) upon ladder attachment, eliminating transition freezes on frame 0.
+
+## [5.3.9] - 2026-10-11
+
+### Added
+
+- **Ship Planter Direct Hotbar Seed Planting**: Implemented `Interactable` and `Hoverable` on `CultivatableComponent` (`Ship Planter - Small` and `Large`), allowing players to select seeds on the hotbar (slots 1–8) and plant them directly into the soil bed without receiving "Use on what?" errors.
+- **Dynamic Crop Resolution & Spacing Protection**: Added dynamic lookup from the Cultivator piece table (with comprehensive vanilla and modded crop fallbacks), normal-aligned placement rotation on rolling vessels, and 0.35m anti-stacking spacing protection to prevent accidental overlapping plantings.
+
+### Fixed
+
+- **Cultivator Tool Compatibility**: Enhanced `Plantable_Patch` and `Player_Patch` to validate both `NeedCultivated` and `Invalid` placement states on `CultivatableComponent` pieces via `GetComponentInParent`, ensuring smooth placement with both Cultivator tools and actionbar items.
+
+## [5.3.8] - 2026-10-11
+
+### Added
+
+- **Ladder Alignment & Early Dismount Tuning Sliders**: Added "Climbing Offset" (`LadderClimbOffset`) and "Top Release Offset" (`LadderTopReleaseOffset`) sliders to the Boat Settings toggle switch menu (`VehicleGui.cs`) backed by persistent BepInEx configurations.
+
+## [5.3.7] - 2026-10-11
+
+### Added
+
+- **In-Game Speed Tuning Sliders**: Added two real-time sliders ("Ladder Climb Speed" and "Ladder Animation Speed") to the Boat Settings toggle switch menu.
+
+### Changed
+
+- **Uniform Ladder Climb Speed**: Removed all sprint / Shift speed multipliers during ladder climbing to enforce a consistent, uniform vertical velocity ascending and descending.
+- **Fixed Inverted Animation Direction**: Fixed the inverted scrub phase calculation so climbing up plays the upward climbing motion and climbing down plays downward motion.
+
+## [5.3.6] - 2026-10-11
+
+### Added
+
+- **Jacob's / Rope Ladder Biomechanical IK & Gait**: Extracted standalone `valheim-ladderclimb` animation clip and implemented deterministic scrubbing gait (`LadderGait.cs`). Integrated analytical 2-bone arm IK (`Bend`) and rung snap targeting on Jacob's ladder / rope ladders (`RopeLadderComponent.cs`). Suppressed vanilla foot IK interference in `CharacterAnimEvent_Patch.cs` to prevent feet snapping downwards to terrain/water colliders.
+
+## [5.3.5] - 2026-10-10
+
+### Fixed
+
+- **Map Pin Bed Target Guard**: `BoatBedSpawnController.VehicleHasOnboardBed` ensures the map icon and `[Spawn]` label never target boats that lack an onboard bed piece, resolving an issue where claiming a land bed near a newly built boat produced duplicate bed map pins.
+
+### Changed
+
+- **Nautical Recipe Rebalances**: Rebalanced material costs across Boat Hammer categories (Ship's Helm, Steering Oar, Sternpost Rudder, Sails, Ship Anchor, Rope Ladder, Deck Planking, Keel Extensions, Portholes).
+
+## [5.3.1] - 2026-10-09
+
+### Added
+
+- **Greydwarf Sailors (Easter Egg)**: Added `VehicleGlobalConfig.EnableGreydwarfSailors` toggle. Hire friendly sailors (10 coins, 1 resin upkeep) with 19 unique hats to defend your ship with rocks and haul loose items.
+- **Dynamic Water Wake Controls**: Rudder water wake foam and waterline height sliders (<kbd>Shift</kbd>+<kbd>E</kbd>).
+- **Persistent ZDOID Architecture**: Migrated vehicle piece tracking to persistent ZDOIDs, fixing disappearing parts, sector transition desyncs, and save issues.
+
+---
+
 ## [4.2.2] - 2026-03-14
 
 ### Fixed

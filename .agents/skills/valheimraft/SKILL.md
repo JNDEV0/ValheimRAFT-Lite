@@ -43,10 +43,10 @@ Run MSBuild with `SolutionDir` defined:
 ### Step 3: Desktop Packaging & r2modman Testing
 Create directory `C:\Users\User\Desktop\ValheimRAFT <version>`:
 1. **Thunderstore Zip** (`ValheimRAFT-<version>-Thunderstore.zip`):
-   - Flat root containing `manifest.json`, `icon.png`, `README.md`, `LICENSE`, all DLLs/PDBs, `Assets/valheim-ladderclimb`, and `Assets/Translations/English/valheimraft.json` *(English ONLY)*.
+   - Flat root containing `manifest.json`, `icon.png`, `README.md`, `CHANGELOG.md`, `LICENSE`, all DLLs/PDBs, `Assets/valheim-ladderclimb`, and `Assets/Translations/English/valheimraft.json` *(English ONLY)*.
    - **For local testing**: Import this `.zip` file directly into **r2modman** (`Settings` -> `Import local mod`). Never manually copy binaries into the game's `BepInEx/plugins` folder.
 2. **NexusMods Zip** (`ValheimRAFT-<version>-NexusMods.zip`):
-   - Contains a root `ValheimRAFT/` folder with all DLLs, PDBs, ServerSync, `Assets/valheim-ladderclimb`, English translation json ONLY, and README.
+   - Contains a root `ValheimRAFT/` folder with all DLLs, PDBs, ServerSync, `Assets/valheim-ladderclimb`, English translation json ONLY, `CHANGELOG.md`, and `README.md`.
 3. Unpacked `NexusMods/` and `Thunderstore/` folders alongside the zips for manual inspection.
 
 ### Step 4: Git Commit & Push
