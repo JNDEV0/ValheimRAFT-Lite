@@ -248,12 +248,18 @@ public class MapPinSync : MonoBehaviour
     {
       foreach (var kvp in guids)
       {
-        if (kvp.Key != 0) activeVehicleIds.Add(kvp.Key);
+        if (kvp.Key != 0 && VehicleRecallController.DoesVehicleExist(kvp.Key))
+        {
+          activeVehicleIds.Add(kvp.Key);
+        }
       }
     }
     foreach (var loadedId in VehicleManager.VehicleInstances.Keys)
     {
-      if (loadedId != 0) activeVehicleIds.Add(loadedId);
+      if (loadedId != 0 && VehicleRecallController.DoesVehicleExist(loadedId))
+      {
+        activeVehicleIds.Add(loadedId);
+      }
     }
 
     var deadVehicleIds = new List<int>();

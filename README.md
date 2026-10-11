@@ -1,4 +1,4 @@
-# ValheimRAFT Lite SP v5.4.1
+# ValheimRAFT Lite SP v5.4.2
 
 **ValheimRAFT Lite (Single Player)** — Fixed various issues and expanded features. Design and construct custom navigable vessels and movable bases in Valheim. Ship bed, Portal, improved physics, drop anchor, recruit Greydwarf sailors, and take to the skies in flight!
 
@@ -25,15 +25,17 @@
 
 These mods complement **ValheimRAFT Lite** particularly well for an expansive nautical and exploration playthrough:
 
-- **[Monstrum](https://thunderstore.io/c/valheim/p/Therzie/Monstrum/)** by Therzie: Adds diverse land animals, monsters across the world.
-- **[SeaAnimals](https://thunderstore.io/c/valheim/p/Marlthon/SeaAnimals/)** by Marlthon: Brings the ocean biome to life with dolphins, sharks, whales, and more sea creatures to encounter on your voyages.
+- **[Monstrum](https://thunderstore.io/c/valheim/p/Therzie/Monstrum/)** by Therzie: Adds arious land animals and monsters throughout the world.
+- **[SeaAnimals](https://thunderstore.io/c/valheim/p/Marlthon/SeaAnimals/)** by Marlthon: Brings the ocean biome to life with dolphins, sharks, whales, and other sea creatures to encounter on your voyages.
+- **[Dive_In](https://thunderstore.io/c/valheim/p/sighsorry/Dive_In/)** by sighsorry: Adds underwater plants, allows sea creatures to dive as well as the player, underwater combat, more to explore while sailing, and you can retrieve materials that sink underwater.
+- **[AirAnimals](https://thunderstore.io/c/valheim/p/Marlthon/AirAnimals/)** by Marlthon: Adds more flying animals to encounter. Land Ho!
 - **[Warfare](https://thunderstore.io/c/valheim/p/Therzie/Warfare/) & [Armory](https://thunderstore.io/c/valheim/p/Therzie/Armory/) & [Wizardry](https://thunderstore.io/c/valheim/p/Therzie/Wizardry/)** by Therzie: Expands weapons and armor crafted from materials dropped by Monstrum creatures, wizardry goes well with the eitr generator and battery unlocked later in game (kept from zolantris-valheimraft).
 - **[RecyclePlus](https://thunderstore.io/c/valheim/p/TastyChickenLegs/RecyclePlus/)** by TastyChickenLegs: Allows you to recycle or destroy items. better than leaving stuff you dont want on the floor.
 - **[OdinArchitect](https://thunderstore.io/c/valheim/p/OdinPlus/OdinArchitect/)** by OdinPlus: Adds elevators, working drawbridges, 205+ architectural pieces that work great on large vessels and docks.
-- **[OdinsKingdom](https://thunderstore.io/c/valheim/p/OdinPlus/OdinsKingdom/)** by OdinPlus: Castle walls and fortress parts—ideal for constructing a floating or flying sky fortress.
+- **[OdinsKingdom](https://thunderstore.io/c/valheim/p/OdinPlus/OdinsKingdom/)** by OdinPlus: Castle walls and fortress parts. Ideal for constructing a floating or flying sky fortress.
 - **[More_World_Locations_AIO](https://thunderstore.io/c/valheim/p/warpalicious/More_World_Locations_AIO/)** by warpalicious: Adds dozens of hand-crafted dungeons, camps, and coastal points of interest to discover while sailing.
 - **[ImmersiveTrader](https://thunderstore.io/c/valheim/p/Hypnogoogic/ImmersiveTrader/)** by Hypnogoogic: Take on shipping and transport contracts between traders across the map for profit and adventure.
-- **[SeedBed](https://thunderstore.io/c/valheim/p/blacks7ar/SeedBed/)** by blacks7ar: Adds a compact raised bed to plant on that works well on a boat where soil space is limited.
+- **[SeedBed](https://thunderstore.io/c/valheim/p/blacks7ar/SeedBed/)** by blacks7ar: Adds a compact raised bed to plant seeds onto. Works well on a boat where soil space is limited. requires ymir's flesh bought from haldor trader.
 - **[ODINFLIGHT](https://thunderstore.io/c/valheim/p/Pfhoenix/ODINFLIGHT/)** by Pfhoenix: Adds glider wings to skydive and glide down safely when leaping from a flying vessel in flight mode.
 
 ---

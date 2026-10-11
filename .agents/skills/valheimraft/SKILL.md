@@ -67,6 +67,10 @@ git push origin main
 
 ## 4. Release History Highlights
 
+### v5.4.2
+- **Fixed Float Mode Ground Impact Violent Y-Kickup**: Fixed a critical calculation bug in `VehicleMovementController.UpdateColliderPositions` where touching the ground or rudder while in Float Mode over land was adding the full world ground elevation (`_lastHighestGroundPoint`, ~45–55m) directly to `position.y`, violently catapulting the vessel 50–55m into the sky and causing an infinite falling/kickup loop. Corrected the anti-fallthrough penetration logic, capped maximum upward displacement strictly to 2.0m, zeroed downward linear velocity upon ground impact to prevent bounces, and ensured land terrain elevation does not pollute water ballast `TargetHeight`.
+- **Pruned Ghost Unloaded Ships & Filtered Non-Vehicle ZDOs**: Updated `VehicleRecallController.DoesVehicleExist` and `VehicleRecallController.GetVehicleLocation` to strictly validate vehicle prefabs (`WaterVehicleShip` and `LandVehicle`) and verify non-zero piece counts (`VehiclePiecesController.EnsurePiecesForVehicle(id).Count > 0`). Filtered `MapPinSync.UpdateVehiclePins` active vehicle lookups to ignore non-vehicle persistent IDs (such as toggle switches, rope ladder anchors, carrots, and dock components), completely eliminating ghost unloaded ship logs and cleaning up phantom map pins.
+
 ### v5.4.1
 - **Top Release Clearance Tuning Slider**: Added "Top Release Clearance" slider (`LadderTopReleaseClearance`, range -1.2m to +0.8m, default -0.6m) to the Boat Settings toggle menu (`VehicleGui.cs`), eliminating character overshooting above the deck and enabling precision fine-tuning so feet land directly on deck planks upon top release.
 - **Hardset Rung Alignment & Early Dismount**: Hardcoded ideal tested values for Jacob's / rope ladders: `ClimbOffset = -0.5f` (perfect rung alignment) and `TopReleaseOffset = -1.0f` (immediate top release right as hands crest the deck edge), removing both redundant sliders from the menu.

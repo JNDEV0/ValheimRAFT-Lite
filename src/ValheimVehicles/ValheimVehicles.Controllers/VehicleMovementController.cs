@@ -1,4 +1,4 @@
-﻿#region
+#region
 
 
 
@@ -3922,101 +3922,52 @@
     /// </summary>
 
     private void UpdateColliderPositions()
-
     {
-
-      if (PiecesController == null) return;
-
-      var convexHullRelativeBounds =
-
-        PiecesController.convexHullComponent.GetConvexHullBounds(true);
-
-
-
-      // var expectedLowestBlockingColliderPoint =
-
-      //   BlockingCollider.transform.position.y - BlockingCollider.bounds.extents.y;
-
-      var expectedLowestBlockingColliderPoint =
-
-        PiecesController.transform.position.y +
-
-        convexHullRelativeBounds.min.y;
-
-
-
+      if (PiecesController == null || PiecesController.convexHullComponent == null) return;
       if (IsFlying() || !WaterConfig.WaterBallastEnabled.Value) return;
 
+      var convexHullRelativeBounds =
+        PiecesController.convexHullComponent.GetConvexHullBounds(true);
 
+      var position = transform.position;
+      var expectedLowestBlockingColliderPoint =
+        position.y + convexHullRelativeBounds.min.y;
 
-      // ForceUpdates TargetPosition in case the blocking collider is below the ground. This would cause issues, as the vehicle would then not be able to ascend properly.
-
-      if (_lastHighestGroundPoint > expectedLowestBlockingColliderPoint)
-
+      var waterLevel = ZoneSystem.instance != null ? ZoneSystem.instance.m_waterLevel : 30f;
+      float groundAtVehicle = _lastHighestGroundPoint;
+      if (ZoneSystem.instance != null && ZoneSystem.instance.GetGroundHeight(position, out var centerGround))
       {
+        groundAtVehicle = centerGround;
+      }
 
-        // will be a positive number.
+      bool isOverLand = groundAtVehicle > waterLevel + 1f;
 
-        var heightDifference = _lastHighestGroundPoint -
-
-                               expectedLowestBlockingColliderPoint;
-
-        // we force update it.
-
+      // In water: gently adjust ballast TargetHeight if resting/scraping on shallow seabed
+      if (!isOverLand && _lastHighestGroundPoint > expectedLowestBlockingColliderPoint)
+      {
+        var heightDifference = Mathf.Clamp(_lastHighestGroundPoint - expectedLowestBlockingColliderPoint, 0f, 1f);
         UpdateTargetHeight(TargetHeight + heightDifference);
-
       }
 
-
-
-      // ForceUpdateIfBelowGround, this can happen if driving the vehicle forwards into the ground.
-
-      // Prevents the ship from exceeding the lowest height above the water
-
-      // if (_lastHighestGroundPoint > OnboardCollider.bounds.min.y)
-
-      // {
-
-      //   // will be a positive number.
-
-      //   var heightDifference = _lastHighestGroundPoint -
-
-      //                          OnboardCollider.bounds.min.y;
-
-      //   // we force update it.
-
-      //   UpdateTargetHeight(TargetHeight + heightDifference);
-
-      // }
-
-
-
-      // super stuck. do a direct update. But protect the players from being launched. Yikes.
-
-      if (_lastHighestGroundPoint > PiecesController.transform.position.y +
-
-          convexHullRelativeBounds.center.y)
-
+      // Anti-fallthrough guard: only trigger if the lowest point has physically clipped into the terrain
+      if (groundAtVehicle > expectedLowestBlockingColliderPoint + 0.1f)
       {
+        var desiredY = groundAtVehicle - convexHullRelativeBounds.min.y;
+        var lift = Mathf.Clamp(desiredY - position.y, 0f, 2f);
 
-        // force updates the vehicle to this position.
+        if (lift > 0.01f)
+        {
+          position = new Vector3(position.x, position.y + lift, position.z);
+          transform.position = position;
 
-        var position = transform.position;
+          if (m_body != null && !m_body.isKinematic && m_body.linearVelocity.y < 0f)
+          {
+            m_body.linearVelocity = new Vector3(m_body.linearVelocity.x, 0f, m_body.linearVelocity.z);
+          }
 
-        position = new Vector3(position.x,
-
-          position.y + (_lastHighestGroundPoint -
-
-                        convexHullRelativeBounds.center.y),
-
-          position.z);
-
-        transform.position = position;
-
-        UpdateTargetHeight(0);
-
+          UpdateTargetHeight(0);
+        }
       }
-
     }
 
 

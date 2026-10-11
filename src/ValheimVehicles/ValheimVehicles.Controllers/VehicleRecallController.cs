@@ -50,7 +50,7 @@ public static class VehicleRecallController
     foreach (var kvp in VehicleManager.VehicleInstances)
     {
       var vm = kvp.Value;
-      if (vm != null && vm.m_nview != null && vm.m_nview.GetZDO() != null)
+      if (vm != null && vm.m_nview != null && vm.m_nview.GetZDO() != null && DoesVehicleExist(kvp.Key))
       {
         var zdo = vm.m_nview.GetZDO();
         if (zdo.GetLong(ZDOVars.s_creator, 0) == playerId)
@@ -64,8 +64,8 @@ public static class VehicleRecallController
     // 4. Scan all ZDOs in ZDOMan for vehicles created by this player
     if (ZDOMan.instance != null && ZDOMan.instance.m_objectsByID != null)
     {
-      var waterShipPrefab = PrefabNames.WaterVehicleShip.GetStableHashCode();
-      var landShipPrefab = PrefabNames.LandVehicle.GetStableHashCode();
+      var waterShipPrefab = PrefabNameHashes.WaterVehicleShip;
+      var landShipPrefab = PrefabNameHashes.LandVehicle;
 
       foreach (var kvp in ZDOMan.instance.m_objectsByID)
       {
@@ -77,7 +77,7 @@ public static class VehicleRecallController
           if (zdo.GetLong(ZDOVars.s_creator, 0) == playerId)
           {
             var pId = zdo.GetInt(ZdoVarController.PersistentUidHash, 0);
-            if (pId != 0)
+            if (pId != 0 && DoesVehicleExist(pId))
             {
               if (LoopTracker.Enabled) LoggerProvider.LogInfo($"[VesselRecall] Found distant ZDO vessel ID {pId} created by player ({playerId})");
               return pId;
@@ -127,22 +127,49 @@ public static class VehicleRecallController
     return 0;
   }
 
+  public static bool IsVehiclePrefab(int prefabHash)
+  {
+    return prefabHash == PrefabNameHashes.WaterVehicleShip ||
+           prefabHash == PrefabNameHashes.LandVehicle;
+  }
+
   public static bool DoesVehicleExist(int vehicleId)
   {
     if (vehicleId == 0) return false;
-    if (VehicleManager.VehicleInstances.ContainsKey(vehicleId)) return true;
-    if (ZdoWatchController.Instance != null && ZdoWatchController.Instance.GetZdo(vehicleId) != null) return true;
+    if (VehicleManager.VehicleInstances.TryGetValue(vehicleId, out var vm) && vm != null)
+    {
+      var pieceCount = VehiclePiecesController.EnsurePiecesForVehicle(vehicleId).Count;
+      if (pieceCount > 0 || (vm.PiecesController != null && vm.PiecesController.m_pieces.Count > 0))
+      {
+        return true;
+      }
+      return false;
+    }
 
-    if (ZDOMan.instance != null && ZDOMan.instance.m_objectsByID != null)
+    ZDO? zdo = null;
+    if (ZdoWatchController.Instance != null)
+    {
+      zdo = ZdoWatchController.Instance.GetZdo(vehicleId);
+    }
+
+    if (zdo == null && ZDOMan.instance != null && ZDOMan.instance.m_objectsByID != null)
     {
       foreach (var kvp in ZDOMan.instance.m_objectsByID)
       {
         if (kvp.Value != null && kvp.Value.GetInt(ZdoVarController.PersistentUidHash, 0) == vehicleId)
         {
-          return true;
+          zdo = kvp.Value;
+          break;
         }
       }
     }
+
+    if (zdo != null && zdo.IsValid() && IsVehiclePrefab(zdo.GetPrefab()))
+    {
+      var pieces = VehiclePiecesController.EnsurePiecesForVehicle(vehicleId);
+      return pieces != null && pieces.Count > 0;
+    }
+
     return false;
   }
 
@@ -157,6 +184,12 @@ public static class VehicleRecallController
 
     if (VehicleManager.VehicleInstances.TryGetValue(vehicleId, out vehicleManager) && vehicleManager != null)
     {
+      var pieces = VehiclePiecesController.EnsurePiecesForVehicle(vehicleId);
+      if (pieces.Count == 0 && (vehicleManager.PiecesController == null || vehicleManager.PiecesController.m_pieces.Count == 0))
+      {
+        return false;
+      }
+
       position = vehicleManager.transform.position;
       rotation = vehicleManager.transform.rotation;
       isLoaded = true;
@@ -182,8 +215,14 @@ public static class VehicleRecallController
       }
     }
 
-    if (zdo != null && zdo.IsValid())
+    if (zdo != null && zdo.IsValid() && IsVehiclePrefab(zdo.GetPrefab()))
     {
+      var pieces = VehiclePiecesController.EnsurePiecesForVehicle(vehicleId);
+      if (pieces == null || pieces.Count == 0)
+      {
+        return false;
+      }
+
       position = zdo.GetPosition();
       rotation = zdo.GetRotation();
       isLoaded = false;
