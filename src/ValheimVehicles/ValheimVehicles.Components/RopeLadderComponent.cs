@@ -241,36 +241,57 @@
 
     public void UpdateSteps()
     {
-      if (!m_stepObject) return;
-
-      var downDir = m_attachPoint != null ? -m_attachPoint.transform.up : -transform.up;
-      if (Vector3.Angle(downDir, Vector3.down) > 75f)
-        return;
-
-      if (rayMask == 0)
-        rayMask = LayerMask.GetMask("Default", "static_solid", "Default_small",
-          "piece", "terrain");
-
-      if (vehiclePiecesController == null)
+      try
       {
-        vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
+        if (m_stepObject == null)
+        {
+          var stepT = transform.Find("step");
+          if (stepT != null) m_stepObject = stepT.gameObject;
+          if (m_stepObject == null) return;
+        }
+
+        if (m_attachPoint == null)
+        {
+          m_attachPoint = transform.Find("attachpoint");
+          if (m_attachPoint == null)
+          {
+            m_attachPoint = transform;
+          }
+        }
+
+        if (m_collider == null)
+        {
+          m_collider = GetComponentInChildren<BoxCollider>();
+        }
+
+        var downDir = -m_attachPoint.transform.up;
+        if (Vector3.Angle(downDir, Vector3.down) > 75f)
+          return;
+
+        if (rayMask == 0)
+          rayMask = LayerMask.GetMask("Default", "static_solid", "Default_small",
+            "piece", "terrain");
+
         if (vehiclePiecesController == null)
         {
-          var vm = GetComponentInParent<VehicleManager>();
-          if (vm != null) vehiclePiecesController = vm.PiecesController;
+          vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
+          if (vehiclePiecesController == null)
+          {
+            var vm = GetComponentInParent<VehicleManager>();
+            if (vm != null) vehiclePiecesController = vm.PiecesController;
+          }
         }
-      }
 
-      m_ladderHeight = 500f;
-      var hitpoint = new Vector3(m_attachPoint.transform.position.x, 0f,
-        m_attachPoint.transform.position.z);
-      var raystart = new Vector3(m_attachPoint.transform.position.x,
-        transform.position.y,
-        m_attachPoint.transform.position.z);
-      var hits = Physics.RaycastAll(
-        new Ray(raystart, -m_attachPoint.transform.up),
-        m_ladderHeight, rayMask);
-      bool hasGroundHit = false;
+        m_ladderHeight = 500f;
+        var hitpoint = new Vector3(m_attachPoint.transform.position.x, 0f,
+          m_attachPoint.transform.position.z);
+        var raystart = new Vector3(m_attachPoint.transform.position.x,
+          transform.position.y,
+          m_attachPoint.transform.position.z);
+        var hits = Physics.RaycastAll(
+          new Ray(raystart, -m_attachPoint.transform.up),
+          m_ladderHeight, rayMask);
+        bool hasGroundHit = false;
       for (var i = 0; i < hits.Length; i++)
       {
         var hit = hits[i];
@@ -418,6 +439,11 @@
           new Vector3(0f, (0f - m_ladderHeight) / 2f, 0f);
       }
     }
+    catch (System.Exception e)
+    {
+      LoggerProvider.LogDev($"Error updating ladder steps: {e.Message}");
+    }
+  }
 
     public void UpdateIK(Animator animator)
     {

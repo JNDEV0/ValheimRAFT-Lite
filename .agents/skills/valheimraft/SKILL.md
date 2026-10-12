@@ -9,6 +9,14 @@ This skill provides some contextual memory, architectural patterns starting refe
 
 ---
 
+## Low Token Limit Workflow: "low token limit, add to future prompts"
+When the user states "low token limit, add to future prompts" (or similar):
+- **DO NOT** edit code, run builds, update versions, or expand `SKILL.md`.
+- **ONLY** append the reported bug/issue/complaint into [`futureprompts.md`](file:///d:/SteamLibrary/steamapps/common/Valheim/ValheimMods_Repo/futureprompts.md) in the repository root, separating each issue with `---`.
+- Keep the response short, acknowledge the issue was added, and await future prompt.
+
+---
+
 ## 1. Project Overview & Repository Layout
 
 - **Git Repository**: `D:\SteamLibrary\steamapps\common\Valheim\ValheimMods_Repo`
@@ -66,6 +74,9 @@ git push origin main
 ---
 
 ## 4. Release History Highlights
+
+### v5.4.5
+- **Fixed Rope Ladder Sector Activation NullReferenceException**: Fixed a `NullReferenceException` thrown in `RopeLadderComponent.UpdateSteps()` during early sector loading and piece initialization (`VehiclePiecesController.AddPieceDataForComponents`). Added lazy-initialization and fallback guards for `m_attachPoint`, `m_stepObject`, and `m_collider`, wrapped step calculations in try-catch handlers, and deferred early initialization step updates until vehicle piece activation completes.
 
 ### v5.4.4
 - **Fixed Rope Ladder Sector Reload & Extension**: Fixed rope ladders stuck at 1 rung upon sector unload/reload. Replaced restrictive world Euler angle checks with vertical deviation angles (supporting rolling vessels and sloping beach shorelines), filtered out mounting surface hits within 0.4m, and hooked automatic ladder extension upon piece addition and sector piece activation completion (`UpdateAllLadders`).

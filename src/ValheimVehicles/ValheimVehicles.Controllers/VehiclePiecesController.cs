@@ -1187,7 +1187,17 @@
               m_ladders.Add(ladder);
             }
             ladder.vehiclePiecesController = this;
-            ladder.UpdateSteps();
+            if (isNew || BaseVehicleInitState == InitializationState.Complete)
+            {
+              try
+              {
+                ladder.UpdateSteps();
+              }
+              catch (System.Exception e)
+              {
+                LoggerProvider.LogDev($"Error in initial ladder.UpdateSteps: {e.Message}");
+              }
+            }
             break;
         }
       }
@@ -1590,8 +1600,15 @@
         {
           if (ladder != null)
           {
-            ladder.vehiclePiecesController = this;
-            ladder.UpdateSteps();
+            try
+            {
+              ladder.vehiclePiecesController = this;
+              ladder.UpdateSteps();
+            }
+            catch (System.Exception e)
+            {
+              LoggerProvider.LogDev($"Error updating ladder steps in UpdateAllLadders: {e.Message}");
+            }
           }
         }
       }

@@ -6,6 +6,12 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
+## [5.4.5] - 2026-10-12
+
+### Fixed
+
+- **Rope Ladder Sector Activation NullReferenceException**: Fixed a `NullReferenceException` thrown in `RopeLadderComponent.UpdateSteps()` during early sector loading and piece initialization (`VehiclePiecesController.AddPieceDataForComponents`). Added lazy-initialization and fallback guards for `m_attachPoint`, `m_stepObject`, and `m_collider`, wrapped step calculations in try-catch handlers, and deferred early initialization step updates until vehicle piece activation completes.
+
 ## [5.4.4] - 2026-10-12
 
 ### Fixed
