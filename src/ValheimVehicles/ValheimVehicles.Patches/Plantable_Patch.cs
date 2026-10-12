@@ -2,6 +2,8 @@ using HarmonyLib;
 using UnityEngine;
 using ValheimVehicles.Components;
 using ValheimVehicles.Controllers;
+using ValheimVehicles.Shared.Constants;
+using ZdoWatcher;
 
 namespace ValheimVehicles.Patches;
 
@@ -77,45 +79,96 @@ public class Plantable_Patch
     return false;
   }
 
+  internal struct PlantGrowState
+  {
+    public int cultivatableParentId;
+    public int vehicleParentId;
+    public VehiclePiecesController? piecesController;
+    public Vector3 localPos;
+    public Vector3 localEuler;
+  }
+
   [HarmonyPatch(typeof(Plant), "Grow")]
   [HarmonyPrefix]
-  private static void Plant_Grow_Prefix(Plant __instance, out int __state)
+  private static void Plant_Grow_Prefix(Plant __instance, out PlantGrowState __state)
   {
-    // Capture the parent ID before the plant is destroyed
-    __state = 0;
+    __state = default;
     if (!__instance || __instance.m_nview == null || __instance.m_nview.m_zdo == null) return;
     try
     {
-      __state = CultivatableComponent.GetParentID(__instance.m_nview);
+      __state.cultivatableParentId = CultivatableComponent.GetParentID(__instance.m_nview);
+      __state.vehicleParentId = __instance.m_nview.m_zdo.GetInt(VehicleZdoVars.MBParentId, 0);
+      __state.piecesController = __instance.GetComponentInParent<VehiclePiecesController>();
+
+      if (__state.piecesController == null && __state.vehicleParentId != 0)
+      {
+        VehiclePiecesController.ActiveInstances.TryGetValue(__state.vehicleParentId, out __state.piecesController);
+      }
+
+      if (__state.vehicleParentId == 0 && __state.cultivatableParentId != 0)
+      {
+        var planterZdo = ZdoWatchController.Instance.GetZdo(__state.cultivatableParentId);
+        if (planterZdo != null)
+        {
+          __state.vehicleParentId = planterZdo.GetInt(VehicleZdoVars.MBParentId, 0);
+          if (__state.piecesController == null && __state.vehicleParentId != 0)
+          {
+            VehiclePiecesController.ActiveInstances.TryGetValue(__state.vehicleParentId, out __state.piecesController);
+          }
+        }
+      }
+
+      if (__state.piecesController != null)
+      {
+        __state.localPos = __state.piecesController.transform.InverseTransformPoint(__instance.transform.position);
+        __state.localEuler = (Quaternion.Inverse(__state.piecesController.transform.rotation) * __instance.transform.rotation).eulerAngles;
+      }
     }
     catch (System.Exception ex)
     {
-      ZLog.LogWarning($"[Plantable_Patch] Failed to get parent ID in Grow_Prefix: {ex.Message}");
+      ZLog.LogWarning($"[Plantable_Patch] Failed in Grow_Prefix: {ex.Message}");
     }
   }
 
   [HarmonyPatch(typeof(Plant), "Grow")]
   [HarmonyPostfix]
-  private static void Plant_Grow_Postfix(Plant __instance, GameObject __result, int __state)
+  private static void Plant_Grow_Postfix(Plant __instance, GameObject __result, PlantGrowState __state)
   {
     if (__result == null) return;
 
     try
     {
       var newPlantNetView = __result.GetComponent<ZNetView>();
-      if (newPlantNetView == null) return;
+      if (newPlantNetView == null || newPlantNetView.m_zdo == null) return;
 
-      // Don't use __instance here - it's destroyed. Use __result's parent instead.
-      var bvc = __result.GetComponentInParent<VehiclePiecesController>();
-      if (bvc != null)
+      var bvc = __state.piecesController;
+      if (bvc == null && __state.vehicleParentId != 0)
       {
-        bvc.AddNewPiece(newPlantNetView);
+        VehiclePiecesController.ActiveInstances.TryGetValue(__state.vehicleParentId, out bvc);
       }
 
-      // Use the captured parent ID from the Prefix
-      if (__state != 0)
+      if (bvc != null)
       {
-        CultivatableComponent.AddNewChild(__state, newPlantNetView);
+        var sp = __result.GetComponent<StaticPhysics>();
+        if (sp != null) Object.Destroy(sp);
+
+        bvc.TrySetPieceToParent(newPlantNetView);
+        __result.transform.localPosition = __state.localPos;
+        __result.transform.localRotation = Quaternion.Euler(__state.localEuler);
+
+        var vId = bvc.Manager != null ? bvc.Manager.PersistentZdoId : __state.vehicleParentId;
+        newPlantNetView.m_zdo.Set(VehicleZdoVars.MBParentId, vId);
+        newPlantNetView.m_zdo.Set(VehicleZdoVars.IsVehiclePieceHash, 1);
+        newPlantNetView.m_zdo.Set(VehicleZdoVars.MBPositionHash, __state.localPos);
+        newPlantNetView.m_zdo.Set(VehicleZdoVars.MBRotationVecHash, __state.localEuler);
+
+        VehiclePieceRegistry.RegisterPiece(vId, newPlantNetView.m_zdo.m_uid);
+        bvc.AddPiece(newPlantNetView, true);
+      }
+
+      if (__state.cultivatableParentId != 0)
+      {
+        CultivatableComponent.AddNewChild(__state.cultivatableParentId, newPlantNetView);
       }
     }
     catch (System.Exception ex)

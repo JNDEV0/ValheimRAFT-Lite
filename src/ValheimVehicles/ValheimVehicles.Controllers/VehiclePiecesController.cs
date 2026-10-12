@@ -1182,8 +1182,12 @@
             break;
           }
           case RopeLadderComponent ladder:
-            m_ladders.Add(ladder);
+            if (!m_ladders.Contains(ladder))
+            {
+              m_ladders.Add(ladder);
+            }
             ladder.vehiclePiecesController = this;
+            ladder.UpdateSteps();
             break;
         }
       }
@@ -1575,6 +1579,22 @@
         .Set(VehicleZdoVars.ZdoKeyBaseVehicleInitState, true);
       BaseVehicleInitState = InitializationState.Complete;
       IgnoreAllVehicleColliders();
+      UpdateAllLadders();
+    }
+
+    public void UpdateAllLadders()
+    {
+      if (m_ladders != null)
+      {
+        foreach (var ladder in m_ladders)
+        {
+          if (ladder != null)
+          {
+            ladder.vehiclePiecesController = this;
+            ladder.UpdateSteps();
+          }
+        }
+      }
     }
 
 

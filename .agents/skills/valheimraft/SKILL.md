@@ -67,6 +67,11 @@ git push origin main
 
 ## 4. Release History Highlights
 
+### v5.4.4
+- **Fixed Rope Ladder Sector Reload & Extension**: Fixed rope ladders stuck at 1 rung upon sector unload/reload. Replaced restrictive world Euler angle checks with vertical deviation angles (supporting rolling vessels and sloping beach shorelines), filtered out mounting surface hits within 0.4m, and hooked automatic ladder extension upon piece addition and sector piece activation completion (`UpdateAllLadders`).
+- **Fixed Ship Planter Crops Detaching & Floating**: Fixed crops (carrots, turnips, etc.) detaching and floating in space after growing or upon sector unload/reload. Captured vehicle parenting and relative transform offsets before sapling growth so mature pickables remain registered with `VehiclePiecesController`, maintain persistent `MBParentId` / `MBPositionHash`, and move with the vessel.
+- **Existing Floating Crop Recovery**: Enhanced `CultivatableComponent.InitPiece` on game load and sector reload to automatically detect any detached or floating crops previously linked to a ship planter, reattaching them directly to their parent planter surface with persistent vehicle ZDO tracking.
+
 ### v5.4.3
 - **Categorized Feature Documentation**: Reorganized mod documentation into distinct categories (Nautical Progression, Helm & Propulsion, Rope Ladders, Mobile Bases, Physics & Flight, Greydwarf Sailors, Architecture & Stability) for clarity.
 - **Terminology Standardization**: Standardized all references to "Greydwarf Sailors" across manifest descriptions, in-game UI, and documentation.

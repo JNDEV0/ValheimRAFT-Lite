@@ -13,6 +13,13 @@ public class VehiclePieceActivator : BasePieceActivatorComponent
   public void Init(VehiclePiecesController host)
   {
     _host = host;
+    OnActivationComplete = (state) =>
+    {
+      if (_host != null)
+      {
+        _host.UpdateAllLadders();
+      }
+    };
   }
 
   protected override void TrySetPieceToParent(ZNetView netView)

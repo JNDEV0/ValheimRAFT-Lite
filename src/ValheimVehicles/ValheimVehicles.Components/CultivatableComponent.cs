@@ -4,6 +4,7 @@ using UnityEngine;
 using ValheimVehicles.Interfaces;
 using ValheimVehicles.Shared.Constants;
 using ValheimVehicles.Structs;
+using ValheimVehicles.Controllers;
 using ZdoWatcher;
 using ZdoWatcher.ZdoWatcher.Utils;
 using Logger = Jotunn.Logger;
@@ -324,7 +325,138 @@ public class CultivatableComponent : MonoBehaviour, Interactable, Hoverable
   {
     if (netview == null || !netview || netview.m_zdo == null) return;
     var id = GetParentID(netview);
-    if (id != 0) AddChild(id, netview);
+    if (id == 0) return;
+
+    AddChild(id, netview);
+
+    var sp = netview.GetComponent<StaticPhysics>();
+    if ((bool)sp) Destroy(sp);
+
+    // If already attached to a vehicle and has MBPositionHash, ensure it's registered
+    var vehicleId = netview.m_zdo.GetInt(VehicleZdoVars.MBParentId, 0);
+
+    // If vehicleId not set directly on crop, look up parent planter's vehicle
+    ZDO? planterZdo = null;
+    if (vehicleId == 0)
+    {
+      planterZdo = ZdoWatchController.Instance.GetZdo(id);
+      if (planterZdo == null && ZDOMan.instance != null)
+      {
+        var zdoid = netview.m_zdo.GetZDOID(VehicleZdoVars.MBCultivatableParentHash);
+        if (zdoid != ZDOID.None) planterZdo = ZDOMan.instance.GetZDO(zdoid);
+      }
+
+      if (planterZdo != null)
+      {
+        vehicleId = planterZdo.GetInt(VehicleZdoVars.MBParentId, 0);
+      }
+    }
+
+    if (vehicleId != 0)
+    {
+      VehiclePiecesController? vehicleController = null;
+      if (VehiclePiecesController.ActiveInstances.TryGetValue(vehicleId, out var vc) && vc != null && vc.isActiveAndEnabled && !vc.IsInvalid())
+      {
+        vehicleController = vc;
+      }
+      else
+      {
+        var vm = VehicleManager.GetVehicle(vehicleId);
+        if (vm != null && vm.PiecesController != null && vm.PiecesController.isActiveAndEnabled && !vm.PiecesController.IsInvalid())
+        {
+          vehicleController = vm.PiecesController;
+        }
+      }
+
+      if (vehicleController != null)
+      {
+        AttachCropToVehicle(netview, vehicleController, planterZdo, vehicleId, id);
+      }
+      else
+      {
+        // Vehicle controller not active yet during sector load, ensure hashes exist then queue as pending piece
+        EnsureCropZdoHashes(netview, planterZdo, vehicleId, id);
+        BasePieceActivatorComponent.AddPendingPiece(vehicleId, netview, false, true, false);
+      }
+    }
+  }
+
+  private static void EnsureCropZdoHashes(ZNetView netview, ZDO? planterZdo, int vehicleId, int planterPersistentId)
+  {
+    if (netview == null || netview.m_zdo == null) return;
+
+    var hasSavedPos = netview.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.negativeInfinity) != Vector3.negativeInfinity;
+    if (!hasSavedPos)
+    {
+      planterZdo ??= ZdoWatchController.Instance.GetZdo(planterPersistentId);
+      if (planterZdo != null)
+      {
+        var planterLocalPos = planterZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+        var planterLocalRot = planterZdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero);
+        netview.m_zdo.Set(VehicleZdoVars.MBPositionHash, planterLocalPos + Vector3.up * 0.15f);
+        netview.m_zdo.Set(VehicleZdoVars.MBRotationVecHash, planterLocalRot);
+      }
+    }
+
+    netview.m_zdo.Set(VehicleZdoVars.MBParentId, vehicleId);
+    netview.m_zdo.Set(VehicleZdoVars.IsVehiclePieceHash, 1);
+  }
+
+  public static void AttachCropToVehicle(ZNetView netview, VehiclePiecesController vehicleController, ZDO? planterZdo, int vehicleId, int planterPersistentId)
+  {
+    if (netview == null || netview.m_zdo == null || vehicleController == null) return;
+
+    var hasSavedPos = netview.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.negativeInfinity) != Vector3.negativeInfinity;
+    Vector3 localPos;
+    Vector3 localEuler;
+
+    if (hasSavedPos)
+    {
+      localPos = netview.m_zdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+      localEuler = netview.m_zdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero);
+    }
+    else
+    {
+      // Recovering a detached / floating crop (such as crops that grew without vehicle parenting)
+      planterZdo ??= ZdoWatchController.Instance.GetZdo(planterPersistentId);
+      ZNetView? planterNv = null;
+      if (planterZdo != null && ZNetScene.instance != null)
+      {
+        planterNv = ZNetScene.instance.FindInstance(planterZdo);
+      }
+
+      if (planterNv != null)
+      {
+        // Snap crop directly onto planter top soil surface
+        var targetWorldPos = planterNv.transform.position + planterNv.transform.up * 0.15f;
+        localPos = vehicleController.transform.InverseTransformPoint(targetWorldPos);
+        localEuler = (Quaternion.Inverse(vehicleController.transform.rotation) * planterNv.transform.rotation).eulerAngles;
+      }
+      else if (planterZdo != null)
+      {
+        var planterLocalPos = planterZdo.GetVec3(VehicleZdoVars.MBPositionHash, Vector3.zero);
+        localPos = planterLocalPos + Vector3.up * 0.15f;
+        localEuler = planterZdo.GetVec3(VehicleZdoVars.MBRotationVecHash, Vector3.zero);
+      }
+      else
+      {
+        localPos = vehicleController.transform.InverseTransformPoint(netview.transform.position);
+        localEuler = (Quaternion.Inverse(vehicleController.transform.rotation) * netview.transform.rotation).eulerAngles;
+      }
+
+      netview.m_zdo.Set(VehicleZdoVars.MBPositionHash, localPos);
+      netview.m_zdo.Set(VehicleZdoVars.MBRotationVecHash, localEuler);
+    }
+
+    netview.m_zdo.Set(VehicleZdoVars.MBParentId, vehicleId);
+    netview.m_zdo.Set(VehicleZdoVars.IsVehiclePieceHash, 1);
+
+    vehicleController.TrySetPieceToParent(netview);
+    netview.transform.localPosition = localPos;
+    netview.transform.localRotation = Quaternion.Euler(localEuler);
+
+    VehiclePieceRegistry.RegisterPiece(vehicleId, netview.m_zdo.m_uid);
+    vehicleController.AddPiece(netview);
   }
 
   public static int GetParentID(ZNetView netview)

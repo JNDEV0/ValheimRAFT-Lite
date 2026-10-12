@@ -7,6 +7,8 @@
   using ValheimVehicles.Controllers;
   using ValheimVehicles.Interfaces;
   using ValheimVehicles.Prefabs;
+  using ValheimVehicles.Shared.Constants;
+  using ValheimVehicles.SharedScripts;
   using Zolantris.Shared;
 
 #endregion
@@ -191,6 +193,16 @@
 
     private bool ShouldRetractLadder()
     {
+      if (vehiclePiecesController == null)
+      {
+        vehiclePiecesController = GetComponentInParent<VehiclePiecesController>();
+        if (vehiclePiecesController == null)
+        {
+          var vm = GetComponentInParent<VehicleManager>();
+          if (vm != null) vehiclePiecesController = vm.PiecesController;
+        }
+      }
+
       if (vehiclePiecesController == null || vehiclePiecesController.MovementController == null)
       {
         return false;
@@ -199,9 +211,18 @@
       var movementController = vehiclePiecesController.MovementController;
 
       // If anchored, always extend ladder.
-      if (movementController.isAnchored)
+      if (movementController.isAnchored || movementController.vehicleAnchorState == AnchorState.Anchored)
       {
         return false;
+      }
+
+      if (movementController.m_nview != null && movementController.m_nview.GetZDO() != null)
+      {
+        var anchorVal = (AnchorState)movementController.m_nview.GetZDO().GetInt(VehicleZdoVars.VehicleAnchorState, (int)AnchorState.Recovered);
+        if (VehicleMovementController.IsAnchorDropped(anchorVal))
+        {
+          return false;
+        }
       }
 
       // If actively moving (> 0.01f or speed != Stop), retract ladder (applies to both flight and float modes).
@@ -222,8 +243,8 @@
     {
       if (!m_stepObject) return;
 
-      if (Mathf.Abs(transform.rotation.eulerAngles.x) > 40 ||
-          Mathf.Abs(transform.rotation.eulerAngles.z) > 40)
+      var downDir = m_attachPoint != null ? -m_attachPoint.transform.up : -transform.up;
+      if (Vector3.Angle(downDir, Vector3.down) > 75f)
         return;
 
       if (rayMask == 0)
@@ -256,10 +277,20 @@
         if (hit.collider == m_collider) continue;
         if (hit.collider.transform.IsChildOf(transform)) continue;
         if (hit.collider.GetComponentInParent<Character>() != null) continue;
+        if (hit.distance < 0.4f) continue;
         if (hit.collider.GetComponentInParent<VehiclePiecesController>() != null ||
             hit.collider.GetComponentInParent<VehicleManager>() != null)
         {
           continue; // Ignore pieces belonging to the vehicle
+        }
+        if (vehiclePiecesController != null && hit.collider.transform.IsChildOf(vehiclePiecesController.transform))
+        {
+          continue;
+        }
+        var hitNv = hit.collider.GetComponentInParent<ZNetView>();
+        if (hitNv != null && hitNv.GetZDO() != null && hitNv.GetZDO().GetInt(VehicleZdoVars.MBParentId, 0) != 0)
+        {
+          continue;
         }
 
         if (hit.distance < m_ladderHeight)
