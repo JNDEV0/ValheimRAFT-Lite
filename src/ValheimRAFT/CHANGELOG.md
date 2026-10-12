@@ -6,6 +6,20 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
+## [5.4.7] - 2026-10-12
+
+### Changed
+
+- **Tuned Rudder Rowing Speeds**: Reduced Steering Oar row speed to 3 m/s (from 4 m/s) and Sternpost Rudder row speed to 5 m/s (from 7.5 m/s) for tighter harbor maneuvering and authentic rowing pacing.
+- **Rudder Linear Force SmoothDamp Acceleration**: Added smooth throttle acceleration (`Vector3.SmoothDamp` over 2.0s) to rowing linear force, eliminating sudden jerk when engaging row or reverse gear.
+- **Responsive Sailing Acceleration**: Tightened sailing throttle interpolation `SmoothDamp` transition time from 3.5s to 2.0s for responsive yet weighted helm control.
+- **Upgraded Sail Progression Speeds**: Rebalanced all sail tiers upward so the Raft sail immediately matches full rowing speed, and advanced sails provide superior velocity:
+  - Raft Sail: 5.0 m/s (up from 3.0 m/s, matching former Karve tier).
+  - Karve Sail: 7.5 m/s (up from 5.0 m/s, matching former Longship tier).
+  - Longship Sail: 10.0 m/s (up from 7.5 m/s, matching former Drakkar tier).
+  - Drakkar Sail: 12.0 m/s (up from 10.0 m/s).
+- **Steering Wheel HUD Formatting**: Fixed rowing and sailing speed display formatting (`{val:0.#}`) so values are never ceiling-rounded to the next whole integer.
+
 ## [5.4.6] - 2026-10-12
 
 ### Changed

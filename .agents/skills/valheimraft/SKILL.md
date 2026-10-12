@@ -75,6 +75,9 @@ git push origin main
 
 ## 4. Release History Highlights
 
+### v5.4.7
+- **Tuned Rudder Rowing & Sail Speed Balancing**: Reduced Steering Oar row speed to 3 m/s (from 4 m/s) and Sternpost Rudder row speed to 5 m/s (from 7.5 m/s). Applied `Vector3.SmoothDamp` throttle acceleration (2.0s) to rudder linear force so rowing ramps up smoothly rather than snapping instantly. Adjusted sailing throttle transition time from 3.5s to 2.0s for responsive helm control. Rebalanced all sail tiers upward so the Raft sail immediately matches full rowing speed (Raft: 5.0, Karve: 7.5, Longship: 10.0, Drakkar: 12.0 m/s). Fixed HUD formatting on steering wheel to prevent integer ceiling-rounding.
+
 ### v5.4.6
 - **Vanilla-Aligned Sailing Physics & Balanced Progression**: Decoupled sailing speed from rowing speed (removed `minProp` from half/full sail calculations). Rebalanced individual sail tier defaults (Raft: 3.0, Karve: 5.0, Longship: 7.5, Drakkar: 10.0) matching authentic vanilla ship cruising speeds. Clamped storm wind intensity scaling (max 0.55) to prevent runaway speed surges. Halved `MaxSailSpeed` ceiling from 30.0 to 15.0 m/s. Added wooden hull acceleration inertia (3.5s throttle smoothing), wave chop pitch resistance, and rudder turn drag.
 

@@ -6976,7 +6976,7 @@
                    (windAngleFactorInterpolated * m_sailForceFactor * sailSize);
 
       m_sailForce = Vector3.SmoothDamp(m_sailForce, target,
-        ref m_windChangeVelocity, 3.5f, 99f);
+        ref m_windChangeVelocity, 2.0f, 99f);
 
       if (!isFlying)
       {
@@ -7344,91 +7344,74 @@
 
 
 
+    private Vector3 _currentRudderLinearForce = Vector3.zero;
+    private Vector3 _rudderLinearVelocity = Vector3.zero;
+
     // Speed push along forward.No rotation writes.Apply at CoM.No dt multiply.
-
     private void ApplyRudderLinearForce()
-
     {
-
       if (VehicleSpeed == Ship.Speed.Stop || isAnchored || m_body == null || m_body.isKinematic)
-
+      {
+        _currentRudderLinearForce = Vector3.zero;
+        _rudderLinearVelocity = Vector3.zero;
         return;
+      }
 
       if (_impactBounceTimer > 0f)
+      {
+        _currentRudderLinearForce = Vector3.zero;
+        _rudderLinearVelocity = Vector3.zero;
         return;
-
-
+      }
 
       var flying = IsFlying();
 
-
-
       // Stop steering when above the water. Applying force is bad...
-
       if (!flying && !IsSubmerged() && ShipFloatationObj.IsAboveBuoyantLevel)
-
+      {
+        _currentRudderLinearForce = Vector3.zero;
+        _rudderLinearVelocity = Vector3.zero;
         return;
-
-
+      }
 
       var forward = ShipDirection.forward;
-
       var rudderForce = GetRudderForcePerSpeed();
 
-
-
       // Always >= 1 or nothing happens when rudder defaults to 0 speed
-
       var steerSpeed = Mathf.Max(rudderForce, 1f);
 
-
-
       // Base forward push scales down as rudder deflects
-
       var steerForce = forward * (m_backwardForce * steerSpeed * (1f - Mathf.Abs(m_rudderValue)));
 
-
-
       // Reverse flips sign
-
       var directionMultiplier = VehicleSpeed != Ship.Speed.Back ? 1 : -1;
-
       steerForce *= directionMultiplier;
 
-
-
       // Additional speed added to the vehicle (your helper)
-
       steerForce += GetAdditiveSteerForce(directionMultiplier);
 
-
-
       // Water-only damping from buoyancy system
-
       if (!flying && _currentShipFloatation != null)
-
         steerForce *= _currentShipFloatation.Value.BuoyancySpeedMultiplier;
 
-
-
-      // --- CRUCIAL CHANGES ---
-
-      // 1) Do NOT set transform.rotation here (that caused stutter).
-
-      // 2) Apply at CoM to avoid unintended torque.
-
-      // 3) Use Acceleration and DO NOT multiply by fixedDeltaTime.
-
-      AddForceAtPosition(
-
+      // Smoothly ramp up rowing force over 2 seconds
+      _currentRudderLinearForce = Vector3.SmoothDamp(
+        _currentRudderLinearForce,
         steerForce,
-
-        m_body.worldCenterOfMass,
-
-        ForceMode.Acceleration // or PhysicsConfig.turningVelocityMode.Value, but ensure it's Acceleration/Force without dt
-
+        ref _rudderLinearVelocity,
+        2.0f,
+        99f
       );
 
+      // --- CRUCIAL CHANGES ---
+      // 1) Do NOT set transform.rotation here (that caused stutter).
+      // 2) Apply at CoM to avoid unintended torque.
+      // 3) Use Acceleration and DO NOT multiply by fixedDeltaTime.
+      AddForceAtPosition(
+        _currentRudderLinearForce,
+        m_body.worldCenterOfMass,
+        ForceMode.Acceleration // or PhysicsConfig.turningVelocityMode.Value, but ensure it's Acceleration/Force without dt
+      );
     }
 
 

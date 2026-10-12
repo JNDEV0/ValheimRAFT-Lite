@@ -1,4 +1,4 @@
-﻿using Zolantris.Shared;
+using Zolantris.Shared;
 #nullable enable
 
 #region
@@ -191,8 +191,8 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     var sailingSpeed = piecesController.GetSumOfSailPropulsion();
 
     shipStatsText =
-      $"<color=white>rowing speed: {rowingSpeed:F0}</color>\n" +
-      $"<color=white>sailing speed: {sailingSpeed:F1}</color>";
+      $"<color=white>rowing speed: {rowingSpeed:0.#}</color>\n" +
+      $"<color=white>sailing speed: {sailingSpeed:0.#}</color>";
 
     return true;
   }

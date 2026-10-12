@@ -260,39 +260,39 @@ public class PropulsionConfig : BepInExBaseConfig<PropulsionConfig>
     );
 
     SailTier1Propulsion = config.BindUnique(GenericSectionName,
-      "SailTier1Propulsion", 3.0f,
+      "SailTier1Propulsion", 5.0f,
       ConfigHelpers.CreateConfigDescription(
         "Flat propulsion added per Raft sail (Tier 1).", true, false));
-    if (System.Math.Abs(SailTier1Propulsion.Value - 1.5f) < 0.01f || System.Math.Abs(SailTier1Propulsion.Value - 5f) < 0.01f)
+    if (System.Math.Abs(SailTier1Propulsion.Value - 1.5f) < 0.01f || System.Math.Abs(SailTier1Propulsion.Value - 3.0f) < 0.01f)
     {
-      SailTier1Propulsion.Value = 3.0f;
+      SailTier1Propulsion.Value = 5.0f;
     }
 
     SailTier2Propulsion = config.BindUnique(GenericSectionName,
-      "SailTier2Propulsion", 5.0f,
+      "SailTier2Propulsion", 7.5f,
       ConfigHelpers.CreateConfigDescription(
         "Flat propulsion added per Karve sail (Tier 2).", true, false));
-    if (System.Math.Abs(SailTier2Propulsion.Value - 2.0f) < 0.01f || System.Math.Abs(SailTier2Propulsion.Value - 4f) < 0.01f)
+    if (System.Math.Abs(SailTier2Propulsion.Value - 2.0f) < 0.01f || System.Math.Abs(SailTier2Propulsion.Value - 5.0f) < 0.01f)
     {
-      SailTier2Propulsion.Value = 5.0f;
+      SailTier2Propulsion.Value = 7.5f;
     }
 
     SailTier3Propulsion = config.BindUnique(GenericSectionName,
-      "SailTier3Propulsion", 7.5f,
+      "SailTier3Propulsion", 10.0f,
       ConfigHelpers.CreateConfigDescription(
         "Flat propulsion added per Longship sail (Tier 3).", true, false));
-    if (System.Math.Abs(SailTier3Propulsion.Value - 2.5f) < 0.01f || System.Math.Abs(SailTier3Propulsion.Value - 7f) < 0.01f)
+    if (System.Math.Abs(SailTier3Propulsion.Value - 2.5f) < 0.01f || System.Math.Abs(SailTier3Propulsion.Value - 7.5f) < 0.01f)
     {
-      SailTier3Propulsion.Value = 7.5f;
+      SailTier3Propulsion.Value = 10.0f;
     }
 
     SailTier4Propulsion = config.BindUnique(GenericSectionName,
-      "SailTier4Propulsion", 10.0f,
+      "SailTier4Propulsion", 12.0f,
       ConfigHelpers.CreateConfigDescription(
         "Flat propulsion added per Drakkar sail (Tier 4).", true, false));
-    if (System.Math.Abs(SailTier4Propulsion.Value - 3.0f) < 0.01f || System.Math.Abs(SailTier4Propulsion.Value - 9f) < 0.01f)
+    if (System.Math.Abs(SailTier4Propulsion.Value - 3.0f) < 0.01f || System.Math.Abs(SailTier4Propulsion.Value - 10.0f) < 0.01f)
     {
-      SailTier4Propulsion.Value = 10.0f;
+      SailTier4Propulsion.Value = 12.0f;
     }
 
     SailPropulsionMultiplier = config.BindUnique(GenericSectionName,
