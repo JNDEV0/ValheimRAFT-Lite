@@ -3867,7 +3867,8 @@
 
     public float GetMaxPropulsion()
     {
-      return GetMinPropulsion() + GetSumOfSailPropulsion();
+      var sailSum = GetSumOfSailPropulsion();
+      return sailSum > 0f ? sailSum : GetMinPropulsion();
     }
 
     public float GetPropulsionForSpeed(Ship.Speed speed)
@@ -3881,9 +3882,9 @@
         case Ship.Speed.Slow:
           return minProp;
         case Ship.Speed.Half:
-          return ((HasAnySails() ? minProp : 0f) + (sailSum * 0.5f)) * sailMultiplier;
+          return (sailSum * 0.5f) * sailMultiplier;
         case Ship.Speed.Full:
-          return ((HasAnySails() ? minProp : 0f) + (sailSum * 1.0f)) * sailMultiplier;
+          return (sailSum * 1.0f) * sailMultiplier;
         case Ship.Speed.Back:
           return PropulsionConfig.VehicleRudderSpeedBack?.Value ?? 5f;
         case Ship.Speed.Stop:

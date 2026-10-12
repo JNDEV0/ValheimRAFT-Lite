@@ -6,6 +6,18 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
+## [5.4.6] - 2026-10-12
+
+### Changed
+
+- **Decoupled Sailing from Rowing**: Removed baseline rowing speed (`minProp`) from half and full sail propulsion calculations. Sailing speed is now purely governed by your vessel's sails and wind angle.
+- **Rebalanced Sail Tier Progression**: Raised individual sail propulsion defaults (Raft: 3.0, Karve: 5.0, Longship: 7.5, Drakkar: 10.0) so each sail tier provides a distinct, noticeable speed increase matching authentic vanilla ship tiers.
+- **Controlled Storm Wind Surge**: Narrowed interpolated storm wind intensity scaling (`Mathf.Lerp(0.38f, 0.55f, windIntensity)`), giving an authentic ~20% storm speed boost without runaway double-speed surges.
+- **Halved Max Sailing Speed**: Reduced `MaxSailSpeed` cap from 30.0 m/s to 15.0 m/s, preventing vessels from ramping uncontrollably off wave crests.
+- **Vessel Inertia & Throttle Smoothing**: Increased sail force interpolation smoothing time from 1.0s to 3.5s, giving ships heavy wooden hull momentum rather than instant arcade acceleration.
+- **Wave Chop & Pitch Resistance**: Added incline swell resistance where climbing steep ocean waves drains forward momentum slightly, restoring the sensation of plowing into heavy seas.
+- **Rudder Turn Scrub**: Hard rudder deflection now naturally scrubs up to 25% forward sailing momentum, mimicking realistic underwater rudder drag.
+
 ## [5.4.5] - 2026-10-12
 
 ### Fixed

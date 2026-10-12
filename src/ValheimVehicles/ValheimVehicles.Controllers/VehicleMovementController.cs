@@ -6848,25 +6848,18 @@
 
 
     private float GetInterpolatedWindAngleFactor()
-
     {
-
       var windIntensity = IsWindControllActive()
-
         ? 1f
-
         : EnvMan.instance.GetWindIntensity();
 
-      var interpolatedWindIntensity = Mathf.Lerp(0.25f, 1f, windIntensity);
-
-
+      var interpolatedWindIntensity = Mathf.Lerp(0.38f, 0.55f, windIntensity);
 
       var windAngleFactor = GetWindAngleFactor();
 
       windAngleFactor *= interpolatedWindIntensity;
 
       return windAngleFactor;
-
     }
 
 
@@ -6972,65 +6965,39 @@
 
 
     private Vector3 GetSailForce(float sailSize, float dt, bool isFlying)
-
     {
-
       var windDir = IsWindControllActive()
-
         ? Vector3.zero
-
         : EnvMan.instance.GetWindDir();
 
       var windAngleFactorInterpolated = GetInterpolatedWindAngleFactor();
 
-
-
       var target = Vector3.Normalize(ShipDirection.forward) *
-
                    (windAngleFactorInterpolated * m_sailForceFactor * sailSize);
 
-
-
-      // TODO determine if we ever want to use this winddirection force again.
-
-      // Vector3 target;
-
-
-
-      // if (isFlying)
-
-      //   target = Vector3.Normalize(ShipDirection.forward) *
-
-      //            (windAngleFactorInterpolated * m_sailForceFactor * sailSize);
-
-      // else
-
-      //   target = Vector3.Normalize(windDir + ShipDirection.forward) *
-
-      //            GetSailForceEnergy(sailSize, windAngleFactorInterpolated);
-
-
-
       m_sailForce = Vector3.SmoothDamp(m_sailForce, target,
-
-        ref m_windChangeVelocity, 1f, 99f);
-
-
-
-      // add a buoyancy force multiplier for when near stuck to slow down velocity.
+        ref m_windChangeVelocity, 3.5f, 99f);
 
       if (!isFlying)
-
       {
-
         m_sailForce *= ShipFloatationObj.BuoyancySpeedMultiplier;
 
+        // Wave chop / swell resistance: climbing steep swells drains forward speed slightly
+        if (transform.forward.y > 0.05f)
+        {
+          var climbAngle = Mathf.Clamp01(transform.forward.y * 1.5f);
+          m_sailForce *= (1.0f - climbAngle * 0.35f);
+        }
+
+        // Turn scrub: rudder in water scrubs forward sailing momentum up to 25% at max lock
+        if (Mathf.Abs(m_rudderValue) > 0.05f)
+        {
+          var steerDrag = Mathf.Abs(m_rudderValue) * 0.25f;
+          m_sailForce *= (1.0f - steerDrag);
+        }
       }
 
-
-
       return Vector3.ClampMagnitude(m_sailForce, Mathf.Min(PhysicsConfig.MaxLinearVelocity.Value, PropulsionConfig.MaxSailSpeed.Value));
-
     }
 
 

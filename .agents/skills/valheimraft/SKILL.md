@@ -75,6 +75,9 @@ git push origin main
 
 ## 4. Release History Highlights
 
+### v5.4.6
+- **Vanilla-Aligned Sailing Physics & Balanced Progression**: Decoupled sailing speed from rowing speed (removed `minProp` from half/full sail calculations). Rebalanced individual sail tier defaults (Raft: 3.0, Karve: 5.0, Longship: 7.5, Drakkar: 10.0) matching authentic vanilla ship cruising speeds. Clamped storm wind intensity scaling (max 0.55) to prevent runaway speed surges. Halved `MaxSailSpeed` ceiling from 30.0 to 15.0 m/s. Added wooden hull acceleration inertia (3.5s throttle smoothing), wave chop pitch resistance, and rudder turn drag.
+
 ### v5.4.5
 - **Fixed Rope Ladder Sector Activation NullReferenceException**: Fixed a `NullReferenceException` thrown in `RopeLadderComponent.UpdateSteps()` during early sector loading and piece initialization (`VehiclePiecesController.AddPieceDataForComponents`). Added lazy-initialization and fallback guards for `m_attachPoint`, `m_stepObject`, and `m_collider`, wrapped step calculations in try-catch handlers, and deferred early initialization step updates until vehicle piece activation completes.
 
