@@ -200,15 +200,7 @@
         return false;
 
       // Determine if this piece is attached to a vehicle / boat
-      var isVehiclePart = __instance.GetComponentInParent<VehiclePiecesController>() != null;
-      if (!isVehiclePart)
-      {
-        var nview = __instance.m_nview != null ? __instance.m_nview : __instance.GetComponent<ZNetView>();
-        if (nview != null && nview.GetZDO() != null && VehiclePiecesController.GetParentID(nview.GetZDO()) != 0)
-        {
-          isVehiclePart = true;
-        }
-      }
+      var isVehiclePart = IsVehiclePiece(__instance);
 
       if (isVehiclePart)
       {
@@ -299,6 +291,49 @@
       __instance.m_supports = true;
       __instance.m_noSupportWear = true;
       return false;
+    }
+
+    public static bool IsVehiclePiece(WearNTear? wnt)
+    {
+      if (wnt == null) return false;
+      if (wnt.GetComponentInParent<VehiclePiecesController>() != null) return true;
+      var nview = wnt.m_nview != null ? wnt.m_nview : wnt.GetComponent<ZNetView>();
+      if (nview != null && nview.GetZDO() != null && VehiclePiecesController.GetParentID(nview.GetZDO()) != 0)
+      {
+        return true;
+      }
+      return false;
+    }
+
+    [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.CanHaveSnow), typeof(bool))]
+    [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.CanHaveSnow), typeof(bool), typeof(bool))]
+    [HarmonyPrefix]
+    private static bool WearNTear_CanHaveSnowPrefix(WearNTear __instance, ref bool __result)
+    {
+      if (!(VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false) && IsVehiclePiece(__instance))
+      {
+        __result = false;
+        return false;
+      }
+      return true;
+    }
+
+    [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.UpdateSnowVisual))]
+    [HarmonyPrefix]
+    private static bool WearNTear_UpdateSnowVisualPrefix(WearNTear __instance)
+    {
+      if (!(VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false) && IsVehiclePiece(__instance))
+      {
+        if (__instance.m_snow != null && __instance.m_snow.gameObject.activeSelf)
+          __instance.m_snow.gameObject.SetActive(false);
+        if (__instance.m_snowWorn != null && __instance.m_snowWorn.gameObject.activeSelf)
+          __instance.m_snowWorn.gameObject.SetActive(false);
+        if (__instance.m_snowBroken != null && __instance.m_snowBroken.gameObject.activeSelf)
+          __instance.m_snowBroken.gameObject.SetActive(false);
+        __instance.m_snowBuildup = 0f;
+        return false;
+      }
+      return true;
     }
 
     private static Rigidbody? AttachRigidbodyMovableBase(Collider collider)

@@ -134,13 +134,79 @@ public static class VehicleOwnership_Patches
     return true;
   }
 
+  private static string? _lastDemolishTargetId;
+  private static float _lastDemolishTime;
+  private const float DemolishConfirmWindow = 3.0f;
+
+  public static bool IsValheimRaftPiece(Piece? piece)
+  {
+    if (piece == null) return false;
+    if (IsVehiclePiece(piece.gameObject)) return true;
+    var name = piece.gameObject.name;
+    if (name.StartsWith("ValheimVehicles", System.StringComparison.OrdinalIgnoreCase)) return true;
+    if (name.StartsWith("Ship", System.StringComparison.OrdinalIgnoreCase)) return true;
+    if (name.IndexOf("vehicle", System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+    if (name.IndexOf("raft", System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+    if (name.IndexOf("sail", System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+    if (name.IndexOf("rudder", System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+    if (name.IndexOf("anchor", System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+    if (name.IndexOf("keel", System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+    if (name.IndexOf("swivel", System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+    if (name.IndexOf("hull", System.StringComparison.OrdinalIgnoreCase) >= 0) return true;
+    return false;
+  }
+
   [HarmonyPatch(typeof(Player), "RemovePiece")]
   [HarmonyPrefix]
-  public static void Player_RemovePiece(Player __instance)
+  public static bool Player_RemovePiece(Player __instance, ref bool __result)
   {
     var hoveringPiece = __instance.GetHoveringPiece();
-    if (hoveringPiece != null && IsVehiclePiece(hoveringPiece.gameObject))
+    if (hoveringPiece == null)
     {
+      if (Physics.Raycast(GameCamera.instance.transform.position, GameCamera.instance.transform.forward, out var hitInfo, 50f, __instance.m_removeRayMask) &&
+          Vector3.Distance(hitInfo.point, __instance.m_eye.position) < __instance.m_maxPlaceDistance)
+      {
+        hoveringPiece = hitInfo.collider.GetComponentInParent<Piece>();
+      }
+    }
+
+    if (hoveringPiece != null && IsValheimRaftPiece(hoveringPiece))
+    {
+      if (Player_Patch.IsBoatHammer(__instance.GetRightItem()))
+      {
+        var nvTarget = hoveringPiece.GetComponent<ZNetView>();
+        var targetId = nvTarget != null && nvTarget.GetZDO() != null
+          ? nvTarget.GetZDO().m_uid.ToString()
+          : hoveringPiece.GetInstanceID().ToString();
+
+        var now = Time.time;
+        if (_lastDemolishTargetId == targetId && (now - _lastDemolishTime) <= DemolishConfirmWindow)
+        {
+          _lastDemolishTargetId = null;
+          _lastDemolishTime = 0f;
+
+          hoveringPiece.m_canBeRemoved = true;
+          if (nvTarget != null && nvTarget.IsValid() && !nvTarget.IsOwner())
+          {
+            nvTarget.ClaimOwnership();
+          }
+          return true;
+        }
+
+        _lastDemolishTargetId = targetId;
+        _lastDemolishTime = now;
+
+        var pieceName = Localization.instance != null ? Localization.instance.Localize(hoveringPiece.m_name) : hoveringPiece.m_name;
+        if (string.IsNullOrWhiteSpace(pieceName) || pieceName.StartsWith("$"))
+        {
+          pieceName = hoveringPiece.name.Replace("(Clone)", "").Trim();
+        }
+
+        __instance.Message(MessageHud.MessageType.Center, $"destroy {pieceName}? click again to confirm");
+        __result = false;
+        return false;
+      }
+
       hoveringPiece.m_canBeRemoved = true;
       var nv = hoveringPiece.GetComponent<ZNetView>();
       if (nv != null && nv.IsValid() && !nv.IsOwner())
@@ -148,6 +214,8 @@ public static class VehicleOwnership_Patches
         nv.ClaimOwnership();
       }
     }
+
+    return true;
   }
 
   [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.Remove))]

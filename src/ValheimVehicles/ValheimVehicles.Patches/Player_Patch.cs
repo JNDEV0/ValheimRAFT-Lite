@@ -126,18 +126,86 @@
       }
     }
 
+    public static bool IsBoatHammer(ItemDrop.ItemData? item)
+    {
+      if (item == null || item.m_shared == null) return false;
+      return item.m_shared.m_name == PrefabNames.VehicleHammer ||
+             item.m_shared.m_name == "$valheim_vehicles_hammer_name" ||
+             item.m_shared.m_name == "Boat Hammer" ||
+             item.m_shared.m_name == "Vehicle Hammer" ||
+             (item.m_dropPrefab != null && item.m_dropPrefab.name == PrefabNames.VehicleHammer) ||
+             (item.m_shared.m_buildPieces != null && item.m_shared.m_buildPieces.name == VehicleHammerTableRegistry.VehicleHammerTableName);
+    }
+
     [HarmonyPatch(typeof(HammerItemElement), nameof(HammerItemElement.IsHammer))]
     [HarmonyPostfix]
     public static void HammerItemElement_IsHammer(HammerItemElement __instance, ItemDrop.ItemData item, bool __result)
     {
-      if (item != null && item.m_shared != null &&
-        (item.m_shared.m_name == PrefabNames.VehicleHammer ||
-         item.m_shared.m_name == "$valheim_vehicles_hammer_name" ||
-         item.m_shared.m_name == "Boat Hammer" ||
-         item.m_shared.m_name == "Vehicle Hammer"))
+      if (IsBoatHammer(item))
       {
         // ReSharper disable once RedundantAssignment
         __result = true;
+      }
+    }
+
+    private static bool _retainedBoatHammerOnDeath;
+    private static ItemDrop.ItemData? _retainedBoatHammerData;
+
+    [HarmonyPatch(typeof(Player), nameof(Player.CreateTombStone))]
+    [HarmonyPrefix]
+    public static void Player_CreateTombStone_BoatHammer_Prefix(Player __instance)
+    {
+      _retainedBoatHammerOnDeath = false;
+      _retainedBoatHammerData = null;
+      if (__instance == null || __instance.m_inventory == null) return;
+
+      var items = __instance.m_inventory.GetAllItems();
+      for (int i = items.Count - 1; i >= 0; i--)
+      {
+        var item = items[i];
+        if (IsBoatHammer(item))
+        {
+          _retainedBoatHammerOnDeath = true;
+          _retainedBoatHammerData = item;
+          __instance.m_inventory.RemoveItem(item);
+          break;
+        }
+      }
+    }
+
+    [HarmonyPatch(typeof(Player), nameof(Player.CreateTombStone))]
+    [HarmonyPostfix]
+    public static void Player_CreateTombStone_BoatHammer_Postfix(Player __instance)
+    {
+      if (__instance == null || __instance.m_inventory == null || _retainedBoatHammerData == null) return;
+      __instance.m_inventory.AddItem(_retainedBoatHammerData);
+    }
+
+    [HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
+    [HarmonyPostfix]
+    public static void Player_OnSpawned_BoatHammer_Postfix(Player __instance)
+    {
+      if (__instance == Player.m_localPlayer && _retainedBoatHammerOnDeath)
+      {
+        var hasHammer = __instance.m_inventory != null && __instance.m_inventory.GetAllItems().Any(IsBoatHammer);
+        if (!hasHammer && __instance.m_inventory != null)
+        {
+          if (_retainedBoatHammerData != null)
+          {
+            __instance.m_inventory.AddItem(_retainedBoatHammerData);
+          }
+          else if (ObjectDB.instance != null)
+          {
+            var prefab = ObjectDB.instance.GetItemPrefab(PrefabNames.VehicleHammer);
+            var drop = prefab ? prefab.GetComponent<ItemDrop>() : null;
+            if (drop != null)
+            {
+              __instance.m_inventory.AddItem(drop.m_itemData.Clone());
+            }
+          }
+        }
+        _retainedBoatHammerOnDeath = false;
+        _retainedBoatHammerData = null;
       }
     }
 
@@ -871,5 +939,93 @@
       {
         __result = true;
       }
+    }
+
+    public static bool IsPlayerOnSteeringWheel(Player player)
+    {
+      if (player == null) return false;
+      if (player.m_doodadController is SteeringWheelComponent) return true;
+      if (player.IsAttached() && (bool)player.m_attachPoint && (bool)player.m_attachPoint.parent)
+      {
+        if (player.m_attachPoint.parent.GetComponent<SteeringWheelComponent>() != null)
+          return true;
+      }
+      return false;
+    }
+
+    [HarmonyPatch(typeof(Player), "UpdateHover")]
+    [HarmonyPrefix]
+    public static bool Player_UpdateHover_Prefix(Player __instance)
+    {
+      bool onWheel = IsPlayerOnSteeringWheel(__instance);
+      if (onWheel)
+      {
+        __instance.m_hovering = null;
+        __instance.m_hoveringCreature = null;
+
+        // If player pressed Use to release the wheel, ensure detachment occurs even if m_doodadController was lost
+        if ((ZInput.GetButtonDown("Use") || ZInput.GetButtonDown("JoyUse")) && !Hud.InRadial())
+        {
+          SteeringWheelComponent.LastReleaseTime = Time.time;
+          if (__instance.m_doodadController != null)
+          {
+            __instance.StopDoodadControl();
+          }
+          else
+          {
+            var wheel = __instance.m_attachPoint?.parent?.GetComponent<SteeringWheelComponent>();
+            if (wheel != null)
+            {
+              wheel.OnUseStop(__instance);
+            }
+            __instance.AttachStop();
+          }
+          ZInput.ResetButtonStatus("Use");
+          ZInput.ResetButtonStatus("JoyUse");
+        }
+        return false;
+      }
+
+      if (Time.time - SteeringWheelComponent.LastReleaseTime < 0.35f)
+      {
+        __instance.m_hovering = null;
+        __instance.m_hoveringCreature = null;
+        return false;
+      }
+
+      return true;
+    }
+
+    [HarmonyPatch(typeof(Player), "Interact")]
+    [HarmonyPrefix]
+    public static bool Player_Interact_Prefix(Player __instance, GameObject go, bool hold, bool alt)
+    {
+      if (IsPlayerOnSteeringWheel(__instance))
+      {
+        SteeringWheelComponent.LastReleaseTime = Time.time;
+        if (__instance.m_doodadController != null)
+        {
+          __instance.StopDoodadControl();
+        }
+        else
+        {
+          var wheel = __instance.m_attachPoint?.parent?.GetComponent<SteeringWheelComponent>();
+          if (wheel != null)
+          {
+            wheel.OnUseStop(__instance);
+          }
+          __instance.AttachStop();
+        }
+        ZInput.ResetButtonStatus("Use");
+        ZInput.ResetButtonStatus("JoyUse");
+        return false;
+      }
+
+      if (Time.time - SteeringWheelComponent.LastReleaseTime < 0.35f)
+      {
+        return false;
+      }
+
+      return true;
     }
   }

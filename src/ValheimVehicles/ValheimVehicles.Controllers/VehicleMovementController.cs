@@ -5989,7 +5989,7 @@
 
         SyncVehicleRotationDependentItems();
 
-
+        UpdateSnowAltitudeCheck(deltaTime);
 
         if (!_isLandMovementControllerInvalid)
 
@@ -6009,6 +6009,37 @@
 
       }
 
+    }
+
+    private float _snowAltitudeCheckTimer;
+    private bool _wasAtSnowAltitude;
+
+    private void UpdateSnowAltitudeCheck(float deltaTime)
+    {
+      _snowAltitudeCheckTimer -= deltaTime;
+      if (_snowAltitudeCheckTimer > 0f) return;
+      _snowAltitudeCheckTimer = 1.5f;
+
+      var snowOverlayEnabled = VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false;
+      if (snowOverlayEnabled)
+      {
+        _wasAtSnowAltitude = false;
+        return;
+      }
+
+      var isAtSnowAltitude = IsFlying() || transform.position.y >= 50f;
+      if (isAtSnowAltitude)
+      {
+        if (!_wasAtSnowAltitude || PiecesController?.LastAppliedSnowOverlayState != false)
+        {
+          _wasAtSnowAltitude = true;
+          PiecesController?.UpdateSnowOverlay(false);
+        }
+      }
+      else
+      {
+        _wasAtSnowAltitude = false;
+      }
     }
 
 
@@ -6992,7 +7023,7 @@
         // Turn scrub: rudder in water scrubs forward sailing momentum up to 25% at max lock
         if (Mathf.Abs(m_rudderValue) > 0.05f)
         {
-          var steerDrag = Mathf.Abs(m_rudderValue) * 0.25f;
+          var steerDrag = Mathf.Abs(m_rudderValue) * 0.01f;
           m_sailForce *= (1.0f - steerDrag);
         }
       }
@@ -9869,19 +9900,15 @@
 
 
     private void EjectPreviousPlayerFromControls(Player? player)
-
     {
-
       if (player == null) return;
-
+      SteeringWheelComponent.LastReleaseTime = Time.time;
       VehicleOnboardController.AddOrRemovePlayerBlockingCameraWhileControlling(player, false);
 
-
-
       player.m_doodadController = null;
-
       player.AttachStop();
-
+      ZInput.ResetButtonStatus("Use");
+      ZInput.ResetButtonStatus("JoyUse");
     }
 
 

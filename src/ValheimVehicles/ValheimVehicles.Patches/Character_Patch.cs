@@ -162,6 +162,7 @@ public class Character_Patch
   private static bool OnCollisionStay(Character __instance, Collision collision)
   {
     WaterZoneUtils.IgnoreColliderIfAttachedAndOnVehicle(__instance, collision);
+    if (__instance.IsAttached()) return false;
     if (!__instance.m_nview.IsValid() || !__instance.m_nview.IsOwner() ||
         __instance.m_jumpTimer < 0.1f) return false;
     var contacts = collision.contacts;

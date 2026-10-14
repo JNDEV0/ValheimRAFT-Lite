@@ -58,6 +58,13 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   public static ConfigEntry<float> LadderTopReleaseClearance = null!;
   private const string VehicleLadderKey = $"{VehicleGlobalBaseKey}:Ladder";
 
+  // water wake settings
+  public static ConfigEntry<float> DefaultWakeFoamRate = null!;
+  public static ConfigEntry<float> DefaultWakeFoamLifetime = null!;
+  public static ConfigEntry<float> DefaultWakeSprayRate = null!;
+  public static ConfigEntry<float> DefaultWakeSprayLifetime = null!;
+  private const string VehicleWakeKey = $"{VehicleGlobalBaseKey}:WaterWake";
+
   public override void OnBindConfig(ConfigFile config)
   {
     CreateSoundConfig(config);
@@ -69,6 +76,7 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
     CreateMaterialConfig(config);
     CreateSailorsConfig(config);
     CreateLadderConfig(config);
+    CreateWakeConfig(config);
   }
 
   private static void CreateHornConfig(ConfigFile config)
@@ -224,5 +232,32 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
       ConfigHelpers.CreateConfigDescription(
         "Height threshold at top of ladder to release early onto the deck.",
         false, false, new AcceptableValueRange<float>(-1.0f, 0.8f)));
+  }
+
+  private static void CreateWakeConfig(ConfigFile config)
+  {
+    DefaultWakeFoamRate = config.BindUnique(VehicleWakeKey,
+      "DefaultWakeFoamRate", 1.0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Default multiplier for flat wake foam emission rate (density).",
+        false, false, new AcceptableValueRange<float>(0.0f, 3.0f)));
+
+    DefaultWakeFoamLifetime = config.BindUnique(VehicleWakeKey,
+      "DefaultWakeFoamLifetime", 1.0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Default multiplier for flat wake foam lifespan (how long the foam trail lingers).",
+        false, false, new AcceptableValueRange<float>(0.1f, 3.0f)));
+
+    DefaultWakeSprayRate = config.BindUnique(VehicleWakeKey,
+      "DefaultWakeSprayRate", 1.0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Default multiplier for wake water spray particle emission rate.",
+        false, false, new AcceptableValueRange<float>(0.0f, 3.0f)));
+
+    DefaultWakeSprayLifetime = config.BindUnique(VehicleWakeKey,
+      "DefaultWakeSprayLifetime", 1.0f,
+      ConfigHelpers.CreateConfigDescription(
+        "Default multiplier for wake water spray particle lifespan.",
+        false, false, new AcceptableValueRange<float>(0.1f, 3.0f)));
   }
 }

@@ -67,11 +67,13 @@ namespace ValheimVehicles.SharedScripts
     private HoverFadeText anchorStateFadeText;
     private float messageFadeValue = 255f;
 
+    public static readonly Vector3 DefaultAnchorStartLocalPosition = new(-0.201f, -0.755f, -0.379f);
+
     public Vector3 GetAnchorStartLocalPosition()
     {
-      if (anchorStartLocalPosition != Vector3.zero)
+      if (anchorStartLocalPosition != Vector3.zero && anchorStartLocalPosition.y > -1f)
         return anchorStartLocalPosition;
-      return new Vector3(-0.201f, -0.755f, -0.379f);
+      return DefaultAnchorStartLocalPosition;
     }
 
     /// <summary>
@@ -125,12 +127,41 @@ namespace ValheimVehicles.SharedScripts
         {
           anchorRb.isKinematic = true;
           anchorRb.useGravity = false;
-          anchorStartLocalPosition = anchorRb.transform.localPosition;
+          if (anchorRb.transform.localPosition.y > -1f)
+          {
+            anchorStartLocalPosition = anchorRb.transform.localPosition;
+          }
+          else
+          {
+            anchorStartLocalPosition = DefaultAnchorStartLocalPosition;
+          }
         }
       }
 
       if (anchorStateFadeTextTransform != null)
         anchorStateFadeText = anchorStateFadeTextTransform.gameObject.AddComponent<HoverFadeText>();
+    }
+
+    public void ResetAnchorVisualToRetrieved()
+    {
+      var startPos = GetAnchorStartLocalPosition();
+      if (anchorTransform != null)
+      {
+        anchorTransform.localPosition = startPos;
+        anchorTransform.localRotation = Quaternion.identity;
+      }
+      if (anchorRb != null)
+      {
+        anchorRb.transform.localPosition = startPos;
+        if (!anchorRb.isKinematic)
+        {
+          anchorRb.position = anchorTransform != null ? anchorTransform.position : anchorRb.position;
+          anchorRb.rotation = anchorTransform != null ? anchorTransform.rotation : Quaternion.identity;
+          anchorRb.linearVelocity = Vector3.zero;
+          anchorRb.angularVelocity = Vector3.zero;
+        }
+      }
+      UpdateRopeVisual();
     }
 
     public virtual void Start()
@@ -141,10 +172,7 @@ namespace ValheimVehicles.SharedScripts
       if (currentState == AnchorState.Recovered || currentState == AnchorState.Idle)
       {
         UpdateAnchorState(AnchorState.Recovered, GetCurrentStateText());
-        if (anchorRb != null)
-        {
-          anchorRb.transform.localPosition = GetAnchorStartLocalPosition();
-        }
+        ResetAnchorVisualToRetrieved();
       }
     }
 
@@ -168,9 +196,10 @@ namespace ValheimVehicles.SharedScripts
       if (anchorRb == null || anchorTransform == null) return;
       if (currentState != AnchorState.Recovered && currentState != AnchorState.Idle) return;
 
-      if (transform.position.sqrMagnitude - anchorTransform.position.sqrMagnitude > 0.5f)
+      var startPos = GetAnchorStartLocalPosition();
+      if (Vector3.Distance(anchorTransform.localPosition, startPos) > 0.1f)
       {
-        anchorTransform.localPosition = GetAnchorStartLocalPosition();
+        ResetAnchorVisualToRetrieved();
       }
     }
 
@@ -252,7 +281,7 @@ namespace ValheimVehicles.SharedScripts
       anchorStateFadeText.ResetHoverTimer();
     }
 
-    public void UpdateAnchorState(AnchorState newState, string text)
+    public virtual void UpdateAnchorState(AnchorState newState, string text)
     {
       // Do nothing if state is equivalent
       if (newState == currentState) return;

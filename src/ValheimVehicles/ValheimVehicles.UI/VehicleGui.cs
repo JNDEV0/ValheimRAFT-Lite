@@ -969,7 +969,7 @@
         contentItemWidth);
       if (minFloatSliderRow != null) commandsPanelToggleObjects.Add(minFloatSliderRow);
 
-      // Ship Water Wake Controls (Toggle & Positional Sliders)
+      // Ship Water Wake Controls (Toggle & Tuning Sliders)
       var wakeEnabled = vZdo?.GetBool(VehicleZdoVars.ShipWaterWakeEnabled, VehiclePieceWaterEffects.GlobalEnableWaterWake) ?? VehiclePieceWaterEffects.GlobalEnableWaterWake;
       var wakeToggleRow = SwivelUIHelpers.AddToggleRow(
         svParent,
@@ -986,6 +986,114 @@
           }
         });
       if (wakeToggleRow != null) commandsPanelToggleObjects.Add(wakeToggleRow);
+
+      // Wake Foam Rate Slider (0.0x to 3.0x, default 1.0x)
+      var curFoamRate = vZdo?.GetFloat(VehicleZdoVars.WakeFoamRate, VehiclePieceWaterEffects.GlobalWakeFoamRate) ?? VehiclePieceWaterEffects.GlobalWakeFoamRate;
+      var foamRateRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Wake Foam Rate",
+        0.0f, 3.0f,
+        curFoamRate,
+        val =>
+        {
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null)
+          {
+            v.m_nview.GetZDO().Set(VehicleZdoVars.WakeFoamRate, val);
+          }
+          if (v != null)
+          {
+            foreach (var we in v.GetComponentsInChildren<VehiclePieceWaterEffects>(true))
+            {
+              we.UpdateParticleParameters();
+            }
+          }
+        },
+        out _,
+        contentItemWidth);
+      if (foamRateRow != null) commandsPanelToggleObjects.Add(foamRateRow);
+
+      // Wake Foam Lifespan Slider (0.1x to 3.0x, default 1.0x)
+      var curFoamLifetime = vZdo?.GetFloat(VehicleZdoVars.WakeFoamLifetime, VehiclePieceWaterEffects.GlobalWakeFoamLifetime) ?? VehiclePieceWaterEffects.GlobalWakeFoamLifetime;
+      var foamLifetimeRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Wake Foam Lifespan",
+        0.1f, 3.0f,
+        curFoamLifetime,
+        val =>
+        {
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null)
+          {
+            v.m_nview.GetZDO().Set(VehicleZdoVars.WakeFoamLifetime, val);
+          }
+          if (v != null)
+          {
+            foreach (var we in v.GetComponentsInChildren<VehiclePieceWaterEffects>(true))
+            {
+              we.UpdateParticleParameters();
+            }
+          }
+        },
+        out _,
+        contentItemWidth);
+      if (foamLifetimeRow != null) commandsPanelToggleObjects.Add(foamLifetimeRow);
+
+      // Water Spray Rate Slider (0.0x to 3.0x, default 1.0x)
+      var curSprayRate = vZdo?.GetFloat(VehicleZdoVars.WakeSprayRate, VehiclePieceWaterEffects.GlobalWakeSprayRate) ?? VehiclePieceWaterEffects.GlobalWakeSprayRate;
+      var sprayRateRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Water Spray Rate",
+        0.0f, 3.0f,
+        curSprayRate,
+        val =>
+        {
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null)
+          {
+            v.m_nview.GetZDO().Set(VehicleZdoVars.WakeSprayRate, val);
+          }
+          if (v != null)
+          {
+            foreach (var we in v.GetComponentsInChildren<VehiclePieceWaterEffects>(true))
+            {
+              we.UpdateParticleParameters();
+            }
+          }
+        },
+        out _,
+        contentItemWidth);
+      if (sprayRateRow != null) commandsPanelToggleObjects.Add(sprayRateRow);
+
+      // Water Spray Lifespan Slider (0.1x to 3.0x, default 1.0x)
+      var curSprayLifetime = vZdo?.GetFloat(VehicleZdoVars.WakeSprayLifetime, VehiclePieceWaterEffects.GlobalWakeSprayLifetime) ?? VehiclePieceWaterEffects.GlobalWakeSprayLifetime;
+      var sprayLifetimeRow = SwivelUIHelpers.AddSliderRow(
+        svParent,
+        viewStyles,
+        "Water Spray Lifespan",
+        0.1f, 3.0f,
+        curSprayLifetime,
+        val =>
+        {
+          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
+          if (v?.m_nview?.GetZDO() != null)
+          {
+            v.m_nview.GetZDO().Set(VehicleZdoVars.WakeSprayLifetime, val);
+          }
+          if (v != null)
+          {
+            foreach (var we in v.GetComponentsInChildren<VehiclePieceWaterEffects>(true))
+            {
+              we.UpdateParticleParameters();
+            }
+          }
+        },
+        out _,
+        contentItemWidth);
+      if (sprayLifetimeRow != null) commandsPanelToggleObjects.Add(sprayLifetimeRow);
 
       // 4. Console Debug Logs (Loop Log)
       var logRow = SwivelUIHelpers.AddToggleRow(

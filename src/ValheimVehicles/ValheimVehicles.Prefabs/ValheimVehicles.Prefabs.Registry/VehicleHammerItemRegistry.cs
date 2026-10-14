@@ -78,7 +78,8 @@ public class VehicleHammerItemRegistry : RegisterPrefab<VehicleHammerItemRegistr
       // - m_itemType = ItemDrop.ItemData.ItemType.Tool
       // - prefab name must container "hammer" lower case.
       m_skillType = Skills.SkillType.Swords,
-      m_itemType = ItemDrop.ItemData.ItemType.Tool
+      m_itemType = ItemDrop.ItemData.ItemType.Tool,
+      m_questItem = true
     };
 
     if (itemDrop.m_itemData.m_shared.m_attack == null)

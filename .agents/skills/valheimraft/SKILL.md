@@ -75,6 +75,9 @@ git push origin main
 
 ## 4. Release History Highlights
 
+### v5.4.8
+- **Prompt Repairs & In-Game Wake Sliders**: Added middle-click demolish confirmation safety and preserved inventory on death for the Boat Hammer. Suppressed `m_wet` snow overlay across all vessel pieces at altitude (>80m) and in flight mode. Fixed rope ladder upward climb character collision jitter. Fixed anchor mesh/rope visual desync on sector reload. Dynamically projected wake foam and spray particles to the undulating ocean surface. Added 4 live in-game sliders to the Boat Settings menu for wake foam and water spray rate and lifespan. Fixed steering wheel `[E]` release input bleed and instant re-grab. Updated sail descriptions with authentic speed values (+5.0, +7.5, +10.0, +12.0).
+
 ### v5.4.7
 - **Tuned Rudder Rowing & Sail Speed Balancing**: Reduced Steering Oar row speed to 3 m/s (from 4 m/s) and Sternpost Rudder row speed to 5 m/s (from 7.5 m/s). Applied `Vector3.SmoothDamp` throttle acceleration (2.0s) to rudder linear force so rowing ramps up smoothly rather than snapping instantly. Adjusted sailing throttle transition time from 3.5s to 2.0s for responsive helm control. Rebalanced all sail tiers upward so the Raft sail immediately matches full rowing speed (Raft: 5.0, Karve: 7.5, Longship: 10.0, Drakkar: 12.0 m/s). Fixed HUD formatting on steering wheel to prevent integer ceiling-rounding.
 

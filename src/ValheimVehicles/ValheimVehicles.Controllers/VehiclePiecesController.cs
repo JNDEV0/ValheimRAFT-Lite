@@ -1048,13 +1048,6 @@
             if (MovementController != null)
             {
               MovementController.UpdateAnchorCapabilities();
-              var aState = MovementController.vehicleAnchorState;
-              anchorMechanismController.UpdateAnchorState(aState,
-                VehicleAnchorMechanismController.GetCurrentStateTextStatic(aState, Manager != null && Manager.IsLandVehicle));
-              if (MovementController.isAnchored || aState == AnchorState.Anchored)
-              {
-                anchorMechanismController.UpdateAnchorPositionIfNotNearGround();
-              }
             }
             break;
           }
@@ -1399,6 +1392,11 @@
       m_pieces.Add(netView);
       UpdatePieceCount();
 
+      if (!(VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false))
+      {
+        ApplySnowOverlayToPiece(netView, false);
+      }
+
       AddPieceDataForComponents(netView, isNew);
 
 
@@ -1507,7 +1505,10 @@
     }
 
     private static readonly int _AddSnowPropId = Shader.PropertyToID("_AddSnow");
+    private static readonly int _SnowLevelPropId = Shader.PropertyToID("_SnowLevel");
     private static MaterialPropertyBlock? _snowMpb;
+
+    public bool? LastAppliedSnowOverlayState { get; private set; }
 
     public static void ApplySnowOverlayToAllVehicles(bool enabled)
     {
@@ -1520,21 +1521,49 @@
       }
     }
 
-    public void UpdateSnowOverlay(bool enabled)
+    public void ApplySnowOverlayToPiece(ZNetView piece, bool enabled)
     {
+      if (piece == null) return;
       _snowMpb ??= new MaterialPropertyBlock();
       var val = enabled ? 1f : 0f;
+      var renderers = piece.GetComponentsInChildren<Renderer>(true);
+      foreach (var r in renderers)
+      {
+        if (r == null) continue;
+        r.GetPropertyBlock(_snowMpb);
+        _snowMpb.SetFloat(_AddSnowPropId, val);
+        _snowMpb.SetFloat(_SnowLevelPropId, val);
+        r.SetPropertyBlock(_snowMpb);
+      }
+
+      if (!enabled)
+      {
+        var wnt = piece.GetComponent<WearNTear>();
+        if (wnt != null)
+        {
+          if (wnt.m_snow != null && wnt.m_snow.gameObject.activeSelf)
+            wnt.m_snow.gameObject.SetActive(false);
+          if (wnt.m_snowWorn != null && wnt.m_snowWorn.gameObject.activeSelf)
+            wnt.m_snowWorn.gameObject.SetActive(false);
+          if (wnt.m_snowBroken != null && wnt.m_snowBroken.gameObject.activeSelf)
+            wnt.m_snowBroken.gameObject.SetActive(false);
+          wnt.m_snowBuildup = 0f;
+        }
+
+        if (MaterialMan.instance != null)
+        {
+          MaterialMan.instance.ResetValue(piece.gameObject, _SnowLevelPropId);
+        }
+      }
+    }
+
+    public void UpdateSnowOverlay(bool enabled)
+    {
+      LastAppliedSnowOverlayState = enabled;
       foreach (var piece in m_pieces)
       {
         if (piece == null) continue;
-        var renderers = piece.GetComponentsInChildren<Renderer>(true);
-        foreach (var r in renderers)
-        {
-          if (r == null) continue;
-          r.GetPropertyBlock(_snowMpb);
-          _snowMpb.SetFloat(_AddSnowPropId, val);
-          r.SetPropertyBlock(_snowMpb);
-        }
+        ApplySnowOverlayToPiece(piece, enabled);
       }
     }
 
@@ -1544,6 +1573,11 @@
     private void OnBaseVehicleInitializationStateChange(InitializationState state)
     {
       if (state != InitializationState.Complete) return;
+
+      if (!(VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false))
+      {
+        UpdateSnowOverlay(false);
+      }
 
       StartActivatePendingPieces();
     }
@@ -1590,6 +1624,7 @@
       BaseVehicleInitState = InitializationState.Complete;
       IgnoreAllVehicleColliders();
       UpdateAllLadders();
+      UpdateAllAnchors();
     }
 
     public void UpdateAllLadders()
@@ -1611,6 +1646,22 @@
             }
           }
         }
+      }
+    }
+
+    public void UpdateAllAnchors()
+    {
+      if (m_anchorMechanismComponents == null || m_anchorMechanismComponents.Count == 0) return;
+      if (MovementController == null) return;
+
+      try
+      {
+        var aState = MovementController.vehicleAnchorState;
+        UpdateAnchorState(aState);
+      }
+      catch (System.Exception e)
+      {
+        LoggerProvider.LogDev($"Error updating anchors in UpdateAllAnchors: {e.Message}");
       }
     }
 
@@ -3085,6 +3136,11 @@
 
       if (pieceStateEnum == PendingPieceStateEnum.Complete)
       {
+        if (!(VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false))
+        {
+          UpdateSnowOverlay(false);
+        }
+
         if (!IsInitialPieceActivationComplete)
         {
           IsInitialPieceActivationComplete = true;
@@ -3396,12 +3452,21 @@
 
       anchorComponent.TryGuardAgainstAnchorSyncIssues();
 
-      // Ensure anchor head sits on seabed if vessel is already anchored on load
-      if (MovementController != null && (MovementController.isAnchored || MovementController.vehicleAnchorState == AnchorState.Anchored))
+      if (MovementController != null)
       {
         var aState = MovementController.vehicleAnchorState;
-        anchorComponent.UpdateAnchorState(aState, VehicleAnchorMechanismController.GetCurrentStateTextStatic(aState, Manager != null && Manager.IsLandVehicle));
-        anchorComponent.UpdateAnchorPositionIfNotNearGround();
+        var isLand = Manager != null && Manager.IsLandVehicle;
+        var stateText = VehicleAnchorMechanismController.GetCurrentStateTextStatic(aState, isLand);
+        anchorComponent.UpdateAnchorState(aState, stateText);
+
+        if (MovementController.isAnchored || aState == AnchorState.Anchored)
+        {
+          anchorComponent.UpdateAnchorPositionIfNotNearGround();
+        }
+        else if (aState == AnchorState.Recovered || aState == AnchorState.Idle)
+        {
+          anchorComponent.ResetAnchorVisualToRetrieved();
+        }
       }
     }
     /// <summary>
@@ -3419,36 +3484,14 @@
       foreach (var anchorComponent in m_anchorMechanismComponents)
       {
         if (!anchorComponent) continue;
-        if (anchorState != anchorComponent.currentState || (anchorState == AnchorState.Anchored && anchorComponent.anchorTransform != null && anchorComponent.anchorTransform.localPosition == anchorComponent.GetAnchorStartLocalPosition()))
+        anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
+        if (anchorState == AnchorState.Anchored)
         {
-          anchorComponent.UpdateAnchorState(anchorState, currentWheelStateText);
-          if (anchorState == AnchorState.Anchored)
-          {
-            anchorComponent.UpdateAnchorPositionIfNotNearGround();
-          }
+          anchorComponent.UpdateAnchorPositionIfNotNearGround();
         }
-
-        if (anchorState == AnchorState.Recovered || anchorState == AnchorState.Idle)
+        else if (anchorState == AnchorState.Recovered || anchorState == AnchorState.Idle)
         {
-          if (anchorComponent.anchorTransform != null)
-          {
-            var startPos = anchorComponent.GetAnchorStartLocalPosition();
-            anchorComponent.anchorTransform.localPosition = startPos;
-            anchorComponent.anchorTransform.localRotation = Quaternion.identity;
-            var rb = anchorComponent.anchorTransform.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-              rb.transform.localPosition = startPos;
-              if (!rb.isKinematic)
-              {
-                rb.position = anchorComponent.anchorTransform.position;
-                rb.rotation = anchorComponent.anchorTransform.rotation;
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-              }
-            }
-          }
-          anchorComponent.UpdateRopeVisual();
+          anchorComponent.ResetAnchorVisualToRetrieved();
         }
       }
 

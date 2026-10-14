@@ -6,6 +6,28 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ---
 
+## [5.4.8] - 2026-10-14
+
+### Added
+
+- **Live Water Wake & Spray Tuning Sliders**: Added 4 real-time tuning sliders to the "Toggle Switch - Boat Settings" menu (`VehicleGui.cs`):
+  - *Wake Foam Rate* (0.0x–3.0x, default 1.0x): Dynamically scales particle emission frequency for stern wake foam.
+  - *Wake Foam Lifespan* (0.5s–6.0s, default 3.0s): Adjusts duration foam decals persist on the water surface.
+  - *Water Spray Rate* (0.0x–3.0x, default 1.0x): Dynamically scales stern spray particle emission count.
+  - *Water Spray Lifespan* (0.2s–3.0s, default 1.0s): Adjusts duration water spray droplets linger in the air.
+  - Sliders update live and persist via vessel ZDO variables and global BepInEx configurations.
+- **Boat Hammer Middle-Click Demolish Confirmation**: Intercepts middle-click dismantle on ValheimRAFT pieces. Displays a HUD confirmation prompt (`"Dismantle [PieceName]? Click again to confirm"`) with a 2.5s window before dismantling, preventing accidental destruction of boat hull and deck pieces.
+- **Boat Hammer Preserved on Death**: Added quest item protection (`m_questItem = true`) to the Boat Hammer so it remains safely in inventory on death and cannot be lost in a tombstone.
+
+### Fixed
+
+- **Suppressed Altitude & Flight Snow Overlay**: Fixed boat pieces turning blindingly white with snow when ascending near mountain altitudes or flying. When altitude exceeds 80m or flight mode is active, `m_wet` snow accumulation is automatically suppressed across all vehicle pieces and materials are refreshed to clear lingering snow buildup.
+- **Rope Ladder Upward Climb Camera Jitter**: Fixed camera stutter and character-rung collision jitter when climbing rope ladders upward from lower deck sections, water, or midair. Dynamically disables player capsule collisions against all ladder step and frame colliders (`Physics.IgnoreCollision`) while climbing, cleanly restoring collisions upon dismount.
+- **Anchor Visual Desync on Sector Reload**: Fixed visual desync where walking away (sector unload) and returning (sector reload) caused the physical anchor mesh and chain to appear dropped on the seabed even though the helm HUD reported `[Anchor Retrieved]`. Synchronized visual anchor state upon sector piece activation completion (`VehiclePiecesActivator.OnActivationComplete`) and ensured anchor transforms, rigidbodies, and rope line renderers are forcibly synchronized with the vessel's anchor state on start and sector re-entry.
+- **Dynamic Water Surface Tracking for Wake Foam & Spray**: Fixed flat wake foam and spray particles floating detached in midair or submerging when sailing across ocean waves. Replaced static Y=0 calculations with dynamic water surface sampling (`WaterVolume.GetWaterSurface` and `Floating.GetLiquidLevel`), adjusting living wake and foam particle heights every frame to undulate naturally with wave crests and troughs.
+- **Steering Wheel Release `[E]` Input Bleed & Re-grab Prevention**: Fixed input bleed where pressing `[E]` (`Use`) to release the steering wheel / helm simultaneously triggered an interaction with whatever interactable was under the crosshair (causing instant wheel re-grabbing, accidental station/chest opening, or ladder latching). Added an active wheel detachment input consumption buffer (0.35s cooldown) and prefix guards on `Player.Interact` and `Player.UpdateHover` to exclusively consume the release keypress and prevent instant secondary interactions.
+- **Updated Sail Descriptions with Authentic Speeds**: Updated English localization descriptions (`valheimraft.json`) for all 4 sail tiers to reflect their upgraded propulsion values: Raft Sail (`+5.0`), Karve Sail (`+7.5`), Longship Sail (`+10.0`), and Drakkar Sail (`+12.0`).
+
 ## [5.4.7] - 2026-10-12
 
 ### Changed

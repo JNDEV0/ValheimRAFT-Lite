@@ -18,6 +18,7 @@ public class VehiclePieceActivator : BasePieceActivatorComponent
       if (_host != null)
       {
         _host.UpdateAllLadders();
+        _host.UpdateAllAnchors();
       }
     };
   }

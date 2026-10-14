@@ -18,6 +18,7 @@ public static class PieceActivatorHelpers
     Shader.PropertyToID("_RippleDistance");
   private static readonly int ValueNoise = Shader.PropertyToID("_ValueNoise");
   private static readonly int AddSnow = Shader.PropertyToID("_AddSnow");
+  private static readonly int SnowLevel = Shader.PropertyToID("_SnowLevel");
   /// <summary>
   /// Gets the RaycastPieceActivator which is used for Swivels and VehiclePiecesController components. These components are responsible for activation and parenting of vehicle pieces and will always exist above the current piece in transform hierarchy.
   /// </summary>
@@ -52,7 +53,7 @@ public static class PieceActivatorHelpers
      * If this is removed, the raft is seizure inducing.
      */
     if (netView == null) return;
-    var meshes = netView.GetComponentsInChildren<MeshRenderer>(true);
+    var renderers = netView.GetComponentsInChildren<Renderer>(true);
     var suppressSnow = !(VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false);
     MaterialPropertyBlock? snowMpb = null;
     if (suppressSnow)
@@ -60,32 +61,48 @@ public static class PieceActivatorHelpers
       snowMpb = new MaterialPropertyBlock();
     }
 
-    foreach (var meshRenderer in meshes)
+    foreach (var renderer in renderers)
     {
-      if (meshRenderer == null) continue;
+      if (renderer == null) continue;
 
-      if (meshRenderer.sharedMaterials.Length > 0)
+      if (renderer.sharedMaterials.Length > 0)
       {
-        var sharedMaterials = meshRenderer.sharedMaterials;
+        var sharedMaterials = renderer.sharedMaterials;
         for (var j = 0; j < sharedMaterials.Length; j++)
           sharedMaterials[j] = FixMaterial(sharedMaterials[j]);
 
-        meshRenderer.sharedMaterials = sharedMaterials;
+        renderer.sharedMaterials = sharedMaterials;
       }
-      else if (meshRenderer.materials.Length > 0)
+      else if (renderer.materials.Length > 0)
       {
-        var materials = meshRenderer.materials;
+        var materials = renderer.materials;
 
         for (var j = 0; j < materials.Length; j++)
           materials[j] = FixMaterial(materials[j]);
-        meshRenderer.materials = materials;
+        renderer.materials = materials;
       }
 
       if (suppressSnow && snowMpb != null)
       {
-        meshRenderer.GetPropertyBlock(snowMpb);
+        renderer.GetPropertyBlock(snowMpb);
         snowMpb.SetFloat(AddSnow, 0f);
-        meshRenderer.SetPropertyBlock(snowMpb);
+        snowMpb.SetFloat(SnowLevel, 0f);
+        renderer.SetPropertyBlock(snowMpb);
+      }
+    }
+
+    if (suppressSnow)
+    {
+      var wnt = netView.GetComponent<WearNTear>();
+      if (wnt != null)
+      {
+        if (wnt.m_snow != null && wnt.m_snow.gameObject.activeSelf)
+          wnt.m_snow.gameObject.SetActive(false);
+        if (wnt.m_snowWorn != null && wnt.m_snowWorn.gameObject.activeSelf)
+          wnt.m_snowWorn.gameObject.SetActive(false);
+        if (wnt.m_snowBroken != null && wnt.m_snowBroken.gameObject.activeSelf)
+          wnt.m_snowBroken.gameObject.SetActive(false);
+        wnt.m_snowBuildup = 0f;
       }
     }
   }

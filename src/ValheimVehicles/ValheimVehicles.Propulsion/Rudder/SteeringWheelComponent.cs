@@ -68,6 +68,8 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
   public Transform steeringWheelHoverTransform;
   public HoverFadeText steeringWheelHoverText;
 
+  public static float LastReleaseTime = -999f;
+
   public const string Key_ShowTutorial = "SteeringWheel_ShowTutorial";
   public bool showTutorial = true;
 
@@ -427,9 +429,12 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
     if (isCurrentlyControlling)
     {
       if (debugLog) LoggerProvider.LogInfo($"[SteeringWheel:Interact] User '{user.GetHoverName()}' is currently controlling or attached, releasing controls.");
+      LastReleaseTime = Time.time;
       m_lastAttachedHumanoid = null;
       if (user.IsAttached() || user.IsAttachedToShip()) user.AttachStop();
       if (player != null) OnUseStop(player);
+      ZInput.ResetButtonStatus("Use");
+      ZInput.ResetButtonStatus("JoyUse");
       return true;
     }
 
@@ -504,6 +509,9 @@ public class SteeringWheelComponent : MonoBehaviour, IAnimatorHandler, Hoverable
 
   public void OnUseStop(Player player)
   {
+    LastReleaseTime = Time.time;
+    ZInput.ResetButtonStatus("Use");
+    ZInput.ResetButtonStatus("JoyUse");
     ControllersInstance.Manager?.MovementController?.SendReleaseControl(player);
   }
 

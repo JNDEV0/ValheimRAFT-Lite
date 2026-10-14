@@ -5,6 +5,7 @@
   using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Constants;
   using ValheimVehicles.SharedScripts;
+  using Zolantris.Shared;
 
 #endregion
 
@@ -45,11 +46,19 @@
       if (MovementController != null)
       {
         var targetState = MovementController.vehicleAnchorState;
+        UpdateAnchorState(targetState, GetCurrentStateTextStatic(targetState, IsLandVehicle()));
         if (targetState == AnchorState.Anchored || targetState == AnchorState.Lowering)
         {
-          UpdateAnchorState(targetState, GetCurrentStateTextStatic(targetState, IsLandVehicle()));
           UpdateAnchorPositionIfNotNearGround();
         }
+        else
+        {
+          ResetAnchorVisualToRetrieved();
+        }
+      }
+      else
+      {
+        ResetAnchorVisualToRetrieved();
       }
     }
 
@@ -146,11 +155,44 @@
       UpdateRopeVisual();
     }
 
+    public override void UpdateAnchorState(AnchorState newState, string text)
+    {
+      var prevPieceState = currentState;
+      var wheelState = MovementController != null ? MovementController.vehicleAnchorState : prevPieceState;
+      var wheelStateText = GetCurrentStateTextStatic(wheelState, IsLandVehicle());
+
+      LoggerProvider.LogDebug(
+        $"[VehicleAnchor] Anchor piece '{name}' UpdateAnchorState: {prevPieceState} -> {newState} (Ship Helm HUD: [{wheelStateText}] / {wheelState})");
+
+      if (newState == currentState)
+      {
+        // Enforce visual synchronization even if state matches (guards against visual desync on sector load)
+        if (newState == AnchorState.Recovered || newState == AnchorState.Idle)
+        {
+          ResetAnchorVisualToRetrieved();
+        }
+        else if (newState == AnchorState.Anchored)
+        {
+          UpdateAnchorPositionIfNotNearGround();
+        }
+        return;
+      }
+
+      base.UpdateAnchorState(newState, text);
+    }
+
     public override void OnAnchorStateChange(AnchorState newState)
     {
+      var wheelState = MovementController != null ? MovementController.vehicleAnchorState : newState;
+      var wheelStateText = GetCurrentStateTextStatic(wheelState, IsLandVehicle());
+
+      LoggerProvider.LogDebug(
+        $"[VehicleAnchor] OnAnchorStateChange: newPieceState={newState}, shipHelmState={wheelState} ([{wheelStateText}])");
+
       switch (newState)
       {
         case AnchorState.Idle:
+          ResetAnchorVisualToRetrieved();
           break;
         case AnchorState.Lowering:
           break;
@@ -160,25 +202,7 @@
         case AnchorState.Reeling:
           break;
         case AnchorState.Recovered:
-          if (anchorTransform != null)
-          {
-            var startPos = GetAnchorStartLocalPosition();
-            anchorTransform.localPosition = startPos;
-            anchorTransform.localRotation = Quaternion.identity;
-            var rb = anchorTransform.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-              rb.transform.localPosition = startPos;
-              if (!rb.isKinematic)
-              {
-                rb.position = anchorTransform.position;
-                rb.rotation = anchorTransform.rotation;
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
-              }
-            }
-          }
-          UpdateRopeVisual();
+          ResetAnchorVisualToRetrieved();
           break;
         default:
           throw new ArgumentOutOfRangeException(nameof(newState), newState, null);

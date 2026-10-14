@@ -28,20 +28,33 @@ public static class WaterZoneUtils
   public static void IgnoreColliderIfAttachedAndOnVehicle(Character character, Collision collision)
   {
     if (collision.contactCount < 1) return;
-    if (!character.IsAttached() || !character.transform.root.name.StartsWith(PrefabNames.VehiclePiecesContainer))
+    if (!character.IsAttached())
     {
       return;
     }
     var firstContactPoint = collision.contacts[0];
+    if (firstContactPoint.thisCollider == null || firstContactPoint.otherCollider == null) return;
 
-    var exists = CharacterExcludedContactPoints.TryGetValue(character, out var contactPoints);
-    if (!exists)
+    if (!CharacterExcludedContactPoints.TryGetValue(character, out var contactPoints))
     {
-      CharacterExcludedContactPoints[character] = [firstContactPoint];
+      contactPoints = new List<ContactPoint>();
+      CharacterExcludedContactPoints[character] = contactPoints;
     }
-    else
+
+    bool alreadyTracked = false;
+    for (int i = 0; i < contactPoints.Count; i++)
     {
-      CharacterExcludedContactPoints[character].Add(firstContactPoint);
+      if (contactPoints[i].thisCollider == firstContactPoint.thisCollider &&
+          contactPoints[i].otherCollider == firstContactPoint.otherCollider)
+      {
+        alreadyTracked = true;
+        break;
+      }
+    }
+
+    if (!alreadyTracked)
+    {
+      contactPoints.Add(firstContactPoint);
     }
 
     Physics.IgnoreCollision(firstContactPoint.thisCollider, firstContactPoint.otherCollider, true);
@@ -56,7 +69,7 @@ public static class WaterZoneUtils
     {
       contactPoints.ForEach(x =>
       {
-        if (x.otherCollider == null || x.otherCollider == null) return;
+        if (x.thisCollider == null || x.otherCollider == null) return;
         Physics.IgnoreCollision(x.thisCollider, x.otherCollider, false);
       });
     }

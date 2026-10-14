@@ -174,9 +174,11 @@
 
       m_climbAnimPhase = LadderGait.Phase(initialAttachY);
 
-      player.AttachStart(m_attachPoint, null, true, false,
+      player.AttachStart(m_attachPoint, gameObject, true, false,
         false,
         hasClimbClip ? "attach_mast" : "Movement", Vector3.zero);
+
+      SetLadderCollisions(player, true);
 
       if (hasClimbClip)
       {
@@ -189,6 +191,22 @@
       }
 
       DriveAnimation(player);
+    }
+
+    public void SetLadderCollisions(Player player, bool ignore)
+    {
+      if (player == null) return;
+      var playerColliders = player.GetComponentsInChildren<Collider>();
+      var ladderColliders = GetComponentsInChildren<Collider>();
+      foreach (var pc in playerColliders)
+      {
+        if (pc == null) continue;
+        foreach (var lc in ladderColliders)
+        {
+          if (lc == null) continue;
+          Physics.IgnoreCollision(pc, lc, ignore);
+        }
+      }
     }
 
     private bool ShouldRetractLadder()
@@ -418,6 +436,21 @@
           m_steps.Add(go);
           go.transform.localPosition =
             new Vector3(0f, (0f - m_stepDistance) * (float)m_steps.Count, 0f);
+
+          if (Player.m_localPlayer != null && Player.m_localPlayer.IsAttached() &&
+              Player.m_localPlayer.GetAttachPoint() == m_attachPoint)
+          {
+            var stepColliders = go.GetComponentsInChildren<Collider>();
+            var pColliders = Player.m_localPlayer.GetComponentsInChildren<Collider>();
+            foreach (var pc in pColliders)
+            {
+              if (pc == null) continue;
+              foreach (var sc in stepColliders)
+              {
+                if (sc != null) Physics.IgnoreCollision(pc, sc, true);
+              }
+            }
+          }
         }
       }
 
@@ -602,6 +635,7 @@
       }
 
       RestoreClimbAnimation(player);
+      SetLadderCollisions(player, false);
     }
 
     public void OnStepOffLadder(Player player)
