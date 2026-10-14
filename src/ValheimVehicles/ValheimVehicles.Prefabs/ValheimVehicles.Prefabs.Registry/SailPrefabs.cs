@@ -279,20 +279,14 @@ public class SailPrefabs : RegisterPrefab<SailPrefabs>
 
   public static string GetTieredSailAreaText(int tier)
   {
-    var description = tier switch
+    return tier switch
     {
-      1 =>
-        $"$mb_raft_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{PropulsionConfig.SailTier1Area.Value}</b></color>]",
-      2 =>
-        $"$mb_karve_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{PropulsionConfig.SailTier2Area.Value}</b></color>]",
-      3 =>
-        $"$mb_vikingship_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{PropulsionConfig.SailTier3Area.Value}</b></color>]",
-      4 =>
-        $"$valheim_vehicles_drakkalship_mast_desc\n$mb_raft_mast_generic_wind_desc [<color=yellow><b>{PropulsionConfig.SailTier4Area.Value}</b></color>]",
+      1 => "$mb_raft_mast_desc",
+      2 => "$mb_karve_mast_desc",
+      3 => "$mb_vikingship_mast_desc",
+      4 => "$valheim_vehicles_drakkalship_mast_desc",
       _ => ""
     };
-
-    return description;
   }
 
   private void RegisterRaftMast()

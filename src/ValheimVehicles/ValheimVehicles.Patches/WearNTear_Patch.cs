@@ -305,6 +305,37 @@
       return false;
     }
 
+    private static readonly int s_snowLevelPropId = Shader.PropertyToID("_SnowLevel");
+    private static readonly int s_addSnowPropId = Shader.PropertyToID("_AddSnow");
+    private static MaterialPropertyBlock? s_snowMpb;
+
+    [HarmonyPatch(typeof(WearNTear), "UpdateCover")]
+    [HarmonyPrefix]
+    private static bool WearNTear_UpdateCoverPrefix(WearNTear __instance)
+    {
+      if (IsVehiclePiece(__instance))
+      {
+        // On rolling/pitching vessels, raycasting against overhead pieces constantly hits/misses,
+        // repeatedly flipping m_haveRoof and causing repetitive UpdateVisual flashing.
+        // We allow the initial roof check once, then freeze the roof state.
+        if (__instance.m_updateCoverTimer >= 4f)
+        {
+          __instance.m_haveRoof = __instance.HaveRoof();
+          if (__instance.m_inAshlands)
+          {
+            __instance.m_haveAshRoof = __instance.HaveAshRoof();
+          }
+          __instance.m_updateCoverTimer = -999999f;
+          return false;
+        }
+        if (__instance.m_updateCoverTimer < 0f)
+        {
+          return false;
+        }
+      }
+      return true;
+    }
+
     [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.CanHaveSnow), typeof(bool))]
     [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.CanHaveSnow), typeof(bool), typeof(bool))]
     [HarmonyPrefix]
@@ -331,6 +362,27 @@
         if (__instance.m_snowBroken != null && __instance.m_snowBroken.gameObject.activeSelf)
           __instance.m_snowBroken.gameObject.SetActive(false);
         __instance.m_snowBuildup = 0f;
+
+        if (MaterialMan.instance != null)
+        {
+          MaterialMan.instance.SetValue(__instance.gameObject, s_snowLevelPropId, 0f);
+        }
+
+        if (__instance.m_renderers != null)
+        {
+          s_snowMpb ??= new MaterialPropertyBlock();
+          for (int i = 0; i < __instance.m_renderers.Count; i++)
+          {
+            var rend = __instance.m_renderers[i];
+            if (rend != null)
+            {
+              rend.GetPropertyBlock(s_snowMpb);
+              s_snowMpb.SetFloat(s_snowLevelPropId, 0f);
+              s_snowMpb.SetFloat(s_addSnowPropId, 0f);
+              rend.SetPropertyBlock(s_snowMpb);
+            }
+          }
+        }
         return false;
       }
       return true;

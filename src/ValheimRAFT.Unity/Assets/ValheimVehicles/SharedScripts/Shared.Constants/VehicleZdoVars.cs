@@ -37,6 +37,8 @@ namespace ValheimVehicles.Shared.Constants
     public const string WakeFoamLifetime = "ValheimVehicles_WakeFoamLifetime";
     public const string WakeSprayRate = "ValheimVehicles_WakeSprayRate";
     public const string WakeSprayLifetime = "ValheimVehicles_WakeSprayLifetime";
+    public const string WakeSprayDistance = "ValheimVehicles_WakeSprayDistance";
+    public const string WakeSprayArc = "ValheimVehicles_WakeSprayArc";
 
     public const string ToggleSwitchAction = "ValheimVehicles_ToggleSwitchAction";
     public const string ForceAnchorOnPortalTeleport = "ValheimVehicles_ForceAnchorOnPortalTeleport";

@@ -21,6 +21,8 @@ public class VehiclePieceWaterEffects : MonoBehaviour
   public static float GlobalWakeFoamLifetime => VehicleGlobalConfig.DefaultWakeFoamLifetime?.Value ?? 1.0f;
   public static float GlobalWakeSprayRate => VehicleGlobalConfig.DefaultWakeSprayRate?.Value ?? 1.0f;
   public static float GlobalWakeSprayLifetime => VehicleGlobalConfig.DefaultWakeSprayLifetime?.Value ?? 1.0f;
+  public static float GlobalWakeSprayDistance => VehicleGlobalConfig.DefaultWakeSprayDistance?.Value ?? 1.0f;
+  public static float GlobalWakeSprayArc => VehicleGlobalConfig.DefaultWakeSprayArc?.Value ?? 1.0f;
 
   public float GetWakeFoamRate()
   {
@@ -46,6 +48,18 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     return zdo?.GetFloat(Shared.Constants.VehicleZdoVars.WakeSprayLifetime, GlobalWakeSprayLifetime) ?? GlobalWakeSprayLifetime;
   }
 
+  public float GetWakeSprayDistance()
+  {
+    var zdo = _vehicleManager?.m_nview?.GetZDO();
+    return zdo?.GetFloat(Shared.Constants.VehicleZdoVars.WakeSprayDistance, GlobalWakeSprayDistance) ?? GlobalWakeSprayDistance;
+  }
+
+  public float GetWakeSprayArc()
+  {
+    var zdo = _vehicleManager?.m_nview?.GetZDO();
+    return zdo?.GetFloat(Shared.Constants.VehicleZdoVars.WakeSprayArc, GlobalWakeSprayArc) ?? GlobalWakeSprayArc;
+  }
+
   public VehicleWaterEffectType EffectType = VehicleWaterEffectType.Wake;
   public bool IsFallbackEmitter = false;
 
@@ -54,8 +68,67 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     public float StartLifetime;
     public float RateOverTime;
     public float RateOverDistance;
+    public float StartSpeed;
+    public float ShapeAngle;
   }
   private readonly Dictionary<ParticleSystem, ParticleSystemBaseSettings> _baseSettings = new();
+
+  private float _lastFoamRate = -1f;
+  private float _lastFoamLifetime = -1f;
+  private float _lastSprayRate = -1f;
+  private float _lastSprayLifetime = -1f;
+  private float _lastSprayDistance = -1f;
+  private float _lastSprayArc = -1f;
+
+  private Collider[]? _rudderColliders;
+
+  public void GetRudderVerticalBounds(out float minY, out float maxY)
+  {
+    if (_rudderColliders == null || _rudderColliders.Length == 0)
+    {
+      _rudderColliders = GetComponentsInChildren<Collider>();
+    }
+
+    float min = float.MaxValue;
+    float max = float.MinValue;
+    if (_rudderColliders != null && _rudderColliders.Length > 0)
+    {
+      for (int i = 0; i < _rudderColliders.Length; i++)
+      {
+        var col = _rudderColliders[i];
+        if (col != null && col.enabled && !col.isTrigger)
+        {
+          var b = col.bounds;
+          if (b.min.y < min) min = b.min.y;
+          if (b.max.y > max) max = b.max.y;
+        }
+      }
+    }
+
+    if (min == float.MaxValue)
+    {
+      var renderers = GetComponentsInChildren<Renderer>();
+      for (int i = 0; i < renderers.Length; i++)
+      {
+        var r = renderers[i];
+        if (r != null && r.enabled && !(r is ParticleSystemRenderer))
+        {
+          var b = r.bounds;
+          if (b.min.y < min) min = b.min.y;
+          if (b.max.y > max) max = b.max.y;
+        }
+      }
+    }
+
+    if (min == float.MaxValue)
+    {
+      min = transform.position.y - 3.5f;
+      max = transform.position.y + 1.0f;
+    }
+
+    minY = min;
+    maxY = max;
+  }
 
   private GameObject? _effectInstance;
   private ParticleSystem[] _flatFoamParticles = Array.Empty<ParticleSystem>();
@@ -163,12 +236,19 @@ public class VehiclePieceWaterEffects : MonoBehaviour
       var psName = ps.name;
       var psRenderer = ps.GetComponent<ParticleSystemRenderer>();
 
+      float baseSpeed = ps.main.startSpeedMultiplier;
+      if (baseSpeed < 0.01f) baseSpeed = 1.0f;
+      float baseAngle = ps.shape.enabled ? ps.shape.angle : 25f;
+      if (baseAngle < 1f) baseAngle = 25f;
+
       // Record baseline template settings before any multipliers are applied
       _baseSettings[ps] = new ParticleSystemBaseSettings
       {
         StartLifetime = ps.main.startLifetimeMultiplier,
         RateOverTime = ps.emission.rateOverTimeMultiplier,
-        RateOverDistance = ps.emission.rateOverDistanceMultiplier
+        RateOverDistance = ps.emission.rateOverDistanceMultiplier,
+        StartSpeed = baseSpeed,
+        ShapeAngle = baseAngle
       };
 
       // Set both the flat foam and trailing particle spray to 0, 0, 0 relative to the rudder
@@ -226,6 +306,15 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     float foamLifetime = GetWakeFoamLifetime();
     float sprayRate = GetWakeSprayRate();
     float sprayLifetime = GetWakeSprayLifetime();
+    float sprayDistance = GetWakeSprayDistance();
+    float sprayArc = GetWakeSprayArc();
+
+    _lastFoamRate = foamRate;
+    _lastFoamLifetime = foamLifetime;
+    _lastSprayRate = sprayRate;
+    _lastSprayLifetime = sprayLifetime;
+    _lastSprayDistance = sprayDistance;
+    _lastSprayArc = sprayArc;
 
     for (int i = 0; i < _flatFoamParticles.Length; i++)
     {
@@ -250,10 +339,17 @@ public class VehiclePieceWaterEffects : MonoBehaviour
       {
         var main = ps.main;
         main.startLifetimeMultiplier = baseVal.StartLifetime * sprayLifetime;
+        main.startSpeedMultiplier = baseVal.StartSpeed * sprayDistance;
 
         var emission = ps.emission;
         emission.rateOverTimeMultiplier = baseVal.RateOverTime * sprayRate;
         emission.rateOverDistanceMultiplier = baseVal.RateOverDistance * sprayRate;
+
+        if (ps.shape.enabled)
+        {
+          var shape = ps.shape;
+          shape.angle = Mathf.Clamp(baseVal.ShapeAngle * sprayArc, 1f, 85f);
+        }
       }
     }
   }
@@ -342,6 +438,17 @@ public class VehiclePieceWaterEffects : MonoBehaviour
       }
     }
 
+    // Live parameter check: update particle parameters if sliders or config changed
+    if (Mathf.Abs(GetWakeFoamRate() - _lastFoamRate) > 0.001f ||
+        Mathf.Abs(GetWakeFoamLifetime() - _lastFoamLifetime) > 0.001f ||
+        Mathf.Abs(GetWakeSprayRate() - _lastSprayRate) > 0.001f ||
+        Mathf.Abs(GetWakeSprayLifetime() - _lastSprayLifetime) > 0.001f ||
+        Mathf.Abs(GetWakeSprayDistance() - _lastSprayDistance) > 0.001f ||
+        Mathf.Abs(GetWakeSprayArc() - _lastSprayArc) > 0.001f)
+    {
+      UpdateParticleParameters();
+    }
+
     var speed = _vehicleRigidbody.linearVelocity.magnitude;
     const float minSpeed = 1.0f;
 
@@ -377,14 +484,18 @@ public class VehiclePieceWaterEffects : MonoBehaviour
     {
       var rudderPos = transform.position;
       var waterY = GetDynamicWaterHeight(rudderPos);
-      bool isRudderInWater = (waterY >= rudderPos.y - 3.5f) && (waterY <= rudderPos.y + 1.0f);
+      GetRudderVerticalBounds(out float minY, out float maxY);
+
+      // Rudder touches water if water level is at or above the bottom of the rudder
+      bool isRudderInWater = (waterY >= minY);
 
       shouldEmit = speed > minSpeed && isRudderInWater;
 
       if (shouldEmit)
       {
+        float contactY = Mathf.Clamp(waterY, minY, maxY);
         Vector3 shipBackDir = _vehicleManager != null ? -_vehicleManager.transform.forward : -transform.forward;
-        targetEffPos = new Vector3(rudderPos.x, waterY - 0.05f, rudderPos.z) + shipBackDir * 0.2f;
+        targetEffPos = new Vector3(rudderPos.x, contactY, rudderPos.z) + shipBackDir * 0.2f;
         targetYaw = _vehicleManager != null ? _vehicleManager.transform.eulerAngles.y : transform.eulerAngles.y;
       }
     }
@@ -400,10 +511,11 @@ public class VehiclePieceWaterEffects : MonoBehaviour
       _effectInstance.transform.rotation = Quaternion.Euler(0f, targetYaw, 0f);
     }
 
-    // Dynamic wave decal projection: update all living wake/foam particles to dynamically hug undulating ocean waves
-    for (int pIdx = 0; pIdx < _particles.Length; pIdx++)
+    // Dynamic wave decal projection: update all living flat foam particles to dynamically hug undulating ocean waves.
+    // Spray particles are explicitly excluded here so they can spray naturally through 3D air without being flattened!
+    for (int pIdx = 0; pIdx < _flatFoamParticles.Length; pIdx++)
     {
-      var ps = _particles[pIdx];
+      var ps = _flatFoamParticles[pIdx];
       if (ps == null) continue;
 
       int maxP = ps.main.maxParticles;
