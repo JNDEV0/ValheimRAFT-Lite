@@ -149,6 +149,9 @@ namespace ValheimVehicles.Prefabs.Registry
       "ValheimVehicles_Powder_Barrel", // Powder Barrel - Ammo Storage
       "ValheimVehicles_Cannon_Control_Center", // Gunnery Binnacle - Cannon Control Center
 
+      // Smokeless Campfire (moved before ship planters per user request)
+      "ValheimVehicles_SmokelessFirepit",
+
       // Planters & Pier Supports (moved up per user request)
       "MBDirtFloor_1x1", // Ship Planter - Small
       "MBDirtFloor_2x2", // Ship Planter - Large
@@ -433,6 +436,7 @@ namespace ValheimVehicles.Prefabs.Registry
       { "ValheimVehicles_Cannon_Turret_Tier1", new[] { "valheim_vehicles_cannon_turret_tier1", "cannonturrettier1" } },
       { "ValheimVehicles_Powder_Barrel", new[] { "valheim_vehicles_powder_barrel", "powderbarrel" } },
       { "ValheimVehicles_Cannon_Control_Center", new[] { "valheim_vehicles_cannon_control_center", "cannoncontrolcenter" } },
+      { "ValheimVehicles_SmokelessFirepit", new[] { "valheim_vehicles_smokeless_firepit", "smokelessfirepit", "smokeless_firepit", "smokelesscampfire" } },
       { "MBDirtFloor_1x1", new[] { "dirtfloor1x1", "mbdirtfloor1x1" } },
       { "MBDirtFloor_2x2", new[] { "dirtfloor2x2", "mbdirtfloor2x2" } },
       { "MBPier_Stone", new[] { "pierstone", "mbpierstone" } },
