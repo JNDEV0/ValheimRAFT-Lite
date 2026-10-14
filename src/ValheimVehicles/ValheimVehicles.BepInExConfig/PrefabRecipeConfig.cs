@@ -23,6 +23,13 @@ public class PrefabRecipeConfig : BepInExBaseConfig<PrefabRecipeConfig>
   public static readonly Dictionary<string, RequirementConfig[]> DefaultRequirements = new(System.StringComparer.OrdinalIgnoreCase)
   {
     {
+      PrefabNames.SmokelessFirepit, [
+        new RequirementConfig { Item = "Stone", Amount = 8, Recover = true },
+        new RequirementConfig { Item = "RoundLog", Amount = 2, Recover = true },
+        new RequirementConfig { Item = "Thistle", Amount = 4, Recover = true }
+      ]
+    },
+    {
       PrefabNames.CannonballExplosive, new[]
       {
         new RequirementConfig { Item = "BlackMetal", Amount = 1, Recover = true },

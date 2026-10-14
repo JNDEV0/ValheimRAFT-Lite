@@ -94,6 +94,8 @@
       public static readonly string LandVehicle = $"{ValheimVehiclesPrefix}_VehicleLand";
       public static readonly string AirVehicle = $"{ValheimVehiclesPrefix}_VehicleAir";
       public static readonly string WheelSet = $"{ValheimVehiclesPrefix}_WheelSet";
+      public static readonly string SmokelessFirepit =
+        $"{ValheimVehiclesPrefix}_SmokelessFirepit";
 
       public static readonly string CustomWaterFloatation =
         $"{ValheimVehiclesPrefix}_CustomWaterFloatation";

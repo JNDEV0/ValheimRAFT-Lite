@@ -602,6 +602,7 @@
   "valheim_vehicles_tame_no_ship": "No ship nearby to assign this sailor to.",
   "valheim_vehicles_sailor_dismissed": "Sailor Greydwarf dismissed!",
   "valheim_vehicles_sailor_dismiss": "Dismiss",
-  "valheim_vehicles_sailor_dismiss_confirm": "Dismiss Greydwarf sailor? Repeat to confirm (3s)",
-  "valheim_vehicles_tame_ship_too_far": "Ship is too far"
+  "valheim_vehicles_tame_ship_too_far": "Ship is too far",
+  "valheim_vehicles_smokeless_firepit": "Smokeless Campfire",
+  "valheim_vehicles_smokeless_firepit_desc": "A cozy, smokeless hearth engineered for ocean voyages. Provides steady warmth and comfort without choking the deck or blinding the helmsman with billowing soot. <color=yellow>All the warmth and none of the coughing fits while steering into the wind. The gods must've swallowed the soot themselves!</color>"
 }

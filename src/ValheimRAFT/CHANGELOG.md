@@ -10,6 +10,7 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ### Added
 
+- **Smokeless Campfire for Boat Hammer**: Added a seaworthy smokeless campfire piece to the Boat Hammer menu, cloned from the vanilla campfire (`fire_pit`) with all smoke spawners stripped to prevent blinding smoke plumes while the ship is in motion. Balanced crafting cost (8 Stone, 2 Core Wood, 4 Thistle with `Recover = true`), full weather/cooking station support, and authentic sailor lore description.
 - **Boat Hammer Middle-Click Demolish Confirmation**: Intercepts middle-click dismantle on ValheimRAFT pieces. Displays a HUD confirmation prompt (`"Dismantle [PieceName]? Click again to confirm"`) with a 2.5s window before dismantling, preventing accidental destruction of boat hull and deck pieces.
 - **Boat Hammer Preserved on Death**: Added quest item protection (`m_questItem = true`) to the Boat Hammer so it remains safely in inventory on death and cannot be lost in a tombstone.
 

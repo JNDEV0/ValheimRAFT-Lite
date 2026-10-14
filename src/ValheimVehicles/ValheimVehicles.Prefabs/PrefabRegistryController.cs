@@ -851,6 +851,9 @@ namespace ValheimVehicles.Prefabs
       // Floors
       DirtFloorPrefabRegistry.Register();
 
+      // Smokeless Campfire
+      SmokelessFirepitPrefabRegistry.Register();
+
       // cannon prefabs
       CannonPrefabs.Register();
 
