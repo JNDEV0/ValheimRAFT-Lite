@@ -91,19 +91,10 @@ public static class PieceActivatorHelpers
       }
     }
 
-    if (suppressSnow)
+    var wnt = netView.GetComponent<WearNTear>();
+    if (wnt != null)
     {
-      var wnt = netView.GetComponent<WearNTear>();
-      if (wnt != null)
-      {
-        if (wnt.m_snow != null && wnt.m_snow.gameObject.activeSelf)
-          wnt.m_snow.gameObject.SetActive(false);
-        if (wnt.m_snowWorn != null && wnt.m_snowWorn.gameObject.activeSelf)
-          wnt.m_snowWorn.gameObject.SetActive(false);
-        if (wnt.m_snowBroken != null && wnt.m_snowBroken.gameObject.activeSelf)
-          wnt.m_snowBroken.gameObject.SetActive(false);
-        wnt.m_snowBuildup = 0f;
-      }
+      wnt.UpdateSnowVisual();
     }
   }
   

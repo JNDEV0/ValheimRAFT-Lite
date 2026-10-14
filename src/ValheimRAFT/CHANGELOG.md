@@ -10,23 +10,28 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
 ### Added
 
-- **Live Water Wake & Spray Tuning Sliders**: Added real-time tuning sliders to the "Toggle Switch - Boat Settings" menu (`VehicleGui.cs`):
-  - *Wake Foam Rate* (0.0x–3.0x, default 1.0x): Dynamically scales particle emission frequency for stern wake foam.
-  - *Wake Foam Lifespan* (0.1x–3.0x, default 1.0x): Adjusts duration foam decals persist on the water surface.
-  - *Water Spray Rate* (0.0x–3.0x, default 1.0x): Dynamically scales stern spray particle emission count.
-  - *Water Spray Lifespan* (0.1x–3.0x, default 1.0x): Adjusts duration water spray droplets linger in the air.
-  - *Water Spray Distance* (0.2x–3.0x, default 1.0x): Scales velocity and reach of stern water spray.
-  - *Water Spray Arc* (0.2x–3.0x, default 1.0x): Controls spray spread and cone angle.
-  - Sliders update live across rudder emitters and persist via vessel ZDO variables and global BepInEx configurations.
 - **Boat Hammer Middle-Click Demolish Confirmation**: Intercepts middle-click dismantle on ValheimRAFT pieces. Displays a HUD confirmation prompt (`"Dismantle [PieceName]? Click again to confirm"`) with a 2.5s window before dismantling, preventing accidental destruction of boat hull and deck pieces.
 - **Boat Hammer Preserved on Death**: Added quest item protection (`m_questItem = true`) to the Boat Hammer so it remains safely in inventory on death and cannot be lost in a tombstone.
 
+### Changed
+
+- **Water Wake Effects Tuning & Simplified UI**: Baked optimal water wake parameters into global configuration and emitter fallbacks:
+  - *Wake Foam Rate*: 2.0x
+  - *Wake Foam Lifespan*: 3.0x
+  - *Wake Water Spray Rate*: 1.0x
+  - *Wake Water Spray Lifespan*: 1.0x
+  - *Wake Water Spray Distance*: 1.0x
+  - *Wake Water Spray Arc*: 3.0x
+  - Removed the 6 individual tuning sliders from the Boat Settings UI menu in favor of a clean, dedicated on/off toggle (`ShipWaterWakeEnabled`) that live-updates emitters immediately.
+- **Cleaned Up Boat Settings Sliders**: Removed the Top Release Clearance slider (`LadderTopReleaseClearance`) from the UI while keeping the optimal default clearance (-0.6m) preserved.
+
 ### Fixed
 
+- **Universal Boat Snow Overlay & Movement Recast Freeze**: Fixed snow overlay toggle being ignored by vanilla wood pieces (`woodwall`, `wood_stepladder`, `wood_beam`), floors, and OdinArchitect parts:
+  - Extended vehicle piece identification to all 138+ vehicle pieces using comprehensive persistent/parent IDs and vessel bounds (`VehicleOwnership_Patches.IsVehiclePiece`).
+  - Resolved `WearNTear.UpdateCover` recasting raycasts on movement: froze roof evaluations upon initial initialization for all vehicle pieces so rocking and pitching vessels never repeatedly recast or flip roof states.
+  - Added full shader and keyword management across piece renderers (`_ADDSNOW_ON` keyword toggle, `_SnowLevel`, `_AddSnow`, and `MaterialMan` persistent value binding) ensuring all building piece types cleanly show or hide snow upon toggle without flickering or lingering.
 - **Water Wake Live Updates & Rudder Waterline Contact**: Fixed water wake and spray sliders not applying in real time. Connected dynamic parameter updates directly to rudder pieces in `VehicleGui` and `LateUpdate`. Replaced restrictive height offsets with rudder collider vertical bounds (`waterY >= minY`) to eliminate wave crest stutter when submerged, and positioned spray emission precisely at the waterline contact height along the rudder blade.
-- **3D Water Spray Wave Decal Isolation**: Fixed 3D spray particles being crushed down to the ocean surface by the dynamic wave projection loop. Isolated wave projection strictly to flat foam particles, allowing water spray particles to fly freely through 3D air.
-- **Sail Tooltip Legacy Area Removal**: Removed obsolete `Gives sail-area of [...]` text from sail hover tooltips in `SailPrefabs.cs`, showing clean authentic speed descriptions matching actual propulsion.
-- **Snow Overlay Stability & Residual Clearing**: Fixed boat parts flashing/re-projecting every 4 seconds when Snow Overlay is enabled by stabilizing `WearNTear.UpdateCover` roof checks on moving vessels. Fixed snow remaining on pieces when toggled off by explicitly clearing `_SnowLevel` and `_AddSnow` via `MaterialMan` and renderer property blocks.
 - **Fireplace Heightmap Out-of-Range Guard**: Added prefix guard on `Fireplace.CheckUnderTerrain` to skip terrain burial checks for shipboard fireplaces, preventing `ArgumentOutOfRangeException: Index was out of range` when sailing deep oceans or flying.
 - **Suppressed Altitude & Flight Snow Overlay**: Fixed boat pieces turning blindingly white with snow when ascending near mountain altitudes or flying. When altitude exceeds 80m or flight mode is active, `m_wet` snow accumulation is automatically suppressed across all vehicle pieces and materials are refreshed to clear lingering snow buildup.
 - **Rope Ladder Upward Climb Camera Jitter**: Fixed camera stutter and character-rung collision jitter when climbing rope ladders upward from lower deck sections, water, or midair. Dynamically disables player capsule collisions against all ladder step and frame colliders (`Physics.IgnoreCollision`) while climbing, cleanly restoring collisions upon dismount.

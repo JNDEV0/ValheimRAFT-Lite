@@ -239,13 +239,13 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
   private static void CreateWakeConfig(ConfigFile config)
   {
     DefaultWakeFoamRate = config.BindUnique(VehicleWakeKey,
-      "DefaultWakeFoamRate", 1.0f,
+      "DefaultWakeFoamRate", 2.0f,
       ConfigHelpers.CreateConfigDescription(
         "Default multiplier for flat wake foam emission rate (density).",
         false, false, new AcceptableValueRange<float>(0.0f, 3.0f)));
 
     DefaultWakeFoamLifetime = config.BindUnique(VehicleWakeKey,
-      "DefaultWakeFoamLifetime", 1.0f,
+      "DefaultWakeFoamLifetime", 3.0f,
       ConfigHelpers.CreateConfigDescription(
         "Default multiplier for flat wake foam lifespan (how long the foam trail lingers).",
         false, false, new AcceptableValueRange<float>(0.1f, 3.0f)));
@@ -269,7 +269,7 @@ public class VehicleGlobalConfig : BepInExBaseConfig<VehicleGlobalConfig>
         false, false, new AcceptableValueRange<float>(0.2f, 3.0f)));
 
     DefaultWakeSprayArc = config.BindUnique(VehicleWakeKey,
-      "DefaultWakeSprayArc", 1.0f,
+      "DefaultWakeSprayArc", 3.0f,
       ConfigHelpers.CreateConfigDescription(
         "Default multiplier for wake water spray spread/cone angle.",
         false, false, new AcceptableValueRange<float>(0.2f, 3.0f)));

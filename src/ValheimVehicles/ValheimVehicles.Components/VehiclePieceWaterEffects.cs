@@ -17,12 +17,12 @@ public enum VehicleWaterEffectType
 public class VehiclePieceWaterEffects : MonoBehaviour
 {
   public static bool GlobalEnableWaterWake = true;
-  public static float GlobalWakeFoamRate => VehicleGlobalConfig.DefaultWakeFoamRate?.Value ?? 1.0f;
-  public static float GlobalWakeFoamLifetime => VehicleGlobalConfig.DefaultWakeFoamLifetime?.Value ?? 1.0f;
+  public static float GlobalWakeFoamRate => VehicleGlobalConfig.DefaultWakeFoamRate?.Value ?? 2.0f;
+  public static float GlobalWakeFoamLifetime => VehicleGlobalConfig.DefaultWakeFoamLifetime?.Value ?? 3.0f;
   public static float GlobalWakeSprayRate => VehicleGlobalConfig.DefaultWakeSprayRate?.Value ?? 1.0f;
   public static float GlobalWakeSprayLifetime => VehicleGlobalConfig.DefaultWakeSprayLifetime?.Value ?? 1.0f;
   public static float GlobalWakeSprayDistance => VehicleGlobalConfig.DefaultWakeSprayDistance?.Value ?? 1.0f;
-  public static float GlobalWakeSprayArc => VehicleGlobalConfig.DefaultWakeSprayArc?.Value ?? 1.0f;
+  public static float GlobalWakeSprayArc => VehicleGlobalConfig.DefaultWakeSprayArc?.Value ?? 3.0f;
 
   public float GetWakeFoamRate()
   {

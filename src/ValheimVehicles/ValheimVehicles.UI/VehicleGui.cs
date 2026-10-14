@@ -969,24 +969,8 @@
         contentItemWidth);
       if (minFloatSliderRow != null) commandsPanelToggleObjects.Add(minFloatSliderRow);
 
-      // Ship Water Wake Controls (Toggle & Tuning Sliders)
+      // Ship Water Wake Controls (Toggle)
       var wakeEnabled = vZdo?.GetBool(VehicleZdoVars.ShipWaterWakeEnabled, VehiclePieceWaterEffects.GlobalEnableWaterWake) ?? VehiclePieceWaterEffects.GlobalEnableWaterWake;
-      var wakeToggleRow = SwivelUIHelpers.AddToggleRow(
-        svParent,
-        viewStyles,
-        "Ship Water Wake Effects",
-        wakeEnabled,
-        val =>
-        {
-          VehiclePieceWaterEffects.GlobalEnableWaterWake = val;
-          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
-          if (v?.m_nview?.GetZDO() != null)
-          {
-            v.m_nview.GetZDO().Set(VehicleZdoVars.ShipWaterWakeEnabled, val);
-          }
-        });
-      if (wakeToggleRow != null) commandsPanelToggleObjects.Add(wakeToggleRow);
-
       void UpdateVehicleWaterWake(VehicleManager? vm)
       {
         if (vm == null) return;
@@ -1007,131 +991,22 @@
         }
       }
 
-      // Wake Foam Rate Slider (0.0x to 3.0x, default 1.0x)
-      var curFoamRate = vZdo?.GetFloat(VehicleZdoVars.WakeFoamRate, VehiclePieceWaterEffects.GlobalWakeFoamRate) ?? VehiclePieceWaterEffects.GlobalWakeFoamRate;
-      var foamRateRow = SwivelUIHelpers.AddSliderRow(
+      var wakeToggleRow = SwivelUIHelpers.AddToggleRow(
         svParent,
         viewStyles,
-        "Wake Foam Rate",
-        0.0f, 3.0f,
-        curFoamRate,
+        "Ship Water Wake Effects",
+        wakeEnabled,
         val =>
         {
+          VehiclePieceWaterEffects.GlobalEnableWaterWake = val;
           var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
           if (v?.m_nview?.GetZDO() != null)
           {
-            v.m_nview.GetZDO().Set(VehicleZdoVars.WakeFoamRate, val);
+            v.m_nview.GetZDO().Set(VehicleZdoVars.ShipWaterWakeEnabled, val);
           }
           UpdateVehicleWaterWake(v);
-        },
-        out _,
-        contentItemWidth);
-      if (foamRateRow != null) commandsPanelToggleObjects.Add(foamRateRow);
-
-      // Wake Foam Lifespan Slider (0.1x to 3.0x, default 1.0x)
-      var curFoamLifetime = vZdo?.GetFloat(VehicleZdoVars.WakeFoamLifetime, VehiclePieceWaterEffects.GlobalWakeFoamLifetime) ?? VehiclePieceWaterEffects.GlobalWakeFoamLifetime;
-      var foamLifetimeRow = SwivelUIHelpers.AddSliderRow(
-        svParent,
-        viewStyles,
-        "Wake Foam Lifespan",
-        0.1f, 3.0f,
-        curFoamLifetime,
-        val =>
-        {
-          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
-          if (v?.m_nview?.GetZDO() != null)
-          {
-            v.m_nview.GetZDO().Set(VehicleZdoVars.WakeFoamLifetime, val);
-          }
-          UpdateVehicleWaterWake(v);
-        },
-        out _,
-        contentItemWidth);
-      if (foamLifetimeRow != null) commandsPanelToggleObjects.Add(foamLifetimeRow);
-
-      // Water Spray Rate Slider (0.0x to 3.0x, default 1.0x)
-      var curSprayRate = vZdo?.GetFloat(VehicleZdoVars.WakeSprayRate, VehiclePieceWaterEffects.GlobalWakeSprayRate) ?? VehiclePieceWaterEffects.GlobalWakeSprayRate;
-      var sprayRateRow = SwivelUIHelpers.AddSliderRow(
-        svParent,
-        viewStyles,
-        "Water Spray Rate",
-        0.0f, 3.0f,
-        curSprayRate,
-        val =>
-        {
-          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
-          if (v?.m_nview?.GetZDO() != null)
-          {
-            v.m_nview.GetZDO().Set(VehicleZdoVars.WakeSprayRate, val);
-          }
-          UpdateVehicleWaterWake(v);
-        },
-        out _,
-        contentItemWidth);
-      if (sprayRateRow != null) commandsPanelToggleObjects.Add(sprayRateRow);
-
-      // Water Spray Lifespan Slider (0.1x to 3.0x, default 1.0x)
-      var curSprayLifetime = vZdo?.GetFloat(VehicleZdoVars.WakeSprayLifetime, VehiclePieceWaterEffects.GlobalWakeSprayLifetime) ?? VehiclePieceWaterEffects.GlobalWakeSprayLifetime;
-      var sprayLifetimeRow = SwivelUIHelpers.AddSliderRow(
-        svParent,
-        viewStyles,
-        "Water Spray Lifespan",
-        0.1f, 3.0f,
-        curSprayLifetime,
-        val =>
-        {
-          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
-          if (v?.m_nview?.GetZDO() != null)
-          {
-            v.m_nview.GetZDO().Set(VehicleZdoVars.WakeSprayLifetime, val);
-          }
-          UpdateVehicleWaterWake(v);
-        },
-        out _,
-        contentItemWidth);
-      if (sprayLifetimeRow != null) commandsPanelToggleObjects.Add(sprayLifetimeRow);
-
-      // Water Spray Distance Slider (0.2x to 3.0x, default 1.0x)
-      var curSprayDistance = vZdo?.GetFloat(VehicleZdoVars.WakeSprayDistance, VehiclePieceWaterEffects.GlobalWakeSprayDistance) ?? VehiclePieceWaterEffects.GlobalWakeSprayDistance;
-      var sprayDistanceRow = SwivelUIHelpers.AddSliderRow(
-        svParent,
-        viewStyles,
-        "Water Spray Distance",
-        0.2f, 3.0f,
-        curSprayDistance,
-        val =>
-        {
-          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
-          if (v?.m_nview?.GetZDO() != null)
-          {
-            v.m_nview.GetZDO().Set(VehicleZdoVars.WakeSprayDistance, val);
-          }
-          UpdateVehicleWaterWake(v);
-        },
-        out _,
-        contentItemWidth);
-      if (sprayDistanceRow != null) commandsPanelToggleObjects.Add(sprayDistanceRow);
-
-      // Water Spray Arc Slider (0.2x to 3.0x, default 1.0x)
-      var curSprayArc = vZdo?.GetFloat(VehicleZdoVars.WakeSprayArc, VehiclePieceWaterEffects.GlobalWakeSprayArc) ?? VehiclePieceWaterEffects.GlobalWakeSprayArc;
-      var sprayArcRow = SwivelUIHelpers.AddSliderRow(
-        svParent,
-        viewStyles,
-        "Water Spray Arc",
-        0.2f, 3.0f,
-        curSprayArc,
-        val =>
-        {
-          var v = CurrentSelectedVehicle ?? VehicleCommands.GetNearestVehicleManager();
-          if (v?.m_nview?.GetZDO() != null)
-          {
-            v.m_nview.GetZDO().Set(VehicleZdoVars.WakeSprayArc, val);
-          }
-          UpdateVehicleWaterWake(v);
-        },
-        out _,
-        contentItemWidth);
-      if (sprayArcRow != null) commandsPanelToggleObjects.Add(sprayArcRow);
+        });
+      if (wakeToggleRow != null) commandsPanelToggleObjects.Add(wakeToggleRow);
 
       // 4. Console Debug Logs (Loop Log)
       var logRow = SwivelUIHelpers.AddToggleRow(
@@ -1241,25 +1116,6 @@
         contentItemWidth,
         0.05f);
       if (ladderClimbSliderRow != null) commandsPanelToggleObjects.Add(ladderClimbSliderRow);
-
-      // 10. Top Release Clearance Slider
-      var ladderTopClearanceRow = SwivelUIHelpers.AddSliderRow(
-        svParent,
-        viewStyles,
-        "Top Release Clearance",
-        -1.2f, 0.8f,
-        VehicleGlobalConfig.LadderTopReleaseClearance?.Value ?? -0.6f,
-        val =>
-        {
-          if (VehicleGlobalConfig.LadderTopReleaseClearance != null)
-          {
-            VehicleGlobalConfig.LadderTopReleaseClearance.Value = val;
-          }
-        },
-        out _,
-        contentItemWidth,
-        0.02f);
-      if (ladderTopClearanceRow != null) commandsPanelToggleObjects.Add(ladderTopClearanceRow);
 
     }
 

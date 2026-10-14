@@ -1524,6 +1524,13 @@
     public void ApplySnowOverlayToPiece(ZNetView piece, bool enabled)
     {
       if (piece == null) return;
+      var wnt = piece.GetComponent<WearNTear>();
+      if (wnt != null)
+      {
+        wnt.UpdateSnowVisual();
+        return;
+      }
+
       _snowMpb ??= new MaterialPropertyBlock();
       var val = enabled ? 1f : 0f;
       var renderers = piece.GetComponentsInChildren<Renderer>(true);
@@ -1534,26 +1541,34 @@
         _snowMpb.SetFloat(_AddSnowPropId, val);
         _snowMpb.SetFloat(_SnowLevelPropId, val);
         r.SetPropertyBlock(_snowMpb);
+
+        var mats = r.materials;
+        if (mats != null)
+        {
+          for (int m = 0; m < mats.Length; m++)
+          {
+            var mat = mats[m];
+            if (mat == null) continue;
+            if (enabled)
+            {
+              mat.EnableKeyword("_ADDSNOW_ON");
+              mat.SetFloat(_AddSnowPropId, 1f);
+              mat.SetFloat(_SnowLevelPropId, 1f);
+            }
+            else
+            {
+              mat.DisableKeyword("_ADDSNOW_ON");
+              mat.SetFloat(_AddSnowPropId, 0f);
+              mat.SetFloat(_SnowLevelPropId, 0f);
+            }
+          }
+        }
       }
 
-      if (!enabled)
+      if (MaterialMan.instance != null)
       {
-        var wnt = piece.GetComponent<WearNTear>();
-        if (wnt != null)
-        {
-          if (wnt.m_snow != null && wnt.m_snow.gameObject.activeSelf)
-            wnt.m_snow.gameObject.SetActive(false);
-          if (wnt.m_snowWorn != null && wnt.m_snowWorn.gameObject.activeSelf)
-            wnt.m_snowWorn.gameObject.SetActive(false);
-          if (wnt.m_snowBroken != null && wnt.m_snowBroken.gameObject.activeSelf)
-            wnt.m_snowBroken.gameObject.SetActive(false);
-          wnt.m_snowBuildup = 0f;
-        }
-
-        if (MaterialMan.instance != null)
-        {
-          MaterialMan.instance.ResetValue(piece.gameObject, _SnowLevelPropId);
-        }
+        MaterialMan.instance.SetValue(piece.gameObject, _SnowLevelPropId, val);
+        MaterialMan.instance.SetValue(piece.gameObject, _AddSnowPropId, val);
       }
     }
 

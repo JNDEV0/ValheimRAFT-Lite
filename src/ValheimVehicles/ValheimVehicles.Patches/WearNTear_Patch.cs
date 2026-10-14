@@ -186,6 +186,7 @@
         __instance.m_broken.SetActive(true);
       }
 
+      __instance.UpdateSnowVisual();
       return false;
     }
 
@@ -296,6 +297,7 @@
     public static bool IsVehiclePiece(WearNTear? wnt)
     {
       if (wnt == null) return false;
+      if (VehicleOwnership_Patches.IsVehiclePiece(wnt.gameObject)) return true;
       if (wnt.GetComponentInParent<VehiclePiecesController>() != null) return true;
       var nview = wnt.m_nview != null ? wnt.m_nview : wnt.GetComponent<ZNetView>();
       if (nview != null && nview.GetZDO() != null && VehiclePiecesController.GetParentID(nview.GetZDO()) != 0)
@@ -317,8 +319,8 @@
       {
         // On rolling/pitching vessels, raycasting against overhead pieces constantly hits/misses,
         // repeatedly flipping m_haveRoof and causing repetitive UpdateVisual flashing.
-        // We allow the initial roof check once, then freeze the roof state.
-        if (__instance.m_updateCoverTimer >= 4f)
+        // We evaluate roof check once upon vehicle piece initialization, then freeze the roof state.
+        if (__instance.m_updateCoverTimer >= 0f)
         {
           __instance.m_haveRoof = __instance.HaveRoof();
           if (__instance.m_inAshlands)
@@ -326,12 +328,8 @@
             __instance.m_haveAshRoof = __instance.HaveAshRoof();
           }
           __instance.m_updateCoverTimer = -999999f;
-          return false;
         }
-        if (__instance.m_updateCoverTimer < 0f)
-        {
-          return false;
-        }
+        return false;
       }
       return true;
     }
@@ -341,48 +339,98 @@
     [HarmonyPrefix]
     private static bool WearNTear_CanHaveSnowPrefix(WearNTear __instance, ref bool __result)
     {
-      if (!(VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false) && IsVehiclePiece(__instance))
+      if (IsVehiclePiece(__instance))
       {
-        __result = false;
+        bool allow = VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false;
+        __result = allow && !__instance.m_haveRoof;
         return false;
       }
       return true;
+    }
+
+    [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.UpdateWear))]
+    [HarmonyPrefix]
+    private static void WearNTear_UpdateWearPrefix(WearNTear __instance)
+    {
+      if (IsVehiclePiece(__instance))
+      {
+        bool snowEnabled = VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false;
+        if (!snowEnabled)
+        {
+          __instance.m_snowBuildup = 0f;
+          __instance.m_heavySnow = false;
+        }
+      }
     }
 
     [HarmonyPatch(typeof(WearNTear), nameof(WearNTear.UpdateSnowVisual))]
     [HarmonyPrefix]
     private static bool WearNTear_UpdateSnowVisualPrefix(WearNTear __instance)
     {
-      if (!(VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false) && IsVehiclePiece(__instance))
+      if (IsVehiclePiece(__instance))
       {
-        if (__instance.m_snow != null && __instance.m_snow.gameObject.activeSelf)
-          __instance.m_snow.gameObject.SetActive(false);
-        if (__instance.m_snowWorn != null && __instance.m_snowWorn.gameObject.activeSelf)
-          __instance.m_snowWorn.gameObject.SetActive(false);
-        if (__instance.m_snowBroken != null && __instance.m_snowBroken.gameObject.activeSelf)
-          __instance.m_snowBroken.gameObject.SetActive(false);
-        __instance.m_snowBuildup = 0f;
+        bool snowEnabled = VehicleGlobalConfig.BoatSnowOverlay?.Value ?? false;
+        bool hasRoof = __instance.m_haveRoof;
+        bool showSnow = snowEnabled && !hasRoof;
 
-        if (MaterialMan.instance != null)
+        // 1. Physical mesh renderers (for stone_fence, vanilla roofs, etc.)
+        if (__instance.m_snow != null)
         {
-          MaterialMan.instance.SetValue(__instance.gameObject, s_snowLevelPropId, 0f);
+          bool isBroken = __instance.m_healthPercentage <= 0.25f && __instance.m_snowBroken != null;
+          bool isWorn = __instance.m_healthPercentage <= 0.75f && __instance.m_snowWorn != null && !isBroken;
+          __instance.m_snow.gameObject.SetActive(showSnow && !isWorn && !isBroken);
+          if (__instance.m_snowWorn != null)
+            __instance.m_snowWorn.gameObject.SetActive(showSnow && isWorn);
+          if (__instance.m_snowBroken != null)
+            __instance.m_snowBroken.gameObject.SetActive(showSnow && isBroken);
         }
 
-        if (__instance.m_renderers != null)
+        __instance.m_snowBuildup = showSnow ? 1f : 0f;
+        float snowVal = showSnow ? 1f : 0f;
+
+        // 2. MaterialMan shader property block
+        if (MaterialMan.instance != null)
         {
-          s_snowMpb ??= new MaterialPropertyBlock();
-          for (int i = 0; i < __instance.m_renderers.Count; i++)
+          MaterialMan.instance.SetValue(__instance.gameObject, s_snowLevelPropId, snowVal);
+          MaterialMan.instance.SetValue(__instance.gameObject, s_addSnowPropId, snowVal);
+        }
+
+        // 3. Direct renderer & material overrides (for wood walls, beams, floors, OdinArchitect, etc.)
+        var renderers = __instance.m_renderers ?? __instance.GetComponentsInChildren<Renderer>(true).ToList();
+        s_snowMpb ??= new MaterialPropertyBlock();
+        for (int i = 0; i < renderers.Count; i++)
+        {
+          var rend = renderers[i];
+          if (rend == null) continue;
+
+          rend.GetPropertyBlock(s_snowMpb);
+          s_snowMpb.SetFloat(s_snowLevelPropId, snowVal);
+          s_snowMpb.SetFloat(s_addSnowPropId, snowVal);
+          rend.SetPropertyBlock(s_snowMpb);
+
+          var mats = rend.materials;
+          if (mats != null)
           {
-            var rend = __instance.m_renderers[i];
-            if (rend != null)
+            for (int m = 0; m < mats.Length; m++)
             {
-              rend.GetPropertyBlock(s_snowMpb);
-              s_snowMpb.SetFloat(s_snowLevelPropId, 0f);
-              s_snowMpb.SetFloat(s_addSnowPropId, 0f);
-              rend.SetPropertyBlock(s_snowMpb);
+              var mat = mats[m];
+              if (mat == null) continue;
+              if (showSnow)
+              {
+                mat.EnableKeyword("_ADDSNOW_ON");
+                mat.SetFloat(s_addSnowPropId, 1f);
+                mat.SetFloat(s_snowLevelPropId, 1f);
+              }
+              else
+              {
+                mat.DisableKeyword("_ADDSNOW_ON");
+                mat.SetFloat(s_addSnowPropId, 0f);
+                mat.SetFloat(s_snowLevelPropId, 0f);
+              }
             }
           }
         }
+
         return false;
       }
       return true;
