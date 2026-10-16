@@ -881,6 +881,19 @@
       }
     }
 
+    [HarmonyPatch(typeof(Player), "SetupPlacementGhost")]
+    [HarmonyPostfix]
+    public static void SetupPlacementGhost_DisableAnchorColliders(Player __instance)
+    {
+      if (!__instance.m_placementGhost) return;
+      var anchors = __instance.m_placementGhost.GetComponentsInChildren<AnchorMechanismController>(true);
+      foreach (var a in anchors)
+      {
+        a.DisableGhostColliders();
+        a.DisableAnchorTopRing();
+      }
+    }
+
     [HarmonyPatch(typeof(Player), "GetControlledShip")]
     [HarmonyPrefix]
     public static bool GetControlledShip(Player __instance, object? __result)

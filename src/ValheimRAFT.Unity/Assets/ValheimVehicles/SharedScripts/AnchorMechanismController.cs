@@ -56,7 +56,7 @@ namespace ValheimVehicles.SharedScripts
     public LineRenderer ropeLine; // LineRenderer to visualize rope
 
     public GameObject chainLinkPrefab;
-    public const float ChainLinkStep = 0.145f;
+    public const float ChainLinkStep = 0.134f;
     public const int MaxChainLinks = 1000;
 
     private readonly List<GameObject> _chainLinkPool = new();
@@ -81,6 +81,43 @@ namespace ValheimVehicles.SharedScripts
       if (anchorStartLocalPosition != Vector3.zero && anchorStartLocalPosition.y > -1f)
         return anchorStartLocalPosition;
       return DefaultAnchorStartLocalPosition;
+    }
+
+    public bool IsGhost()
+    {
+      if (ZNetView.m_forceDisableInit) return true;
+      var netView = GetComponent<ZNetView>() ?? GetComponentInParent<ZNetView>();
+      if (netView != null && netView.m_ghost) return true;
+      if (gameObject.layer == LayerMask.NameToLayer("ghost") || (transform.root != null && transform.root.gameObject.layer == LayerMask.NameToLayer("ghost"))) return true;
+      if (Player.m_localPlayer != null && (Player.m_localPlayer.m_placementGhost == gameObject || (transform.root != null && Player.m_localPlayer.m_placementGhost == transform.root.gameObject))) return true;
+      return false;
+    }
+
+    public void DisableGhostColliders()
+    {
+      var colliders = GetComponentsInChildren<Collider>(true);
+      foreach (var col in colliders)
+      {
+        col.enabled = false;
+      }
+      var rbs = GetComponentsInChildren<Rigidbody>(true);
+      foreach (var rb in rbs)
+      {
+        rb.isKinematic = true;
+        rb.detectCollisions = false;
+      }
+    }
+
+    public void DisableAnchorTopRing()
+    {
+      if (anchorTransform == null) return;
+      foreach (Transform child in anchorTransform.GetComponentsInChildren<Transform>(true))
+      {
+        if (child != anchorTransform && (child.name == "chain_links" || child.name.StartsWith("chain_link")))
+        {
+          child.gameObject.SetActive(false);
+        }
+      }
     }
 
     /// <summary>
@@ -112,15 +149,20 @@ namespace ValheimVehicles.SharedScripts
 
       if (anchorTransform != null)
       {
-        var colliders = anchorTransform.Find("scalar/colliders");
-        if (colliders != null)
+        DisableAnchorTopRing();
+
+        if (!IsGhost())
         {
-          colliders.gameObject.AddComponent<ChildCollisionDetector>();
-          var collidersRb = colliders.GetComponent<Rigidbody>();
-          if (collidersRb != null)
+          var colliders = anchorTransform.Find("scalar/colliders");
+          if (colliders != null)
           {
-            collidersRb.isKinematic = true;
-            collidersRb.useGravity = false;
+            colliders.gameObject.AddComponent<ChildCollisionDetector>();
+            var collidersRb = colliders.GetComponent<Rigidbody>();
+            if (collidersRb != null)
+            {
+              collidersRb.isKinematic = true;
+              collidersRb.useGravity = false;
+            }
           }
         }
       }
@@ -147,10 +189,16 @@ namespace ValheimVehicles.SharedScripts
 
       if (anchorStateFadeTextTransform != null)
         anchorStateFadeText = anchorStateFadeTextTransform.gameObject.AddComponent<HoverFadeText>();
+
+      if (IsGhost())
+      {
+        DisableGhostColliders();
+      }
     }
 
     public void ResetAnchorVisualToRetrieved()
     {
+      DisableAnchorTopRing();
       var startPos = GetAnchorStartLocalPosition();
       if (anchorTransform != null)
       {
@@ -173,6 +221,15 @@ namespace ValheimVehicles.SharedScripts
 
     public virtual void Start()
     {
+      if (IsGhost())
+      {
+        DisableGhostColliders();
+        DisableAnchorTopRing();
+        return;
+      }
+
+      DisableAnchorTopRing();
+
       // Initialize LineRenderer for rope visualization
       if (ropeLine == null) ropeLine = GetComponent<LineRenderer>();
       UpdateRopeVisual();
@@ -217,6 +274,7 @@ namespace ValheimVehicles.SharedScripts
 
     public virtual void FixedUpdate()
     {
+      if (IsGhost()) return;
       if (anchorRb == null) return;
       // Execute behavior based on the current state
       switch (currentState)
@@ -277,6 +335,7 @@ namespace ValheimVehicles.SharedScripts
 
     public virtual void LateUpdate()
     {
+      if (IsGhost()) return;
       if (currentState != AnchorState.Recovered && currentState != AnchorState.Idle)
       {
         UpdateRopeVisual();
@@ -536,6 +595,7 @@ namespace ValheimVehicles.SharedScripts
 
     public void UpdateChainVisual()
     {
+      if (IsGhost()) return;
       if (chainLinkPrefab == null) return;
       if (rotationAnchorRopeAttachpoint == null || anchorRopeAttachStartPoint == null || anchorRopeAttachmentPoint == null) return;
 

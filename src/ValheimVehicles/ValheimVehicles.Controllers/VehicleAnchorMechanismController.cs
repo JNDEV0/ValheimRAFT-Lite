@@ -18,6 +18,7 @@
   public class VehicleAnchorMechanismController : AnchorMechanismController
   {
     public const float maxAnchorDistance = 2000f;
+    public const float AnchorHeightOffset = 1.3f;
 
     public static void SyncHudAnchorValues()
     {
@@ -42,6 +43,7 @@
     public override void Start()
     {
       base.Start();
+      if (IsGhost()) return;
 
       if (MovementController == null && transform.root != null)
       {
@@ -102,7 +104,8 @@
     public void UpdateDistanceToGround()
     {
       var dtg = GetDistanceToGround();
-      anchorDropDistance = Mathf.Clamp(dtg, 1f, maxAnchorDistance);
+      var effectiveDrop = Mathf.Max(0f, dtg - AnchorHeightOffset);
+      anchorDropDistance = Mathf.Clamp(effectiveDrop, 0f, maxAnchorDistance);
     }
 
     public static string GetCurrentStateTextStatic(AnchorState anchorState, bool isLandVehicle)
@@ -141,7 +144,8 @@
       if (currentState != AnchorState.Anchored) return;
       var deltaGround = GetDistanceToGround();
       if (!(deltaGround > 0.5f)) return;
-      var clampedDepth = Mathf.Clamp(deltaGround, 1f, maxAnchorDistance);
+      var effectiveDepth = Mathf.Max(0f, deltaGround - AnchorHeightOffset);
+      var clampedDepth = Mathf.Clamp(effectiveDepth, 0f, maxAnchorDistance);
       var newPos = GetAnchorStartLocalPosition();
       newPos.y -= clampedDepth;
       if (anchorTransform != null)
