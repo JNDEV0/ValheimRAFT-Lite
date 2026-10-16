@@ -56,7 +56,7 @@ namespace ValheimVehicles.SharedScripts
     public LineRenderer ropeLine; // LineRenderer to visualize rope
 
     public GameObject chainLinkPrefab;
-    public const float ChainLinkStep = 0.134f;
+    public const float ChainLinkStep = 0.160f;
     public const int MaxChainLinks = 1000;
 
     private readonly List<GameObject> _chainLinkPool = new();
