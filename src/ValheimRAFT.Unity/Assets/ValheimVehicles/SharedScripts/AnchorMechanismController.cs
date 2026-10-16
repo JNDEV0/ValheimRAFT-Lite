@@ -56,8 +56,8 @@ namespace ValheimVehicles.SharedScripts
     public LineRenderer ropeLine; // LineRenderer to visualize rope
 
     public GameObject chainLinkPrefab;
-    public const float ChainLinkStep = 0.2024f;
-    public const int MaxChainLinks = 600;
+    public const float ChainLinkStep = 0.145f;
+    public const int MaxChainLinks = 1000;
 
     private readonly List<GameObject> _chainLinkPool = new();
     private Transform _chainContainer;
@@ -556,17 +556,19 @@ namespace ValheimVehicles.SharedScripts
       if (distA > 0.05f)
       {
         var dirA = deltaA / distA;
-        var countA = Mathf.Clamp(Mathf.RoundToInt(distA / ChainLinkStep), 1, 20);
+        var countA = Mathf.Clamp(Mathf.RoundToInt(distA / ChainLinkStep), 1, 30);
         var stepA = distA / countA;
         var rotA = Quaternion.FromToRotation(Vector3.down, dirA);
 
         for (int i = 0; i < countA; i++)
         {
           if (linkIndex >= MaxChainLinks) break;
-          var link = GetOrCreateChainLink(linkIndex++);
+          var link = GetOrCreateChainLink(linkIndex);
           link.transform.position = startA + dirA * ((i + 0.5f) * stepA);
-          link.transform.rotation = rotA;
+          bool isRotated = (linkIndex % 2 == 1);
+          link.transform.rotation = rotA * Quaternion.Euler(0f, isRotated ? 90f : 0f, 0f);
           if (!link.activeSelf) link.SetActive(true);
+          linkIndex++;
         }
       }
 
@@ -587,10 +589,12 @@ namespace ValheimVehicles.SharedScripts
         for (int i = 0; i < countB; i++)
         {
           if (linkIndex >= MaxChainLinks) break;
-          var link = GetOrCreateChainLink(linkIndex++);
+          var link = GetOrCreateChainLink(linkIndex);
           link.transform.position = startB + dirB * ((i + 0.5f) * stepB);
-          link.transform.rotation = rotB;
+          bool isRotated = (linkIndex % 2 == 1);
+          link.transform.rotation = rotB * Quaternion.Euler(0f, isRotated ? 90f : 0f, 0f);
           if (!link.activeSelf) link.SetActive(true);
+          linkIndex++;
         }
       }
 
