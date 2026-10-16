@@ -43,6 +43,9 @@ public class VehicleCommands : ConsoleCommand
   {
     public const string mechanismtoggle = "mechanismtoggle";
     public const string debugLog = "debug-log";
+    public const string diag = "diag";
+    public const string instances = "instances";
+    public const string zdos = "zdos";
     public const string hiresailor = "hiresailor";
     public const string boatbed = "boatbed";
     public const string bed = "bed";
@@ -123,7 +126,11 @@ public class VehicleCommands : ConsoleCommand
 
       new CommandInfo(
         VehicleCommandArgs.toggleMaterialCost,
-        "Toggles Boat Hammer no material cost (1 Wood vs standard recipe costs).")
+        "Toggles Boat Hammer no material cost (1 Wood vs standard recipe costs)."),
+
+      new CommandInfo(
+        VehicleCommandArgs.diag,
+        "Dumps active scene instances breakdown and world ZDO counts to the F5 console and BepInEx log. Aliases: 'vehicle instances', 'vehicle zdos'.")
     });
 
     return commands;
@@ -199,6 +206,11 @@ public class VehicleCommands : ConsoleCommand
         break;
       case VehicleCommandArgs.debugLog:
         RunDebugLogCommand();
+        break;
+      case VehicleCommandArgs.diag:
+      case VehicleCommandArgs.instances:
+      case VehicleCommandArgs.zdos:
+        RunDiagnosticsDump();
         break;
       case VehicleCommandArgs.hiresailor:
         HireSailorDirectly();
@@ -1337,6 +1349,127 @@ public class VehicleCommands : ConsoleCommand
 
     Player.m_localPlayer?.Message(MessageHud.MessageType.Center, "[Debug Log] Diagnostics collected and written to console log.");
     _debugLogCoroutine = null;
+  }
+
+  public static void RunDiagnosticsDump()
+  {
+    var player = Player.m_localPlayer;
+    var lines = new List<string>();
+
+    lines.Add("================ VALHEIM DIAGNOSTICS DUMP ================");
+    var fps = 1.0f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f);
+    var ms = Time.unscaledDeltaTime * 1000f;
+    lines.Add($"Performance: {fps:F1} FPS ({ms:F1}ms) | FixedDeltaTime: {Time.fixedDeltaTime * 1000f:F1}ms");
+    if (player != null)
+    {
+      lines.Add($"Player: {player.GetPlayerName()} | Position: {player.transform.position} | Altitude: {player.transform.position.y:F1}m");
+    }
+
+    // 1. ACTIVE SCENE INSTANCES (What makes up the F2 'instances' count)
+    if (ZNetScene.instance != null && ZNetScene.instance.m_instances != null)
+    {
+      int totalInstances = ZNetScene.instance.NrOfInstances();
+      lines.Add($"\n--- ACTIVE SCENE INSTANCES (F2 Count: {totalInstances}) ---");
+      lines.Add("(These are GameObjects with ZNetViews actively loaded in the 3x3 sector grid around you)");
+
+      var instanceCounts = new Dictionary<string, int>();
+      int pieces = 0, creatures = 0, items = 0, vegetation = 0, other = 0;
+
+      foreach (var kvp in ZNetScene.instance.m_instances)
+      {
+        var view = kvp.Value;
+        if (view == null || view.gameObject == null) continue;
+        var name = view.gameObject.name;
+        if (name.EndsWith("(Clone)")) name = name.Substring(0, name.Length - 7);
+        instanceCounts[name] = instanceCounts.TryGetValue(name, out var c) ? c + 1 : 1;
+
+        if (view.GetComponent<Piece>() != null) pieces++;
+        else if (view.GetComponent<Character>() != null) creatures++;
+        else if (view.GetComponent<ItemDrop>() != null) items++;
+        else if (view.GetComponent<TreeBase>() != null || view.GetComponent<TreeLog>() != null || view.GetComponent<Destructible>() != null) vegetation++;
+        else other++;
+      }
+
+      lines.Add($"Category Breakdown: Pieces: {pieces} | Vegetation/Trees: {vegetation} | Creatures: {creatures} | Item Drops: {items} | Other: {other}");
+      lines.Add("Top 35 Active Instantiated Prefabs:");
+
+      var topInstances = instanceCounts.OrderByDescending(kv => kv.Value).Take(35);
+      int rank = 1;
+      foreach (var kv in topInstances)
+      {
+        lines.Add($"  {rank,2}. {kv.Key}: {kv.Value} ({((float)kv.Value / Mathf.Max(1, totalInstances) * 100f):F1}%)");
+        rank++;
+      }
+    }
+
+    // 2. ACTIVE SHIP PIECES
+    var vehicle = GetNearestVehicleManager();
+    if (vehicle != null && vehicle.PiecesController != null)
+    {
+      int pieceCount = vehicle.PiecesController.m_pieces?.Count ?? 0;
+      lines.Add($"\n--- NEAREST VEHICLE PIECES (Total: {pieceCount}) ---");
+      var vehiclePieceCounts = new Dictionary<string, int>();
+      if (vehicle.PiecesController.m_pieces != null)
+      {
+        foreach (var p in vehicle.PiecesController.m_pieces)
+        {
+          if (p == null) continue;
+          var name = p.name;
+          if (name.EndsWith("(Clone)")) name = name.Substring(0, name.Length - 7);
+          vehiclePieceCounts[name] = vehiclePieceCounts.TryGetValue(name, out var c) ? c + 1 : 1;
+        }
+      }
+      var topVehiclePieces = vehiclePieceCounts.OrderByDescending(kv => kv.Value).Take(20);
+      int vRank = 1;
+      foreach (var kv in topVehiclePieces)
+      {
+        lines.Add($"  {vRank,2}. {kv.Key}: {kv.Value}");
+        vRank++;
+      }
+    }
+
+    // 3. WORLD ZDOs IN MEMORY
+    if (ZDOMan.instance != null && ZDOMan.instance.m_objectsByID != null)
+    {
+      int totalZdos = ZDOMan.instance.m_objectsByID.Count;
+      lines.Add($"\n--- WORLD ZDOs IN MEMORY (F2 Count: {totalZdos}) ---");
+      lines.Add("(These are all saved world entities loaded in ZDOMan across explored sectors)");
+
+      var zdoCounts = new Dictionary<string, int>();
+      foreach (var zdo in ZDOMan.instance.m_objectsByID.Values)
+      {
+        if (zdo == null) continue;
+        int prefabHash = zdo.GetPrefab();
+        string name = "";
+        if (ZNetScene.instance != null)
+        {
+          var prefab = ZNetScene.instance.GetPrefab(prefabHash);
+          if (prefab != null) name = prefab.name;
+        }
+        if (string.IsNullOrEmpty(name))
+        {
+          name = $"hash_{prefabHash}";
+        }
+        zdoCounts[name] = zdoCounts.TryGetValue(name, out var c) ? c + 1 : 1;
+      }
+
+      lines.Add("Top 35 World ZDOs:");
+      var topZdos = zdoCounts.OrderByDescending(kv => kv.Value).Take(35);
+      int zRank = 1;
+      foreach (var kv in topZdos)
+      {
+        lines.Add($"  {zRank,2}. {kv.Key}: {kv.Value} ({((float)kv.Value / Mathf.Max(1, totalZdos) * 100f):F1}%)");
+        zRank++;
+      }
+    }
+
+    lines.Add("==========================================================");
+
+    var fullReport = string.Join("\n", lines);
+    Logger.LogMessage(fullReport);
+    Terminal.Log(fullReport);
+
+    player?.Message(MessageHud.MessageType.Center, "Diagnostics dumped to F5 Console and BepInEx Log!");
   }
 
   public static void TeleportToBoatBed()
