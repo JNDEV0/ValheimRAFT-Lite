@@ -2,7 +2,6 @@ name: 🆕 Feature Request
 description: Suggest an idea for a Valheim mod or enhancement
 title: "[Feature Request] "
 labels: feature
-assignees: 'zolantris'
 body:
   - type: markdown
     attributes:

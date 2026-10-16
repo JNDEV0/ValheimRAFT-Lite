@@ -172,7 +172,7 @@ FastDebugFlySpeed = config.BindUnique(MainSection,
       "DisabledLoginApiIntegrations",
       "",
       new ConfigDescription(
-        $"A list of disabled plugins by GUID or name. Each item must be separated by a comma. This list will force disable any plugins matching either the guid or name. e.g. if you don't want ValheimRAFT to be enabling dynamic locations login integrations add \"zolantris.ValheimRAFT\" or \"ValheimRAFT.2.3.0\".",
+        $"A list of disabled plugins by GUID or name. Each item must be separated by a comma. This list will force disable any plugins matching either the guid or name. e.g. if you don't want ValheimRAFT to be enabling dynamic locations login integrations add \"team0.valheimraftlite\" or \"ValheimRAFT.2.3.0\".",
         null,
         new ConfigurationManagerAttributes
           { IsAdminOnly = false, IsAdvanced = false }));

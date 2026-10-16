@@ -7,7 +7,4 @@ AssetBundleManifest:
     Info_0:
       Name: valheim-vehicles
       Dependencies: {}
-    Info_1:
-      Name: eldritch
-      Dependencies:
-        Dependency_0: valheim-vehicles
+

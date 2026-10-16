@@ -13,6 +13,9 @@ the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
   - Dynamically extends when dropping anchor and contracts when reeling in, smoothly deactivating drop links when retrieved in the cradle.
   - Features an efficient object pool managing up to 600 links across both the deck winch-to-roller chute run and the vertical drop to the seabed.
   - Zero-jitter synchronization updated in `LateUpdate` to ensure the chain stays locked to the anchor and vessel during ocean wave motion.
+- **Repository Cleanup & Mod Decoupling**: Purged legacy unused assets, manifests, and build configurations associated with separate mods (`EldritchValheim`, obsolete test assets, and unreferenced damage extension).
+- **Branding & Package Loading Updates**: Updated plugin author and loading identifiers to `team0.valheimraftlite`, cleaned up issue templates, and sanitized upstream repository credits.
+- **Config Documentation Calibration**: Synchronized `ValheimRAFT_AutoDoc.md` sail propulsion speeds with in-game values (Raft: 5.0, Karve: 7.5, Longship: 10.0, Drakkar: 12.0), removed disconnected rope ladder and disabled land vehicle parameters, and purged deprecated teleport horn and QuickStartWorld dev configs.
 
 ## [5.4.8] - 2026-10-14
 

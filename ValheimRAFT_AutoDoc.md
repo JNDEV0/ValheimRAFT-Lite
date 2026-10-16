@@ -47,21 +47,9 @@
 - Description: allows the tiered mast to rotate in wind
 - Default Value: True
 
-### RopeLadderEjectionPoint 
-- Description: The place the player is placed after they leave the ladder. Defaults to Y +0.25 and Z +0.5 meaning you are placed forwards of the ladder.
-- Default Value: (0.00, 0.00, 0.00)
-
 ### Vehicle Hull Starting Piece 
 - Description: Allows you to customize what piece the raft initializes with. Admins only as this can be overpowered.
 - Default Value: Hull4X8
-
-### ropeLadderRunClimbSpeedMult 
-- Description: Allows you to customize how fast you can climb a ladder when in run mode
-- Default Value: 2
-
-### ropeLadderHints 
-- Description: Shows the controls required to auto ascend/descend and run to speedup ladder
-- Default Value: True
 
 ### Protect Vehicle pieces from breaking on Error 
 - Description: Protects against crashes breaking raft/vehicle initialization causing raft/vehicles to slowly break pieces attached to it. This will make pieces attached to valid raft ZDOs unbreakable from damage, but still breakable with hammer
@@ -71,10 +59,6 @@
 - Description: Set the experimental glass color for your vehicle. This will be used for most glass meshes. This is the default color. Eventually players can customize the color of the glass.
 - Default Value: RGBA(0.600, 0.600, 0.600, 0.050)
 
-### enableLandVehicles 
-- Description: Vehicles land vehicle prefab will be enabled. LandVehicles will be available for all version above V3.0.0
-- Default Value: False
-
 ### VehicleStaminaHaulingCost 
 - Description: The cost per 1 meter of hauling a vehicle. This cost is on incurred if the vehicle is being pulled towards the player. When stamina runs out, the player is damaged by this amount until they release the vehicle.
 - Default Value: 5
@@ -82,10 +66,6 @@
 ### VehicleHaulingSnapsOnStaminaZero 
 - Description: Instead of allowing the viking to use health. The vehicle hauling line will snap when you have zero stamina doing a single one-time damage.
 - Default Value: False
-
-### Experimental_TreadScaleX 
-- Description: Set the tank per tread piece X scale (width). This will make the treads larger or smaller allowing more/less grip.
-- Default Value: 1
 
 ## Server config
 
@@ -113,24 +93,16 @@
 
 ## PrefabConfig
 
-### LandVehicle Max Tread Width 
-- Description: Max width the treads can expand to. Lower values will let you make motor bikes. This affects all vehicles. This is just a default. Any vehicle can be configured directly via config menu.
-- Default Value: 8
-
-### LandVehicle Max Tread Length 
-- Description: Max length the treads can expand to. This is just a default. Any vehicle can be configured directly via config menu.
-- Default Value: 20
-
 ### VehicleDockPositionChangeSpeed 
 - Description: Dock position change speed. Higher values will make the vehicle move faster but could cause physics problems.
 - Default Value: 1
 
 ### VehicleDockVerticalHeight 
-- Description: MaxTowing height where a landvehicle can be grabbed/towed by a ship or flying ship. This is cast from the vehicle's upper most bounds and continues directly upwards without any rotation.
+- Description: Max towing height where a vehicle can be grabbed/towed by a ship or flying ship. This is cast from the vehicle's uppermost bounds and continues directly upwards without any rotation.
 - Default Value: 200
 
 ### VehicleDockSphericalRadius 
-- Description: MaxTowing radius where a landvehicle can be grabbed/towed by a ship or flying ship. Spheres are significantly less accurate so a higher value could result in accidental matches with wrong vehicle
+- Description: Max towing radius where a vehicle can be grabbed/towed by a ship or flying ship. Spheres are significantly less accurate so a higher value could result in accidental matches with wrong vehicle.
 - Default Value: 20
 
 ## PrefabConfig: VehicleCannons
@@ -467,16 +439,8 @@
 - Description: The tier damage a water vehicle can do to a rock or other object it hits. To be balanced this should be a lower value IE (1) bronze. But ashlands will require a higher tier to smash spires FYI.
 - Default Value: 100
 
-### LandVehicleRamToolTier 
-- Description: The tier damage a Land vehicle can do to a rock or other object it hits. This should be set to maximum as land vehicles are black metal tier.
-- Default Value: 100
-
 ### WaterVehiclesAreRams 
 - Description: Adds ram damage to a water vehicle's combined hull mesh. This affects all water vehicles vehicles. This will turn off all rams for water vehicles if set to false.
-- Default Value: True
-
-### LandVehiclesAreRams 
-- Description: Adds ram damage to a land vehicle's combined hull mesh. This affects all land vehicles vehicles. This will turn off all rams for land vehicles if set to false.
 - Default Value: True
 
 ### AllowVehicleCollisionBelowFullSpeed 
@@ -1209,26 +1173,6 @@ Recover is optional (defaults true). AmountPerLevel is optional (defaults 0). Am
 - Description: Set the Full speed of rudder, this will apply additively with sails
 - Default Value: 0
 
-### LandVehicle Back Speed 
-- Description: Set the Back speed of land vehicle.
-- Default Value: 1
-
-### LandVehicle Slow Speed 
-- Description: Set the Slow speed of land vehicle.
-- Default Value: 1
-
-### LandVehicle Half Speed 
-- Description: Set the Half speed of land vehicle.
-- Default Value: 1
-
-### LandVehicle Full Speed 
-- Description: Set the Full speed of land vehicle.
-- Default Value: 1
-
-### LandVehicle Turn Speed 
-- Description: Turn speed for landvehicles. Zero is half the normal speed, 50% is normal speed, and 100% is double normal speed.
-- Default Value: 0.5
-
 ### SpeedHalfSailFactor 
 - Description: Multiplier for sail force when at half sail (speed 2). Default is 0.25 (25%).
 - Default Value: 0.25
@@ -1332,19 +1276,19 @@ Other methods removed after 2.5.0
 
 ### SailTier1Propulsion 
 - Description: Flat propulsion added per Raft sail (Tier 1).
-- Default Value: 3
+- Default Value: 5
 
 ### SailTier2Propulsion 
 - Description: Flat propulsion added per Karve sail (Tier 2).
-- Default Value: 5
+- Default Value: 7.5
 
 ### SailTier3Propulsion 
 - Description: Flat propulsion added per Longship sail (Tier 3).
-- Default Value: 7
+- Default Value: 10
 
 ### SailTier4Propulsion 
 - Description: Flat propulsion added per Drakkar sail (Tier 4).
-- Default Value: 9
+- Default Value: 12
 
 ### SailPropulsionMultiplier 
 - Description: Multiplier applied to the total sail propulsion at half and full sail. 1 matches the previous sailing speed, 0.5 halves it. Does not affect rowing (slow) or reverse.
@@ -1352,19 +1296,19 @@ Other methods removed after 2.5.0
 
 ### SailTier1Area 
 - Description: Manual sets the sail wind area of the tier 1 sail.
-- Default Value: 3
+- Default Value: 5
 
 ### SailTier2Area 
 - Description: Manual sets the sail wind area of the tier 2 sail.
-- Default Value: 5
+- Default Value: 7.5
 
 ### SailTier3Area 
 - Description: Manual sets the sail wind area of the tier 3 sail.
-- Default Value: 7
+- Default Value: 10
 
 ### SailTier4Area 
 - Description: Manual sets the sail wind area of the tier 4 sail.
-- Default Value: 9
+- Default Value: 12
 
 ### FlightVerticalToggle 
 - Description: Flight Vertical Continues UntilToggled: Saves the user's fingers by allowing the ship to continue to climb or descend without needing to hold the button
@@ -1614,18 +1558,6 @@ Other methods removed after 2.5.0
 - Description: angular drag controls rotation drag. Higher values will make turning slower. Lower values will make turning faster and could lead to out of control spinning.
 - Default Value: 1.5
 
-### landDrag 
-- Description: Drag value controls how much the vehicle will slow down when moving. Higher values will make the vehicle slower. Lower values will make the vehicle faster.
-- Default Value: 0.05
-
-### landAngularDrag 
-- Description: Land angular drag controls rotation drag. Higher values will make turning slower. Lower values will make turning faster and could lead to out of control spinning.
-- Default Value: 1.2
-
-### LandVehicle Tread Vertical Offset 
-- Description: Wheel offset for Y position. Allowing for raising the treads higher. May require increasing suspension distance so the treads spawn then push the vehicle upwards. Negative lowers the wheels. Positive raises the treads. This value will not override custom config vehicles.
-- Default Value: -1
-
 ### MaxVehicleLinearVelocity_4.6.x 
 - Description: Sets the absolute max speed a vehicle can ever move in. This is X Y Z directions. This will prevent the ship from rapidly flying away. Try staying between 5 and 100. Higher values will increase potential of vehicle flying off to space or rapidly accelerating through objects before physics can apply to an unloaded zone.
 - Default Value: 50
@@ -1834,16 +1766,6 @@ Other methods removed after 2.5.0
 - Description: Language used by ValheimRAFT. 'Auto' follows the game's selected language if an optional translation is installed, else defaults to English.
 - Default Value: Auto
 
-## VehicleGlobal:VesselHorn
-
-### HornTeleportCooldownSeconds 
-- Description: Cooldown in seconds applied after successfully teleporting to a vessel using the Horn of Loki.
-- Default Value: 10
-
-### HornChannelDurationSeconds 
-- Description: Channel duration in seconds required to activate the Horn of Loki.
-- Default Value: 3
-
 ## VehicleGlobal:Damage
 
 ### BoatDamageEnv 
@@ -1936,17 +1858,9 @@ Other methods removed after 2.5.0
 - Description: The maximum amount of energy a power storage unit can hold.
 - Default Value: 800
 
-### LandVehicle_DoNotRequirePower 
-- Description: Allows for free usage of land-vehicles without power system. Very unbalanced.
-- Default Value: False
-
 ### Swivels_DoNotRequirePower 
 - Description: Allows you to use swivels without the vehicle power system.
 - Default Value: False
-
-### LandVehicle_PowerDrain 
-- Description: How much power (watts) is consumed by a LandVehicle per second. This is a base value. Each additional mode will ramp up power. Applies only if LandVehicle_DoNotRequirePower is false.
-- Default Value: 1
 
 ### SwivelPowerDrain 
 - Description: How much power (watts) is consumed by a Swivel per second. Swivels have 1 power mode but swivel lerp speed will affect power cost. Applies only if Swivels_DoNotRequirePower is false.
@@ -1961,49 +1875,3 @@ Other methods removed after 2.5.0
 ### PieceOverlap_Enabled_4.6.x 
 - Description: Prevents piece overlapping which causes flickering in valheim. This is applied on placing a piece, checks for overlapping piece visuals (meshes) and modify the current piece so that it's position is not overlapping with any other pieces. This position update is extremely small and synced in multiplayer. This does not fix complex shaders which can transform or act similarly to meshes. Disabled by default but it can improve building visually when enabled however it can also misalign pieces continuously as reported by some testers.
 - Default Value: False
-
-## QuickStartWorld
-
-### ServerOnlineBackendType 
-- Description: For setting the server type.
-- Default Value: Steamworks
-
-### QuickStartWorldName 
-- Description: Set the quick start World Name
-- Default Value: 
-
-### QuickStartWorldPassword 
-- Description: Set the quick start world password
-- Default Value: 
-
-### IsOpenServer 
-- Description: Set if hosted server is opened allowing other players to connect to the server.
-- Default Value: False
-
-### IsPublicServer 
-- Description: Set the hosted server is public and listed.
-- Default Value: False
-
-### IsServer 
-- Description: Set if server is public
-- Default Value: False
-
-### IsJoinServer 
-- Description: Join a server instead of hosting a server automatically.
-- Default Value: False
-
-### JoinServerUrl 
-- Description: Set the join server URL. This can be an IP address or a web url if hosted server can resolve from a url.
-- Default Value: 
-
-### JoinServerPort 
-- Description: Set the join server URL. This can be an IP address or a web url if hosted server can resolve from a url.
-- Default Value: 2456
-
-### QuickStartEnabled 
-- Description: Enable Quick start
-- Default Value: False
-
-### QuickStartWorldPlayerName 
-- Description: Quick start player name. Must be valid to start the quick start
-- Default Value: 

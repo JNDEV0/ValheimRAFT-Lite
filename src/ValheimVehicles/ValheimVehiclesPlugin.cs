@@ -28,7 +28,7 @@ namespace ValheimVehicles;
 // [BepInPlugin(ModGuid, ModName, BuildInfo.Version)]
 public class ValheimVehiclesPlugin : MonoBehaviour
 {
-  public const string Author = "zolantris";
+  public const string Author = "team0";
   public const string Version = "1.0.0";
   internal const string ModName = "ValheimVehicles";
 

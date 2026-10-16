@@ -40,9 +40,9 @@ namespace ValheimRAFT;
 public class ValheimRaftPlugin : BaseUnityPlugin
 {
   // ReSharper disable MemberCanBePrivate.Global
-  public const string Author = "zolantris";
+  public const string Author = "team0";
   public const string ModName = "ValheimRAFT Lite";
-  public const string ModGuid = $"{Author}.ValheimRAFT";
+  public const string ModGuid = "team0.valheimraftlite";
   public static string Version => BuildInfo.Version;
   public static string HarmonyGuid => ModGuid;
   public const string ModDescription =

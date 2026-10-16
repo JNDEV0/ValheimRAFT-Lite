@@ -81,7 +81,7 @@ body:
         - **Jotunn**: 2.15.2
         - **ValheimRAFT**: Major.Minor.Patch
         
-        Check the ValheimRAFT version in `zolantris-ValheimRAFT/ValheimRAFT.dll` or from your download source.
+        Check the ValheimRAFT version in `team0-ValheimRAFT_Lite/ValheimRAFT.dll` or from your download source.
       value: |
         OS:
         - **OS**: Windows 11 | Ubuntu 20.04
