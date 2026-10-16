@@ -2,7 +2,7 @@
 
 All notable changes to ValheimRAFT Lite are documented here.
 For full commit history see
-the [GitHub Releases](https://github.com/JNDEV0/ValheimRAFT-Lite/releases) page.
+the [GitHub Commits](https://github.com/JNDEV0/ValheimRAFT-Lite/commits/main/) page.
 
 ## [5.4.9] - 2026-10-16
 
@@ -22,7 +22,6 @@ the [GitHub Releases](https://github.com/JNDEV0/ValheimRAFT-Lite/releases) page.
 - **Repository Cleanup & Mod Decoupling**: Purged lingering legacy files, obsolete directories, unused assets, manifests, and build configurations associated with separate mods (`EldritchValheim`, obsolete test assets, and unreferenced damage extension).
 - **Package Naming Convention & Branding**: Updated plugin author and loading identifiers to `team0.valheimraftlite` (`ValheimRAFT_Lite`), cleaned up issue templates, and sanitized upstream repository credits.
 - **Config Documentation Calibration**: Synchronized `ValheimRAFT_AutoDoc.md` sail propulsion speeds with in-game values (Raft: 5.0, Karve: 7.5, Longship: 10.0, Drakkar: 12.0), removed disconnected rope ladder and disabled land vehicle parameters, and purged deprecated teleport horn and QuickStartWorld dev configs.
-- **GPU Instancing Implementation Plan**: Added comprehensive architectural documentation and phased roadmap ([GPU_Instancing_Implementation_Plan.md](file:///d:/SteamLibrary/steamapps/common/Valheim/ValheimMods_Repo/GPU_Instancing_Implementation_Plan.md)) for future zero-bake GPU instancing and mesh clustering (Issue #350).
 
 ## [5.4.8] - 2026-10-14
 
