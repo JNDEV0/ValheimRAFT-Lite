@@ -1,21 +1,28 @@
 # Changelog
 
-All notable changes to ValheimRAFT are documented here.
+All notable changes to ValheimRAFT Lite are documented here.
 For full commit history see
-the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
+the [GitHub Releases](https://github.com/JNDEV0/ValheimRAFT-Lite/releases) page.
 
-## [5.4.9] - 2026-10-15
+## [5.4.9] - 2026-10-16
 
 ### Added
 
-- **Procedural 3D Anchor Chain Links**: Replaced the flat billboard line renderer with high-fidelity 3D interlocking iron chain links (`chain_link.prefab`):
-  - Retains authentic heavy anchor chain thickness (~0.2m) with dark pitted iron material matching the anchor body.
+- **Procedural 3D Interlocking Anchor Chain**: Replaced the flat billboard line renderer with high-fidelity 3D interlocking iron chain links (`chain_link.prefab`):
+  - Alternating 90-degree rotated links with calibrated `0.160f` spacing for a realistic mechanical appearance.
+  - Authentic heavy anchor chain thickness (~0.2m) with dark pitted iron material matching the anchor body.
   - Dynamically extends when dropping anchor and contracts when reeling in, smoothly deactivating drop links when retrieved in the cradle.
-  - Features an efficient object pool managing up to 600 links across both the deck winch-to-roller chute run and the vertical drop to the seabed.
-  - Zero-jitter synchronization updated in `LateUpdate` to ensure the chain stays locked to the anchor and vessel during ocean wave motion.
-- **Repository Cleanup & Mod Decoupling**: Purged legacy unused assets, manifests, and build configurations associated with separate mods (`EldritchValheim`, obsolete test assets, and unreferenced damage extension).
-- **Branding & Package Loading Updates**: Updated plugin author and loading identifiers to `team0.valheimraftlite`, cleaned up issue templates, and sanitized upstream repository credits.
+  - High-capacity dynamic object pool supporting up to 5,000 links (~800m continuous drop depth for high-altitude airship flight into fog and down to seabed).
+  - Physical chain collision: Added dynamic `CapsuleCollider` on the `piece` layer along extended drop chains to prevent walking through the chain or clipping into camera near-planes.
+  - Zero-jitter synchronization updated in `LateUpdate` ensuring the chain stays locked to the anchor and vessel during ocean wave motion and flight.
+- **Anchor Resting Height Calibration**: Raised anchor burial resting height (`AnchorHeightOffset = 1.3f`) so the anchor body sits realistically on the ground or seabed rather than getting buried into terrain.
+- **Anchor Model Refinement**: Automatically disables redundant top anchor ring (`DisableAnchorTopRing`) to connect directly to the 3D chain.
+- **Placement Ghost Collision Fix**: Dynamically disables colliders and physics on anchor placement ghosts when selecting from the Boat Hammer, preventing players from jumping on the ghost or getting pushed around during placement.
+- **Chain Pool Lifetime Hardening**: Added Unity native object lifetime validation (`existing == null`) and clean pool re-initialization on `Awake` and `OnDestroy`, eliminating `NullReferenceException` crashes during sector transitions, vessel re-parenting, or stale instance states.
+- **Repository Cleanup & Mod Decoupling**: Purged lingering legacy files, obsolete directories, unused assets, manifests, and build configurations associated with separate mods (`EldritchValheim`, obsolete test assets, and unreferenced damage extension).
+- **Package Naming Convention & Branding**: Updated plugin author and loading identifiers to `team0.valheimraftlite` (`ValheimRAFT_Lite`), cleaned up issue templates, and sanitized upstream repository credits.
 - **Config Documentation Calibration**: Synchronized `ValheimRAFT_AutoDoc.md` sail propulsion speeds with in-game values (Raft: 5.0, Karve: 7.5, Longship: 10.0, Drakkar: 12.0), removed disconnected rope ladder and disabled land vehicle parameters, and purged deprecated teleport horn and QuickStartWorld dev configs.
+- **GPU Instancing Implementation Plan**: Added comprehensive architectural documentation and phased roadmap ([GPU_Instancing_Implementation_Plan.md](file:///d:/SteamLibrary/steamapps/common/Valheim/ValheimMods_Repo/GPU_Instancing_Implementation_Plan.md)) for future zero-bake GPU instancing and mesh clustering (Issue #350).
 
 ## [5.4.8] - 2026-10-14
 
