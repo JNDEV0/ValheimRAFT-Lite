@@ -136,6 +136,8 @@ namespace ValheimVehicles.SharedScripts
         if (prefabRigidbody) prefabRigidbody.Sleep();
       }
 
+      _chainLinkPool.Clear();
+      _chainContainer = null;
       var oldContainer = transform.Find("ChainContainer");
       if (oldContainer != null) Destroy(oldContainer.gameObject);
 
@@ -675,6 +677,7 @@ namespace ValheimVehicles.SharedScripts
         {
           if (linkIndex >= MaxChainLinks) break;
           var link = GetOrCreateChainLink(linkIndex);
+          if (link == null) break;
           link.transform.position = startA + dirA * ((i + 0.5f) * stepA);
           bool isRotated = (linkIndex % 2 == 1);
           link.transform.rotation = rotA * Quaternion.Euler(0f, isRotated ? 90f : 0f, 0f);
@@ -703,6 +706,7 @@ namespace ValheimVehicles.SharedScripts
         {
           if (linkIndex >= MaxChainLinks) break;
           var link = GetOrCreateChainLink(linkIndex);
+          if (link == null) break;
           link.transform.position = startB + dirB * ((i + 0.5f) * stepB);
           bool isRotated = (linkIndex % 2 == 1);
           link.transform.rotation = rotB * Quaternion.Euler(0f, isRotated ? 90f : 0f, 0f);
@@ -723,14 +727,31 @@ namespace ValheimVehicles.SharedScripts
 
     private GameObject GetOrCreateChainLink(int index)
     {
+      if (_chainContainer == null)
+      {
+        var containerObj = new GameObject("ChainContainer");
+        containerObj.transform.SetParent(transform, false);
+        _chainContainer = containerObj.transform;
+      }
+
       while (_chainLinkPool.Count <= index)
       {
+        _chainLinkPool.Add(null);
+      }
+
+      var existing = _chainLinkPool[index];
+      if (existing == null)
+      {
+        if (chainLinkPrefab == null) return null;
         var newLink = Instantiate(chainLinkPrefab, _chainContainer);
+        if (newLink == null) return null;
         newLink.transform.localScale = chainLinkPrefab.transform.localScale;
         newLink.SetActive(false);
-        _chainLinkPool.Add(newLink);
+        _chainLinkPool[index] = newLink;
+        return newLink;
       }
-      return _chainLinkPool[index];
+
+      return existing;
     }
 
     /// <summary>
