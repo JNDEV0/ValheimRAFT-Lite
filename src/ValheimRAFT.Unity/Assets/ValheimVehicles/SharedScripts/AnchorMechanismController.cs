@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 // ReSharper disable ArrangeNamespaceBody
 // ReSharper disable NamespaceStyle
@@ -57,10 +58,19 @@ namespace ValheimVehicles.SharedScripts
 
     public GameObject chainLinkPrefab;
     public const float ChainLinkStep = 0.160f;
-    public const int MaxChainLinks = 1000;
 
-    private readonly List<GameObject> _chainLinkPool = new();
-    private Transform _chainContainer;
+    private Mesh _chainMesh;
+    private Material _chainMaterial;
+    private Quaternion _torusLocalRotation = Quaternion.identity;
+    private Vector3 _torusLocalScale = Vector3.one;
+    private bool _meshInitialized = false;
+
+    private readonly List<Matrix4x4> _matricesA = new();
+    private readonly List<Matrix4x4> _matricesB = new();
+    private readonly Matrix4x4[] _batchBuffer = new Matrix4x4[1023];
+
+    private CapsuleCollider _chainCollider;
+    private GameObject _chainColliderObj;
 
     public Rigidbody prefabRigidbody;
 
@@ -131,6 +141,9 @@ namespace ValheimVehicles.SharedScripts
         prefabRigidbody = transform.GetComponent<Rigidbody>();
         if (prefabRigidbody) prefabRigidbody.Sleep();
       }
+
+      var oldContainer = transform.Find("ChainContainer");
+      if (oldContainer != null) Destroy(oldContainer.gameObject);
 
       if (anchorTransform == null)
         anchorTransform = transform.Find("anchor");
@@ -317,26 +330,28 @@ namespace ValheimVehicles.SharedScripts
     internal void OnDisable()
     {
       Instances.Remove(this);
-      for (int i = 0; i < _chainLinkPool.Count; i++)
-      {
-        if (_chainLinkPool[i] != null) _chainLinkPool[i].SetActive(false);
-      }
+      if (_chainCollider != null) _chainCollider.enabled = false;
     }
 
     protected virtual void OnDestroy()
     {
-      if (_chainContainer != null)
+      if (_chainColliderObj != null)
       {
-        Destroy(_chainContainer.gameObject);
-        _chainContainer = null;
+        Destroy(_chainColliderObj);
+        _chainColliderObj = null;
       }
-      _chainLinkPool.Clear();
+      _matricesA.Clear();
+      _matricesB.Clear();
     }
 
     public virtual void LateUpdate()
     {
       if (IsGhost()) return;
-      if (currentState != AnchorState.Recovered && currentState != AnchorState.Idle)
+      if (chainLinkPrefab != null)
+      {
+        UpdateChainVisual();
+      }
+      else if (currentState != AnchorState.Recovered && currentState != AnchorState.Idle)
       {
         UpdateRopeVisual();
       }
@@ -593,19 +608,100 @@ namespace ValheimVehicles.SharedScripts
       ropeLine.SetPositions(positions.ToArray());
     }
 
+    private void InitChainMeshAndMaterial()
+    {
+      if (_meshInitialized && _chainMesh != null && _chainMaterial != null) return;
+      if (chainLinkPrefab == null) return;
+
+      var filter = chainLinkPrefab.GetComponentInChildren<MeshFilter>();
+      if (filter != null)
+      {
+        _chainMesh = filter.sharedMesh;
+        _torusLocalRotation = filter.transform.localRotation;
+        _torusLocalScale = Vector3.Scale(chainLinkPrefab.transform.localScale, filter.transform.localScale);
+      }
+
+      var renderer = chainLinkPrefab.GetComponentInChildren<MeshRenderer>();
+      if (renderer != null && renderer.sharedMaterial != null)
+      {
+        _chainMaterial = renderer.sharedMaterial;
+        if (!_chainMaterial.enableInstancing)
+        {
+          _chainMaterial.enableInstancing = true;
+        }
+      }
+
+      _meshInitialized = (_chainMesh != null && _chainMaterial != null);
+    }
+
+    private void UpdateChainCollider(Vector3 startB, Vector3 endB, float distB)
+    {
+      if (IsGhost() || distB < 0.4f)
+      {
+        if (_chainCollider != null && _chainCollider.enabled)
+        {
+          _chainCollider.enabled = false;
+        }
+        return;
+      }
+
+      if (_chainColliderObj == null)
+      {
+        _chainColliderObj = new GameObject("AnchorChainCollider");
+        _chainColliderObj.transform.SetParent(transform, true);
+        _chainColliderObj.layer = LayerMask.NameToLayer("piece");
+        _chainCollider = _chainColliderObj.AddComponent<CapsuleCollider>();
+        _chainCollider.direction = 1; // Y axis
+        _chainCollider.radius = 0.22f;
+      }
+
+      if (_chainCollider != null)
+      {
+        if (!_chainCollider.enabled) _chainCollider.enabled = true;
+        _chainCollider.height = distB;
+        _chainColliderObj.transform.position = (startB + endB) * 0.5f;
+        var dir = startB - endB;
+        if (dir.sqrMagnitude > 0.001f)
+        {
+          _chainColliderObj.transform.rotation = Quaternion.FromToRotation(Vector3.up, dir.normalized);
+        }
+      }
+    }
+
+    private void DrawChainInstances(List<Matrix4x4> matrices)
+    {
+      if (_chainMesh == null || _chainMaterial == null || matrices == null || matrices.Count == 0) return;
+
+      int total = matrices.Count;
+      int offset = 0;
+      while (offset < total)
+      {
+        int batchSize = Mathf.Min(1023, total - offset);
+        matrices.CopyTo(offset, _batchBuffer, 0, batchSize);
+        Graphics.DrawMeshInstanced(
+          _chainMesh,
+          0,
+          _chainMaterial,
+          _batchBuffer,
+          batchSize,
+          null,
+          ShadowCastingMode.On,
+          true,
+          0
+        );
+        offset += batchSize;
+      }
+    }
+
     public void UpdateChainVisual()
     {
       if (IsGhost()) return;
-      if (chainLinkPrefab == null) return;
+      InitChainMeshAndMaterial();
+      if (_chainMesh == null || _chainMaterial == null) return;
       if (rotationAnchorRopeAttachpoint == null || anchorRopeAttachStartPoint == null || anchorRopeAttachmentPoint == null) return;
 
-      if (_chainContainer == null)
-      {
-        var containerObj = new GameObject("ChainContainer");
-        containerObj.transform.SetParent(transform, false);
-        _chainContainer = containerObj.transform;
-      }
-
+      _matricesA.Clear();
+      _matricesB.Clear();
       int linkIndex = 0;
 
       // 1. Deck segment: from winch drum attachpoint to chute roller startpoint
@@ -616,18 +712,16 @@ namespace ValheimVehicles.SharedScripts
       if (distA > 0.05f)
       {
         var dirA = deltaA / distA;
-        var countA = Mathf.Clamp(Mathf.RoundToInt(distA / ChainLinkStep), 1, 30);
+        var countA = Mathf.Max(1, Mathf.RoundToInt(distA / ChainLinkStep));
         var stepA = distA / countA;
         var rotA = Quaternion.FromToRotation(Vector3.down, dirA);
 
         for (int i = 0; i < countA; i++)
         {
-          if (linkIndex >= MaxChainLinks) break;
-          var link = GetOrCreateChainLink(linkIndex);
-          link.transform.position = startA + dirA * ((i + 0.5f) * stepA);
+          var pos = startA + dirA * ((i + 0.5f) * stepA);
           bool isRotated = (linkIndex % 2 == 1);
-          link.transform.rotation = rotA * Quaternion.Euler(0f, isRotated ? 90f : 0f, 0f);
-          if (!link.activeSelf) link.SetActive(true);
+          var rot = rotA * (isRotated ? Quaternion.Euler(0f, 90f, 0f) : Quaternion.identity) * _torusLocalRotation;
+          _matricesA.Add(Matrix4x4.TRS(pos, rot, _torusLocalScale));
           linkIndex++;
         }
       }
@@ -638,46 +732,29 @@ namespace ValheimVehicles.SharedScripts
       var deltaB = endB - startB;
       var distB = deltaB.magnitude;
 
-      // When anchor is recovered/idle in the cradle, distB is ~0.02m (no drop links needed)
+      UpdateChainCollider(startB, endB, distB);
+
+      // When anchor is lowered (distB >= 0.15m), generate drop segment matrices unconditionally (no distance culling)
       if (distB >= 0.15f)
       {
         var dirB = deltaB / distB;
-        var countB = Mathf.Clamp(Mathf.RoundToInt(distB / ChainLinkStep), 1, MaxChainLinks - linkIndex);
+        var countB = Mathf.Max(1, Mathf.RoundToInt(distB / ChainLinkStep));
         var stepB = distB / countB;
         var rotB = Quaternion.FromToRotation(Vector3.down, dirB);
 
         for (int i = 0; i < countB; i++)
         {
-          if (linkIndex >= MaxChainLinks) break;
-          var link = GetOrCreateChainLink(linkIndex);
-          link.transform.position = startB + dirB * ((i + 0.5f) * stepB);
+          var pos = startB + dirB * ((i + 0.5f) * stepB);
           bool isRotated = (linkIndex % 2 == 1);
-          link.transform.rotation = rotB * Quaternion.Euler(0f, isRotated ? 90f : 0f, 0f);
-          if (!link.activeSelf) link.SetActive(true);
+          var rot = rotB * (isRotated ? Quaternion.Euler(0f, 90f, 0f) : Quaternion.identity) * _torusLocalRotation;
+          _matricesB.Add(Matrix4x4.TRS(pos, rot, _torusLocalScale));
           linkIndex++;
         }
       }
 
-      // Deactivate unused pooled chain links
-      for (int i = linkIndex; i < _chainLinkPool.Count; i++)
-      {
-        if (_chainLinkPool[i] != null && _chainLinkPool[i].activeSelf)
-        {
-          _chainLinkPool[i].SetActive(false);
-        }
-      }
-    }
-
-    private GameObject GetOrCreateChainLink(int index)
-    {
-      while (_chainLinkPool.Count <= index)
-      {
-        var newLink = Instantiate(chainLinkPrefab, _chainContainer);
-        newLink.transform.localScale = chainLinkPrefab.transform.localScale;
-        newLink.SetActive(false);
-        _chainLinkPool.Add(newLink);
-      }
-      return _chainLinkPool[index];
+      // Draw all instances unconditionally on GPU
+      DrawChainInstances(_matricesA);
+      DrawChainInstances(_matricesB);
     }
 
     /// <summary>
