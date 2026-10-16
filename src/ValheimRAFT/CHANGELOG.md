@@ -4,7 +4,15 @@ All notable changes to ValheimRAFT are documented here.
 For full commit history see
 the [GitHub Releases](https://github.com/zolantris/ValheimMods/releases) page.
 
----
+## [5.4.9] - 2026-10-15
+
+### Added
+
+- **Procedural 3D Anchor Chain Links**: Replaced the flat billboard line renderer with high-fidelity 3D interlocking iron chain links (`chain_link.prefab`):
+  - Retains authentic heavy anchor chain thickness (~0.2m) with dark pitted iron material matching the anchor body.
+  - Dynamically extends when dropping anchor and contracts when reeling in, smoothly deactivating drop links when retrieved in the cradle.
+  - Features an efficient object pool managing up to 600 links across both the deck winch-to-roller chute run and the vertical drop to the seabed.
+  - Zero-jitter synchronization updated in `LateUpdate` to ensure the chain stays locked to the anchor and vessel during ocean wave motion.
 
 ## [5.4.8] - 2026-10-14
 

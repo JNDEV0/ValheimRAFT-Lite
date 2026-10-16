@@ -29,6 +29,7 @@ public class LoadValheimVehicleAssets : ILoadAssets
   public static Material GlassNautilusNoTint = null!;
 
   public static GameObject ShipAnchorWood = null!;
+  public static GameObject ChainLink = null!;
 
   // mechanisms/energy
   public static GameObject Mechanism_Swivel = null!;
@@ -355,6 +356,10 @@ public class LoadValheimVehicleAssets : ILoadAssets
 
     ShipAnchorWood =
       assetBundle.LoadAsset<GameObject>($"anchor_full_wood.prefab");
+    ChainLink =
+      assetBundle.LoadAsset<GameObject>("chain_link.prefab")
+      ?? assetBundle.LoadAsset<GameObject>("chain_link")
+      ?? assetBundle.LoadAsset<GameObject>("Assets/ValheimVehicles/Prefabs/chain_link.prefab");
 
     RamBladeTop = assetBundle.LoadAsset<GameObject>(
       "ram_blade_top.prefab");

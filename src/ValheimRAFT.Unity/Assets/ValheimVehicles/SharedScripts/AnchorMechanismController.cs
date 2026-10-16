@@ -55,6 +55,13 @@ namespace ValheimVehicles.SharedScripts
 
     public LineRenderer ropeLine; // LineRenderer to visualize rope
 
+    public GameObject chainLinkPrefab;
+    public const float ChainLinkStep = 0.2024f;
+    public const int MaxChainLinks = 600;
+
+    private readonly List<GameObject> _chainLinkPool = new();
+    private Transform _chainContainer;
+
     public Rigidbody prefabRigidbody;
 
     public bool CanUseHotkeys = true;
@@ -252,6 +259,28 @@ namespace ValheimVehicles.SharedScripts
     internal void OnDisable()
     {
       Instances.Remove(this);
+      for (int i = 0; i < _chainLinkPool.Count; i++)
+      {
+        if (_chainLinkPool[i] != null) _chainLinkPool[i].SetActive(false);
+      }
+    }
+
+    protected virtual void OnDestroy()
+    {
+      if (_chainContainer != null)
+      {
+        Destroy(_chainContainer.gameObject);
+        _chainContainer = null;
+      }
+      _chainLinkPool.Clear();
+    }
+
+    public virtual void LateUpdate()
+    {
+      if (currentState != AnchorState.Recovered && currentState != AnchorState.Idle)
+      {
+        UpdateRopeVisual();
+      }
     }
 
     public override void OnChildCollisionEnter(Collision collision)
@@ -430,8 +459,20 @@ namespace ValheimVehicles.SharedScripts
 
     public void UpdateRopeVisual()
     {
-      if (ropeLine == null || rotationAnchorRopeAttachpoint == null || anchorRopeAttachStartPoint == null || anchorRopeAttachmentPoint == null) return;
+      if (rotationAnchorRopeAttachpoint == null || anchorRopeAttachStartPoint == null || anchorRopeAttachmentPoint == null) return;
 
+      if (chainLinkPrefab != null)
+      {
+        if (ropeLine != null && ropeLine.enabled)
+        {
+          ropeLine.enabled = false;
+        }
+        UpdateChainVisual();
+        return;
+      }
+
+      if (ropeLine == null) return;
+      ropeLine.enabled = true;
       ropeLine.useWorldSpace = false; // Ensure the rope uses local space.
       ropeLine.startWidth = 0.2f;
       ropeLine.endWidth = 0.2f;
@@ -491,6 +532,88 @@ namespace ValheimVehicles.SharedScripts
       ropeLine.positionCount = positions.Count;
       // Set the calculated positions to the LineRenderer in local space
       ropeLine.SetPositions(positions.ToArray());
+    }
+
+    public void UpdateChainVisual()
+    {
+      if (chainLinkPrefab == null) return;
+      if (rotationAnchorRopeAttachpoint == null || anchorRopeAttachStartPoint == null || anchorRopeAttachmentPoint == null) return;
+
+      if (_chainContainer == null)
+      {
+        var containerObj = new GameObject("ChainContainer");
+        containerObj.transform.SetParent(transform, false);
+        _chainContainer = containerObj.transform;
+      }
+
+      int linkIndex = 0;
+
+      // 1. Deck segment: from winch drum attachpoint to chute roller startpoint
+      var startA = rotationAnchorRopeAttachpoint.position;
+      var endA = anchorRopeAttachStartPoint.position;
+      var deltaA = endA - startA;
+      var distA = deltaA.magnitude;
+      if (distA > 0.05f)
+      {
+        var dirA = deltaA / distA;
+        var countA = Mathf.Clamp(Mathf.RoundToInt(distA / ChainLinkStep), 1, 20);
+        var stepA = distA / countA;
+        var rotA = Quaternion.FromToRotation(Vector3.down, dirA);
+
+        for (int i = 0; i < countA; i++)
+        {
+          if (linkIndex >= MaxChainLinks) break;
+          var link = GetOrCreateChainLink(linkIndex++);
+          link.transform.position = startA + dirA * ((i + 0.5f) * stepA);
+          link.transform.rotation = rotA;
+          if (!link.activeSelf) link.SetActive(true);
+        }
+      }
+
+      // 2. Drop segment: from chute roller startpoint down to anchor head
+      var startB = anchorRopeAttachStartPoint.position;
+      var endB = anchorRopeAttachmentPoint.position;
+      var deltaB = endB - startB;
+      var distB = deltaB.magnitude;
+
+      // When anchor is recovered/idle in the cradle, distB is ~0.02m (no drop links needed)
+      if (distB >= 0.15f)
+      {
+        var dirB = deltaB / distB;
+        var countB = Mathf.Clamp(Mathf.RoundToInt(distB / ChainLinkStep), 1, MaxChainLinks - linkIndex);
+        var stepB = distB / countB;
+        var rotB = Quaternion.FromToRotation(Vector3.down, dirB);
+
+        for (int i = 0; i < countB; i++)
+        {
+          if (linkIndex >= MaxChainLinks) break;
+          var link = GetOrCreateChainLink(linkIndex++);
+          link.transform.position = startB + dirB * ((i + 0.5f) * stepB);
+          link.transform.rotation = rotB;
+          if (!link.activeSelf) link.SetActive(true);
+        }
+      }
+
+      // Deactivate unused pooled chain links
+      for (int i = linkIndex; i < _chainLinkPool.Count; i++)
+      {
+        if (_chainLinkPool[i] != null && _chainLinkPool[i].activeSelf)
+        {
+          _chainLinkPool[i].SetActive(false);
+        }
+      }
+    }
+
+    private GameObject GetOrCreateChainLink(int index)
+    {
+      while (_chainLinkPool.Count <= index)
+      {
+        var newLink = Instantiate(chainLinkPrefab, _chainContainer);
+        newLink.transform.localScale = chainLinkPrefab.transform.localScale;
+        newLink.SetActive(false);
+        _chainLinkPool.Add(newLink);
+      }
+      return _chainLinkPool[index];
     }
 
     /// <summary>

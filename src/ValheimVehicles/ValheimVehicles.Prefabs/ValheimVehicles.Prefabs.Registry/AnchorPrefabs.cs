@@ -105,6 +105,8 @@ public class AnchorPrefabs : RegisterPrefab<AnchorPrefabs>
     anchorMechanismController.anchorTransform =
       anchorMechanismController.transform.Find("anchor");
 
+    anchorMechanismController.chainLinkPrefab = LoadValheimVehicleAssets.ChainLink;
+
     anchorMechanismController.ropeLine =
       anchorMechanismController.transform.Find("rope_line").GetComponent<LineRenderer>();
 

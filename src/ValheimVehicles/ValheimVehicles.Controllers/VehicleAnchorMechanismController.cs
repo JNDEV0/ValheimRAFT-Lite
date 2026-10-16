@@ -4,6 +4,7 @@
   using UnityEngine;
   using ValheimVehicles.BepInExConfig;
   using ValheimVehicles.Constants;
+  using ValheimVehicles.Prefabs;
   using ValheimVehicles.SharedScripts;
   using Zolantris.Shared;
 
@@ -32,6 +33,10 @@
       base.Awake();
       CanUseHotkeys = false;
       anchorDropDistance = maxAnchorDistance;
+      if (chainLinkPrefab == null && LoadValheimVehicleAssets.ChainLink != null)
+      {
+        chainLinkPrefab = LoadValheimVehicleAssets.ChainLink;
+      }
     }
 
     public override void Start()
